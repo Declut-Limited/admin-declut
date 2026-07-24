@@ -1,0 +1,144 @@
+import { useState, useRef, useEffect } from "react";
+import { FiUser, FiSettings, FiLogOut } from "react-icons/fi";
+import avatarPlaceholder from "@/assets/avatar.svg";
+import { useTheme } from "@/lib/theme/useTheme";
+import { IoIosArrowDown } from "react-icons/io";
+
+interface ProfileDropdownProps {
+  name: string;
+  role: string;
+  userId: string;
+  avatarUrl?: string;
+  onLogout: () => void;
+}
+
+export default function ProfileDropdown({
+  name,
+  role,
+  userId,
+  avatarUrl,
+  onLogout,
+}: ProfileDropdownProps) {
+  const [open, setOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+      >
+        <img
+          src={avatarUrl || avatarPlaceholder}
+          alt={name}
+          className="w-8 h-8 rounded-full object-cover"
+        />
+        <div className="text-left hidden sm:block">
+          <p className="text-sm font-medium text-[#454545] dark:text-gray-100 tracking-wide">
+            {name}
+          </p>
+          <p className="text-xs text-amber-600 tracking-wide">{role}</p>
+        </div>
+        <IoIosArrowDown size={16} color="#454545" />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-2 w-64 bg-[#FAFAFA] dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 p-4 z-50">
+          <div className="flex items-center gap-3 pb-3">
+            <img
+              src={avatarUrl || avatarPlaceholder}
+              alt={name}
+              className="w-10 h-10 rounded-full object-cover"
+            />
+            <div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {name}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{role}</p>
+            </div>
+          </div>
+
+          <div className="bg-indigo-50 dark:bg-indigo-950 rounded-lg px-3 py-2 mb-3">
+            <p className="text-[10px] uppercase text-gray-400 dark:text-gray-500">
+              user ID
+            </p>
+            <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
+              {userId}
+            </p>
+          </div>
+
+          <div className="space-y-1 mb-4">
+            <button className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
+              <FiUser className="w-4 h-4" /> My Profile
+            </button>
+            <button className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
+              <FiSettings className="w-4 h-4" /> Settings
+            </button>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold text-[#454545] dark:text-gray-500 uppercase tracking-wide mb-2">
+              Appearance
+            </p>
+
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              {(["light", "dark", "system"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setTheme(mode)}
+                  className={`rounded-lg border p-2 flex flex-col justify-between h-20 text-left transition-colors ${
+                    theme === mode
+                      ? "border-indigo-500 ring-1 ring-indigo-500"
+                      : "border-gray-200 dark:border-gray-700"
+                  }`}
+                >
+                  <span className="text-xs text-[#888888] dark:text-gray-500 capitalize">
+                    {mode}
+                  </span>
+
+                  {mode === "system" ? (
+                    <div className="flex rounded-md overflow-hidden h-7">
+                      <span className="flex-1 flex items-center justify-center bg-gray-900 text-white text-xs font-medium">
+                        Aa
+                      </span>
+                      <span className="flex-1 flex items-center justify-center bg-white text-gray-400 text-xs font-medium">
+                        Aa
+                      </span>
+                    </div>
+                  ) : (
+                    <span
+                      className={`flex items-center justify-center rounded-md h-7 text-xs font-medium ${
+                        mode === "dark"
+                          ? "bg-gray-900 text-white"
+                          : "bg-white text-gray-900"
+                      }`}
+                    >
+                      Aa
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+          >
+            <FiLogOut className="w-4 h-4" /> Logout
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

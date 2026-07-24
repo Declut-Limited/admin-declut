@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+.dark {
+  --scrollbar-thumb: #475569;
+}
+
+@theme {
+  --font-standerd: "Standerd", system-ui, sans-serif;
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer base {
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb, #FFFFE71A);
+    border-radius: 9999px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb, #FFFFE71A);
+  }
+}
+
+@font-face {
+  font-family: "Standerd";
+  src:
+    url("./assets/fonts/Standerd-Regular.otf") format("opentype"),
+    url("./assets/fonts/Standerd-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+body {
+  font-family:
+    "Standerd",
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+/* dashboard classes */
+@layer components {
+  .stats-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4;
+  }
+
+  .stats-card {
+    @apply bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl p-2 flex flex-col gap-2;
+  }
+
+  .stats-card-label {
+    @apply text-sm text-[#717680] tracking-wide dark:text-gray-400;
+  }
+
+  .stats-card-value {
+    @apply text-2xl font-bold text-[#1f1f1f] tracking-wide dark:text-gray-100;
+  }
+
+  .stats-card-meta {
+    @apply flex items-center gap-1.5 text-xs text-[#888888] tracking-normal dark:text-gray-400;
+  }
+
+  .period-filter-trigger {
+    @apply flex items-center gap-2 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800;
+  }
+
+  .period-filter-dropdown {
+    @apply absolute right-0 mt-2 w-40 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 py-1 z-50;
+  }
+
+  .period-filter-option {
+    @apply w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800;
+  }
+
+  /* revenue chart */
+  .chart-card {
+    @apply bg-[#FAFAFA] dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl p-5;
+  }
+
+  .chart-container{
+    @apply bg-white rounded-md p-2 dark:bg-[#FFFFE71A]
+  }
+
+  .chart-toggle-group {
+    @apply flex items-center gap-1 bg-white dark:bg-gray-800 rounded-full p-1;
+  }
+
+  .chart-toggle-option {
+    @apply px-3 py-1 text-xs font-medium rounded-full transition-colors;
+  }
+
+  .chart-legend-dot {
+    @apply w-2.5 h-2.5 rounded-full shrink-0;
+  }
+
+  .chart-stat-label {
+    @apply text-xs text-[#888888] tracking-wide dark:text-gray-400;
+  }
+
+  .chart-stat-value {
+    @apply text-sm font-semibold text-[#1F1F1F] dark:text-gray-100;
+  }
+}
