@@ -47,7 +47,7 @@ export default function ProfileDropdown({
           <p className="text-sm font-medium text-[#454545] dark:text-gray-100 tracking-wide">
             {name}
           </p>
-          <p className="text-xs text-amber-600 tracking-wide">{role}</p>
+          <p className="text-xs text-[#16A34A] tracking-wide">{role}</p>
         </div>
         <IoIosArrowDown size={16} color="#454545" />
       </button>

@@ -58,11 +58,6 @@ body {
     sans-serif;
 }
 
-/* button,
-a{
-  cursor: pointer;
-} */
-
 /* auth classes */
 @layer components {
   .auth-input-wrapper {
