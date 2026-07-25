@@ -58,6 +58,47 @@ body {
     sans-serif;
 }
 
+/* button,
+a{
+  cursor: pointer;
+} */
+
+/* auth classes */
+@layer components {
+  .auth-input-wrapper {
+    @apply relative flex items-center;
+  }
+
+  .auth-input {
+    @apply w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500;
+  }
+
+  .auth-input-icon {
+    @apply absolute left-3 text-gray-400 w-4 h-4 pointer-events-none;
+  }
+
+  .auth-badge {
+    @apply inline-flex items-center gap-2 text-xs text-gray-300 border border-white/10 rounded-full px-3 py-1.5;
+  }
+
+  .auth-brand-panel {
+    background-color: #0f0f0f;
+    background-image:
+      radial-gradient(
+        ellipse at center,
+        transparent 0%,
+        rgba(0, 0, 0, 0.9) 100%
+      ),
+      linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size:
+      cover,
+      32px 32px,
+      32px 32px;
+  }
+}
+
+
 /* dashboard classes */
 @layer components {
   .stats-grid {
@@ -178,3 +219,4 @@ body {
     @apply text-sm font-medium text-[#4F6EF7] hover:underline cursor-pointer;
   }
 }
+
