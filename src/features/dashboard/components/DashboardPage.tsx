@@ -13,10 +13,41 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import orangeLegend from "../../../assets/icons/OrangeLegendNode.svg";
 import blueLegend from "../../../assets/icons/BlueLegendNode.svg";
 import calendar from "../../../assets/icons/calendar.svg";
+import { LuDot } from "react-icons/lu";
+import avatarPlaceholder from "../../../assets/avatar.svg";
+import logo from "../../../assets/icons/logo.svg";
+
+interface CategoryDistribution {
+  label: string;
+  transactions: string;
+  value: string;
+  percent: string;
+  progress: number; // 0-100
+}
+
+interface TransactionStatusSlice {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface ActivityItem {
+  id: string;
+  actor: string;
+  isSystem?: boolean;
+  avatarUrl?: string;
+  message: React.ReactNode;
+  timestamp: string;
+}
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -116,6 +147,137 @@ const revenueData = [
   { month: "Dec", gross: 61000000, commission: 45000000 },
 ];
 
+const listingsData = [
+  { month: "Aug", listings: 35000 },
+  { month: "Sep", listings: 9000 },
+  { month: "Oct", listings: 59000 },
+  { month: "Nov", listings: 91000 },
+  { month: "Dec", listings: 93000 },
+  { month: "Jan", listings: 50000 },
+];
+
+const categoryDistribution: CategoryDistribution[] = [
+  {
+    label: "Electronics",
+    transactions: "12,410 transactions",
+    value: "₦364.9M",
+    percent: "3.8%",
+    progress: 78,
+  },
+  {
+    label: "Home & Living",
+    transactions: "12,410 transactions",
+    value: "₦364.9M",
+    percent: "3.8%",
+    progress: 55,
+  },
+  {
+    label: "Fashion",
+    transactions: "12,410 transactions",
+    value: "₦364.9M",
+    percent: "3.8%",
+    progress: 60,
+  },
+  {
+    label: "Vehicles",
+    transactions: "12,410 transactions",
+    value: "₦364.9M",
+    percent: "3.8%",
+    progress: 40,
+  },
+  {
+    label: "Kids",
+    transactions: "12,410 transactions",
+    value: "₦364.9M",
+    percent: "3.8%",
+    progress: 22,
+  },
+  {
+    label: "Other Categories",
+    transactions: "12,410 transactions",
+    value: "₦364.9M",
+    percent: "3.8%",
+    progress: 18,
+  },
+];
+
+const transactionStatus: TransactionStatusSlice[] = [
+  { name: "Completed", value: 42, color: "#6366F1" },
+  { name: "Escrow", value: 28, color: "#34D399" },
+  { name: "Awaiting Inspection", value: 18, color: "#F59E0B" },
+  { name: "Disputed", value: 8, color: "#22D3EE" },
+  { name: "Cancelled", value: 4, color: "#A78BFA" },
+];
+
+interface ActivityItem {
+  id: string;
+  actor: string;
+  isSystem?: boolean;
+  avatarUrl?: string;
+  message: React.ReactNode;
+  timestamp: string;
+}
+
+const recentActivity: ActivityItem[] = [
+  {
+    id: "1",
+    actor: "Ekeleme Oscar",
+    avatarUrl: undefined, // swap for real avatar URL once available
+    message: (
+      <>
+        <span className="font-semibold text-[#1A1A1A] dark:text-gray-100">
+          Ekeleme Oscar
+        </span>{" "}
+        released ₦2,340,000 to{" "}
+        <span className="font-semibold text-[#1A1A1A] dark:text-gray-100">
+          Segun Adesina
+        </span>
+      </>
+    ),
+    timestamp: "10 Jul, 2026 at 14:32:08",
+  },
+  {
+    id: "2",
+    actor: "Funke Adeyemi",
+    message: (
+      <>
+        <span className="font-semibold text-[#1A1A1A] dark:text-gray-100">
+          Funke Adeyemi
+        </span>{" "}
+        rejected listing - reason:{" "}
+        <span className="font-semibold text-[#1A1A1A] dark:text-gray-100">
+          Misleading description
+        </span>
+      </>
+    ),
+    timestamp: "10 Jul, 2026 at 14:32:08",
+  },
+  {
+    id: "3",
+    actor: "System",
+    isSystem: true,
+    message: (
+      <>
+        <span className="font-semibold text-[#1A1A1A] dark:text-gray-100">
+          System
+        </span>{" "}
+        auto-released ₦2,340,000 after inspection window expiry.
+      </>
+    ),
+    timestamp: "10 Jul, 2026 at 14:32:08",
+  },
+];
+
+const totalTransactions = transactionStatus.reduce(
+  (sum, s) => sum + s.value,
+  0,
+);
+
+function formatCompactNumber(value: number) {
+  if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
+  return `${value}`;
+}
+
 function formatNaira(value: number) {
   if (value >= 1_000_000) return `₦${(value / 1_000_000).toFixed(0)}M`;
   return `₦${value}`;
@@ -140,9 +302,12 @@ export default function DashboardPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-    useEffect(() => {
+  useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (quickActionsRef.current && !quickActionsRef.current.contains(e.target as Node))
+      if (
+        quickActionsRef.current &&
+        !quickActionsRef.current.contains(e.target as Node)
+      )
         setQuickActionsOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -379,6 +544,194 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* listings per month */}
+      <div className="chart-card mt-6">
+        <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-4">
+          Listings Per Month
+        </p>
+
+        <div className="chart-container">
+          <p className="chart-total-label">Total Listings</p>
+          <p className="chart-total-value pb-4 border-b border-gray-200 dark:border-gray-800">
+            ₦29,517
+            <span className="text-green-500 text-xs font-normal">
+              +12 this month
+            </span>
+          </p>
+
+          <ResponsiveContainer width="100%" height={260} className="mt-4">
+            <BarChart
+              data={listingsData}
+              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke="#E5E7EB"
+              />
+              <XAxis
+                dataKey="month"
+                tick={{ fontSize: 12, fill: "#9CA3AF" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tickFormatter={formatCompactNumber}
+                tick={{ fontSize: 12, fill: "#9CA3AF" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                formatter={(value) => formatCompactNumber(Number(value))}
+              />
+              <Bar dataKey="listings" fill="#4F6EF7" maxBarSize={100} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* category distribution and transaction status */}
+      <div className="two-col-grid">
+        {/* category distribution */}
+        <div className="chart-card">
+          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-4">
+            Category Distribution
+          </p>
+
+          <div className="chart-container">
+            <p className="chart-total-label">Total Contribution Value</p>
+            <p className="chart-total-value pb-2 border-b border-gray-200 dark:border-gray-800">
+              ₦87,500,000
+              <span className="text-green-500 text-xs font-normal">
+                +12 this month
+              </span>
+            </p>
+
+            <div className="mt-4 divide-y divide-gray-100 dark:divide-gray-800">
+              {categoryDistribution.map((cat) => (
+                <div key={cat.label} className="py-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex gap-1 items-center">
+                      <span className="category-row-label">{cat.label}</span>
+                      <LuDot size={16} color="#D0D5DD" />
+                      <span className="category-row-count">
+                        {cat.transactions}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="category-row-value">{cat.value}</span>
+                      <LuDot size={16} color="#D0D5DD" />
+
+                      <span className="category-row-percent">
+                        {cat.percent}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="category-progress-track">
+                    <div
+                      className="category-progress-fill"
+                      style={{ width: `${cat.progress}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        {/* transaction status */}
+        <div className="chart-card">
+          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-4">
+            Transaction Status
+          </p>
+
+          <div className="chart-container flex flex-col items-center">
+            <div className="relative w-full">
+              <ResponsiveContainer width="100%" height={400}>
+                <PieChart>
+                  <Pie
+                    data={transactionStatus}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={95}
+                    outerRadius={140}
+                    paddingAngle={1}
+                    cornerRadius={3}
+                    startAngle={90}
+                    endAngle={-270}
+                  >
+                    {transactionStatus.map((slice) => (
+                      <Cell key={slice.name} fill={slice.color} stroke="none" />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <p className="text-2xl font-bold text-[#1A1A1A] dark:text-gray-100">
+                  {totalTransactions.toLocaleString()}
+                </p>
+                <p className="text-xs text-[#888888] dark:text-gray-400">
+                  transactions
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-4 mt-2">
+              {transactionStatus.map((slice) => (
+                <div
+                  key={slice.name}
+                  className="flex items-center gap-1.5 text-xs text-[#000000B2] dark:text-gray-400"
+                >
+                  <span
+                    className="donut-legend-dot"
+                    style={{ backgroundColor: slice.color }}
+                  />
+                  {slice.name}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* recent activity */}
+      <div className="chart-card mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase">
+            Recent Activity
+          </p>
+          <button className="view-all-link">View All</button>
+        </div>
+
+        <div className="chart-container">
+          {recentActivity.map((item) => (
+            <div key={item.id} className="activity-row">
+              {item.isSystem ? (
+                <span className="w-8 h-8 rounded-full bg-[#4F6EF7] flex items-center justify-center shrink-0">
+                  <img
+                    src={logo}
+                    alt="System"
+                    className="w-4 h-4 object-contain"
+                  />
+                </span>
+              ) : (
+                <img
+                  src={item.avatarUrl || avatarPlaceholder}
+                  alt={item.actor}
+                  className="w-8 h-8 rounded-full object-cover shrink-0"
+                />
+              )}
+
+              <div>
+                <p className="activity-text">{item.message}</p>
+                <p className="activity-timestamp">{item.timestamp}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </React.Fragment>
