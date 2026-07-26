@@ -21,7 +21,7 @@ export default function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg border transition-colors ${bgColor} ${textColor} ${borderColor} ${className}`}
+      className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg border transition-colors cursor-pointer ${bgColor} ${textColor} ${borderColor} ${className}`}
       {...rest}
     >
       {leftIcon}

@@ -2,13 +2,14 @@ import { useState, useRef, useEffect } from "react";
 import { FiChevronDown } from "react-icons/fi";
 
 interface CustomSelectProps {
-  label: string;
+  label?: string;
+  required?: boolean;
   value: string;
   options: string[];
   onChange: (value: string) => void;
 }
 
-export default function CustomSelect({ label, value, options, onChange }: CustomSelectProps) {
+export default function CustomSelect({ label, required, value, options, onChange }: CustomSelectProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -22,15 +23,17 @@ export default function CustomSelect({ label, value, options, onChange }: Custom
 
   return (
     <div ref={ref}>
-      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-        {label}
-      </p>
+      {label && (
+        <label className="block text-xs text-gray-600 dark:text-gray-300 mb-1.5">
+          {label} {required && <span className="text-[#2563EB] text-xs font-medium tracking-wide">*</span>}
+        </label>
+      )}
 
       <div className="relative">
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
-          className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+          className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700"
         >
           {value}
           <FiChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -48,7 +51,7 @@ export default function CustomSelect({ label, value, options, onChange }: Custom
                 }}
                 className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 ${
                   value === option
-                    ? "bg-[#DBEAFE] dark:bg-indigo-950 text-[#1E40AF] dark:text-indigo-400 font-medium"
+                    ? "bg-indigo-50 dark:bg-indigo-950 text-[#2563EB] dark:text-indigo-400 font-medium"
                     : "text-gray-700 dark:text-gray-200"
                 }`}
               >

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import PageHeader from "@/components/generic/PageHeader";
 import TabFilter from "@/components/generic/TabFilter";
 import TableToolbar from "@/components/generic/TableToolbar";
@@ -7,12 +7,15 @@ import FiltersButton from "@/components/generic/FiltersButton";
 import DataTable from "@/components/generic/DataTable";
 import Pagination from "@/components/generic/Pagination";
 import { FiChevronDown } from "react-icons/fi";
-import { userColumns } from "./columns";
 import type { UserRow } from "../types";
 import Button from "@/components/generic/Button";
 import { PiExportFill } from "react-icons/pi";
 import { FaCirclePlus } from "react-icons/fa6";
 import CustomSelect from "@/components/generic/CustomSelect";
+import InviteUserModal from "@/features/users/components/InviteUserModal";
+import { createUserColumns } from "./columns";
+import SuspendUserModal from "./SuspendUserModal";
+import { useNavigate } from "react-router-dom";
 
 const tabs = ["All", "Active", "Suspended", "Banned", "Pending"];
 const yearOptions = ["2024", "2025", "2026"];
@@ -72,6 +75,32 @@ export default function UsersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [role, setRole] = useState("");
 
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [suspendingUser, setSuspendingUser] = useState<UserRow | null>(null);
+
+  const navigate = useNavigate();
+
+  const columns = useMemo(
+    () =>
+      createUserColumns({
+        onSuspend: (user) => setSuspendingUser(user),
+        onReactivate: (user) => console.log("reactivate", user.id), // TODO: wire real reactivate flow
+        onViewDetails: (user) => navigate(`/users/${user.id}`),
+      }),
+    [],
+  );
+
+  const handleConfirmSuspend = (data: {
+    reason: string;
+    duration: string;
+    outcome: string;
+    notes: string;
+  }) => {
+    // TODO: wire to usersApi.suspendUser once endpoint is confirmed
+    console.log("suspending", suspendingUser?.id, data);
+    setSuspendingUser(null);
+  };
+
   const filteredUsers = users.filter((user) => {
     const matchesTab = activeTab === "All" || user.status === activeTab;
     const matchesSearch =
@@ -102,9 +131,7 @@ export default function UsersPage() {
               bgColor="bg-[#2563EB] hover:bg-[#3F5EE0]"
               textColor="text-white"
               borderColor="border-transparent"
-              onClick={() => {
-                /* invite user logic */
-              }}
+              onClick={() => setInviteModalOpen(true)}
             >
               Invite User
             </Button>
@@ -140,7 +167,7 @@ export default function UsersPage() {
           }
         />
 
-        <DataTable data={filteredUsers} columns={userColumns} />
+        <DataTable data={filteredUsers} columns={columns} />
 
         <Pagination
           currentPage={currentPage}
@@ -148,6 +175,19 @@ export default function UsersPage() {
           onPageChange={setCurrentPage}
         />
       </div>
+
+      {/* invite user modal */}
+      {inviteModalOpen && (
+        <InviteUserModal onClose={() => setInviteModalOpen(false)} />
+      )}
+
+      {suspendingUser && (
+        <SuspendUserModal
+          userName={suspendingUser.name}
+          onClose={() => setSuspendingUser(null)}
+          onConfirm={handleConfirmSuspend}
+        />
+      )}
     </div>
   );
 }

@@ -49,7 +49,7 @@ export default function RowActionsMenu({ actions }: RowActionsMenuProps) {
                 action.onClick();
                 setOpen(false);
               }}
-              className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 ${variantClass[action.variant ?? "default"]}`}
+              className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer ${variantClass[action.variant ?? "default"]}`}
             >
               {action.icon}
               {action.label}

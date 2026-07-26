@@ -7,6 +7,7 @@ import ResendPasswordResetLinkPage from "./features/auth/components/ResendPasswo
 import ResetPasswordPage from "./features/auth/components/ResetPasswordPage";
 import PasswordResetSuccessPage from "./features/auth/components/PasswordResetSuccessPage";
 import UsersPage from "./features/users/components/UsersPage";
+import UserDetailPage from "./features/users/components/UserDetailPage";
 
 function App() {
   return (
@@ -22,6 +23,8 @@ function App() {
       <Route element={<DashboardLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/users" element={<UsersPage />} />
+        <Route path="/users/:userId" element={<UserDetailPage />} />
+
       </Route>
     </Routes>
   );
