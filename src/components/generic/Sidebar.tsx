@@ -68,9 +68,9 @@ export default function Sidebar({ collapsed }: SidebarProps) {
           {!collapsed && (
             <>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">Simon James</p>
+                <p className="text-sm font-medium truncate">Ekeleme Oscar</p>
                 <p className="text-xs text-blue-300 truncate">
-                  GPD International
+                 Super Admin
                 </p>
               </div>
               <button

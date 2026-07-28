@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App.tsx";
 import "./index.css";
 import { ThemeProvider } from "./lib/theme/ThemeProvider";
+import "leaflet/dist/leaflet.css";
 
 const queryClient = new QueryClient();
 

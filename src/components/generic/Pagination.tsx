@@ -22,7 +22,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 text-[#475467] dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+        className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 text-brand-gray-dark dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
       >
         Previous
       </button>
@@ -30,7 +30,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
       <div className="flex items-center gap-1">
         {getPageNumbers().map((page, i) =>
           page === "..." ? (
-            <span key={`ellipsis-${i}`} className="px-2 text-sm text-[#475467]">
+            <span key={`ellipsis-${i}`} className="px-2 text-sm text-brand-gray-dark">
               ...
             </span>
           ) : (
@@ -40,7 +40,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
               className={`w-8 h-8 flex items-center justify-center text-sm rounded-full cursor-pointer ${
                 currentPage === page
                   ? "bg-[#DBEAFE] dark:bg-indigo-950 text-[#1E40AF] dark:text-indigo-400 font-medium"
-                  : "text-[#475467] dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  : "text-brand-gray-dark dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
               }`}
             >
               {page}
@@ -52,7 +52,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="px-3 py-1.5 cursor-pointer text-sm rounded-lg border border-gray-200 dark:border-gray-700 text-[#475467] dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
+        className="px-3 py-1.5 cursor-pointer text-sm rounded-lg border border-gray-200 dark:border-gray-700 text-brand-gray-dark dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
       >
         Next
       </button>

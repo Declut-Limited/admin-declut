@@ -75,10 +75,10 @@ export function createUserColumns(
             className="w-8 h-8 rounded-full object-cover"
           />
           <div>
-            <p className="font-medium text-gray-900 dark:text-gray-100">
+            <p className="font-medium text-brand-gray-dark dark:text-gray-100">
               {row.original.name}
             </p>
-            <p className="text-xs text-gray-400">{row.original.email}</p>
+            <p className="text-xs text-brand-gray-light">{row.original.email}</p>
           </div>
         </div>
       ),

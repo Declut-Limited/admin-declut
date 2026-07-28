@@ -8,6 +8,9 @@
 
 @theme {
   --font-standerd: "Standerd", system-ui, sans-serif;
+  --color-brand-blue: #2563EB;
+  --color-brand-gray-dark: #475467;
+  --color-brand-gray-light: #667085;
 }
 
 @layer utilities {
@@ -46,6 +49,14 @@
   .animate-modal-content {
     animation: modal-content-in 0.2s ease-out;
   }
+
+  .underline-wavy {
+    text-decoration-line: underline;
+    text-decoration-style: wavy;
+    text-decoration-color: currentColor;
+    text-underline-offset: 3px;
+  }
+
 }
 
 @layer base {

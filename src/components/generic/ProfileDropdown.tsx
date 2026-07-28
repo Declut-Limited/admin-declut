@@ -53,7 +53,7 @@ export default function ProfileDropdown({
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-64 bg-[#FAFAFA] dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 p-4 z-50">
+        <div className="absolute right-0 mt-2 w-64 bg-[#FAFAFA] dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 p-4 z-999">
           <div className="flex items-center gap-3 pb-3">
             <img
               src={avatarUrl || avatarPlaceholder}

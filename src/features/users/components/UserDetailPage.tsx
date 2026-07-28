@@ -120,7 +120,7 @@ export default function UserDetailPage() {
     <div>
       <button
         onClick={() => navigate("/users")}
-        className="flex items-center gap-1.5 text-sm text-[#2563EB] hover:underline mb-4 cursor-pointer"
+        className="flex items-center gap-1.5 text-sm text-brand-blue hover:underline mb-4 cursor-pointer"
       >
         <FaArrowLeftLong className="w-4 h-4" /> Back to Users
       </button>
@@ -145,7 +145,7 @@ export default function UserDetailPage() {
                 {user.accountType}
               </span>
             </div>
-            <p className="text-xs text-[#667085] dark:text-gray-400 mt-0.5">
+            <p className="text-xs text-brand-gray-light dark:text-gray-400 mt-0.5">
               {user.id} · {user.email} · {user.company}
             </p>
           </div>
@@ -178,7 +178,7 @@ export default function UserDetailPage() {
 
           <p className="detail-stat-label">
             {" "}
-            <FaTags className="w-4 h-4 text-[#475467]" />
+            <FaTags className="w-4 h-4 text-brand-gray-dark" />
             Total Listings
           </p>
         </div>
@@ -192,7 +192,7 @@ export default function UserDetailPage() {
 
           <p className="detail-stat-label">
             {" "}
-            <IoCard className="w-4 h-4 text-[#475467]" /> Sales as Seller
+            <IoCard className="w-4 h-4 text-brand-gray-dark" /> Sales as Seller
           </p>
         </div>
         <div className="detail-stat-card">
@@ -205,7 +205,7 @@ export default function UserDetailPage() {
 
           <p className="detail-stat-label">
             {" "}
-            <FaArrowRightArrowLeft className="w-4 h-4 text-[#475467]" />{" "}
+            <FaArrowRightArrowLeft className="w-4 h-4 text-brand-gray-dark" />{" "}
             Purchases as Buyer
           </p>
         </div>
@@ -327,7 +327,7 @@ export default function UserDetailPage() {
         {/* right column */}
         <div className="flex flex-col gap-6">
           <div className="detail-section-card">
-            <p className="text-xs font-semibold text-[#667085] dark:text-gray-400 uppercase tracking-wide mb-2">
+            <p className="text-xs font-semibold text-brand-gray-light dark:text-gray-400 uppercase tracking-wide mb-2">
               Profile
             </p>
             <div className="profile-info-row">
@@ -362,7 +362,7 @@ export default function UserDetailPage() {
           </div>
 
           <div className="detail-section-card">
-            <p className="text-xs font-semibold text-[#667085] dark:text-gray-400 uppercase tracking-wide mb-2">
+            <p className="text-xs font-semibold text-brand-gray-light dark:text-gray-400 uppercase tracking-wide mb-2">
               Verification
             </p>
             <div className="profile-info-row">
@@ -389,12 +389,12 @@ export default function UserDetailPage() {
 
           {isAdmin && user.permissions && (
             <div className="detail-section-card">
-              <p className="text-xs font-semibold text-[#667085] dark:text-gray-400 uppercase tracking-wide mb-3">
+              <p className="text-xs font-semibold text-brand-gray-light dark:text-gray-400 uppercase tracking-wide mb-3">
                 Module Permissions
               </p>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs text-[#667085] dark:text-gray-400">
+                  <tr className="text-left text-xs text-brand-gray-light dark:text-gray-400">
                     <th className="font-medium pb-2">Module</th>
                     <th className="font-medium pb-2 text-center">View</th>
                     <th className="font-medium pb-2 text-center">Write</th>
@@ -407,7 +407,7 @@ export default function UserDetailPage() {
                       key={perm.module}
                       className="border-t border-gray-50 dark:border-gray-800"
                     >
-                      <td className="py-2 text-[#667085] dark:text-gray-200">
+                      <td className="py-2 text-brand-gray-light dark:text-gray-200">
                         {perm.module}
                       </td>
                       <td className="py-2 text-center">

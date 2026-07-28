@@ -125,9 +125,9 @@ const stats: StatCard[] = [
     trend: "positive",
   },
   {
-    label: "Rejected Listings",
+    label: "Completed Transactions",
     value: "₦4,240,000",
-    meta: "3.4% rejection rate",
+    meta: "98.4% rejection rate",
     trend: "neutral",
   },
 ];
