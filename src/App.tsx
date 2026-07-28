@@ -11,6 +11,7 @@ import UserDetailPage from "./features/users/components/UserDetailPage";
 import ListingsPage from "./features/listings/components/ListingsPage";
 import ListingDetailPage from "./features/listings/components/ListingDetailPage";
 import CategoriesPage from "./features/categories/components/CategoriesPage";
+import ReviewsPage from "./features/reviews/components/ReviewsPage";
 
 function App() {
   return (
@@ -34,6 +35,8 @@ function App() {
         <Route path="/listings/:listingId" element={<ListingDetailPage />} />
 
         <Route path="/categories" element={<CategoriesPage />} />
+
+        <Route path="/reviews" element={<ReviewsPage/>} />
 
 
       </Route>

@@ -13,11 +13,12 @@ import { PiExportFill } from "react-icons/pi";
 import { FiChevronDown } from "react-icons/fi";
 import { createListingColumns } from "./columns";
 import type { ListingRow } from "../types";
+import { getYearOptions } from "@/lib/utils/getYearOptions";
 
 // const tabs = ["All", "Active", "Pending Review", "Flagged", "Sold"];
 const tabs = ["All", "Active", "Sold"];
-//TODO:Make this dynamic later
-const yearOptions = ["2024", "2025", "2026"];
+const yearOptions = getYearOptions();
+
 
 const listings: ListingRow[] = [
   { id: "1", name: "6-Seater Dining Set", code: "LST-001", category: "Home & Living", sellerName: "Tunde Balogun", sellerInitials: "OD", price: "₦954,000", location: "Abeokuta", date: "Apr 9, 2026", status: "Active" },

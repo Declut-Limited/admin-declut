@@ -26,7 +26,7 @@ export default function DataTable<TData>({ data, columns }: DataTableProps<TData
             {headerGroup.headers.map((header) => (
               <th
                 key={header.id}
-                className="text-left px-4 py-3 text-xs font-semibold text-[#475467] dark:text-gray-400 uppercase tracking-wide"
+                className="text-left px-4 py-3 text-xs font-semibold text-brand-gray-dark dark:text-gray-400 uppercase tracking-wide"
               >
                 {header.isPlaceholder
                   ? null
@@ -40,7 +40,7 @@ export default function DataTable<TData>({ data, columns }: DataTableProps<TData
         {table.getRowModel().rows.map((row) => (
           <tr
             key={row.id}
-            className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 text-[#475467] dark:text-gray-400  dark:hover:bg-gray-800/50"
+            className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 text-brand-gray-dark dark:text-gray-400  dark:hover:bg-gray-800/50"
           >
             {row.getVisibleCells().map((cell) => (
               <td key={cell.id} className="px-4 py-3">

@@ -14,10 +14,12 @@ import { FaCirclePlus } from "react-icons/fa6";
 import { createCategoryColumns } from "./columns";
 import AddCategoryModal from "./AddCategoryModal";
 import type { CategoryRow } from "../types";
+import { getYearOptions } from "@/lib/utils/getYearOptions";
 
 
 const tabs = ["All", "Active", "Hidden"];
-const yearOptions = ["2024", "2025", "2026"];
+const yearOptions = getYearOptions();
+
 
 const categories: CategoryRow[] = [
   { id: "1", name: "Electronics", listings: "2,364", status: "Hidden", created: "Aug 24, 2025" },

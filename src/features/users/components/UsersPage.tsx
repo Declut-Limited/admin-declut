@@ -16,9 +16,10 @@ import InviteUserModal from "@/features/users/components/InviteUserModal";
 import { createUserColumns } from "./columns";
 import SuspendUserModal from "./SuspendUserModal";
 import { useNavigate } from "react-router-dom";
+import { getYearOptions } from "@/lib/utils/getYearOptions";
 
 const tabs = ["All", "Active", "Suspended", "Banned", "Pending"];
-const yearOptions = ["2024", "2025", "2026"];
+const yearOptions = getYearOptions();
 
 const users: UserRow[] = [
   {
