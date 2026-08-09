@@ -1,17 +1,19 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiArrowLeft, FiTag } from "react-icons/fi";
 import { BsCheckCircleFill } from "react-icons/bs";
 import Button from "@/components/generic/Button";
 import avatarPlaceholder from "@/assets/avatar.svg";
 import type { PromotionDetail } from "../types";
+import NotFoundState from "@/components/generic/NotFoundState";
 
 const statusPillClass: Record<PromotionDetail["status"], string> = {
-  Scheduled: "text-[#B54708] bg-[#FFFAEB] dark:text-amber-400 dark:bg-amber-950",
+  Scheduled:
+    "text-[#B54708] bg-[#FFFAEB] dark:text-amber-400 dark:bg-amber-950",
   Active: "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
   Ended: "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800",
 };
 
-// placeholder 
+// placeholder
 const mockPromotions: Record<string, PromotionDetail> = {
   "1": {
     code: "PRM-001",
@@ -50,7 +52,12 @@ export default function PromotionDetailPage() {
   const promo = promotionId ? mockPromotions[promotionId] : undefined;
 
   if (!promo) {
-    return <div className="text-sm text-brand-gray-light">Promotion not found.</div>;
+    return (
+      <NotFoundState
+        icon={<FiTag className="w-5 h-5" />}
+        message="Promotion not found."
+      />
+    );
   }
 
   return (
@@ -66,13 +73,18 @@ export default function PromotionDetailPage() {
       <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 mb-6">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-[#1D2939] tracking-wide dark:text-gray-100">{promo.name}</h1>
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusPillClass[promo.status]}`}>
+            <h1 className="text-xl font-bold text-[#1D2939] tracking-wide dark:text-gray-100">
+              {promo.name}
+            </h1>
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusPillClass[promo.status]}`}
+            >
               {promo.status}
             </span>
           </div>
           <p className="text-xs text-brand-gray-light mt-0.5">
-            {promo.code} · {promo.type} · {promo.appliesTo} · Starts {promo.startDate}
+            {promo.code} · {promo.type} · {promo.appliesTo} · Starts{" "}
+            {promo.startDate}
           </p>
         </div>
 
@@ -90,22 +102,32 @@ export default function PromotionDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 flex flex-col gap-6">
           <div className="detail-section-card border-none">
-            <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-2">Campaign Setup</p>
+            <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-2">
+              Campaign Setup
+            </p>
             <div className="profile-info-row">
               <span className="profile-info-label">Campaign Type</span>
-              <span className="profile-info-value">{promo.setup.campaignType}</span>
+              <span className="profile-info-value">
+                {promo.setup.campaignType}
+              </span>
             </div>
             <div className="profile-info-row">
               <span className="profile-info-label">Applies To</span>
-              <span className="profile-info-value">{promo.setup.appliesTo}</span>
+              <span className="profile-info-value">
+                {promo.setup.appliesTo}
+              </span>
             </div>
             <div className="profile-info-row">
               <span className="profile-info-label">Eligible Audience</span>
-              <span className="profile-info-value">{promo.setup.eligibleAudience}</span>
+              <span className="profile-info-value">
+                {promo.setup.eligibleAudience}
+              </span>
             </div>
             <div className="profile-info-row">
               <span className="profile-info-label">Start Date</span>
-              <span className="profile-info-value">{promo.setup.startDate}</span>
+              <span className="profile-info-value">
+                {promo.setup.startDate}
+              </span>
             </div>
             <div className="profile-info-row">
               <span className="profile-info-label">End Date</span>
@@ -114,16 +136,22 @@ export default function PromotionDetailPage() {
           </div>
 
           <div className="detail-section-card border-none">
-            <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-2">Performance</p>
+            <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-2">
+              Performance
+            </p>
             <div className="profile-info-row">
               <span className="profile-info-label">Usage</span>
-              <span className="profile-info-value">{promo.performance.usage}</span>
+              <span className="profile-info-value">
+                {promo.performance.usage}
+              </span>
             </div>
           </div>
         </div>
 
         <div className="detail-section-card border-none">
-          <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-3">Actor</p>
+          <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-3">
+            Actor
+          </p>
 
           <div className="flex items-center gap-2.5 mb-3">
             <img
@@ -132,7 +160,9 @@ export default function PromotionDetailPage() {
               className="w-9 h-9 rounded-full object-cover"
             />
             <div>
-              <p className="text-sm font-semibold text-[#1D2939] dark:text-gray-100">{promo.actor.name}</p>
+              <p className="text-sm font-semibold text-[#1D2939] dark:text-gray-100">
+                {promo.actor.name}
+              </p>
               <p className="text-xs text-brand-gray-light">
                 {promo.actor.id} · {promo.actor.email} · {promo.actor.company}
               </p>
@@ -155,17 +185,28 @@ export default function PromotionDetailPage() {
           </div>
           <div className="profile-info-row">
             <span className="profile-info-label">Total Listings</span>
-            <span className="profile-info-value">{promo.actor.totalListings}</span>
+            <span className="profile-info-value">
+              {promo.actor.totalListings}
+            </span>
           </div>
           <div className="profile-info-row">
             <span className="profile-info-label">Member Since</span>
-            <span className="profile-info-value">{promo.actor.memberSince}</span>
+            <span className="profile-info-value">
+              {promo.actor.memberSince}
+            </span>
           </div>
           <div className="profile-info-row">
             <span className="profile-info-label">Rating</span>
             <span className="flex gap-0.5">
               {Array.from({ length: 5 }).map((_, i) => (
-                <span key={i} className={i < promo.actor.rating ? "text-amber-400" : "text-gray-200"}>★</span>
+                <span
+                  key={i}
+                  className={
+                    i < promo.actor.rating ? "text-amber-400" : "text-gray-200"
+                  }
+                >
+                  ★
+                </span>
               ))}
             </span>
           </div>

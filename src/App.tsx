@@ -23,6 +23,8 @@ import AutomationRulesPage from "./features/notifications/components/AutomationR
 import NotificationDetailPage from "./features/notifications/components/NotificationDetailPage";
 import ContentDetailPage from "./features/content/components/ContentDetailPage";
 import ContentPage from "./features/content/components/ContentPage";
+import TransactionsPage from "./features/transactions/components/TransactionsPage";
+import TransactionDetailPage from "./features/transactions/components/TransactionDetailPage";
 
 function App() {
   return (
@@ -79,6 +81,12 @@ function App() {
 
         <Route path="/content" element={<ContentPage />} />
         <Route path="/content/:contentId" element={<ContentDetailPage />} />
+
+        <Route path="/transactions" element={<TransactionsPage />} />
+        <Route
+          path="/transactions/:transactionId"
+          element={<TransactionDetailPage />}
+        />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

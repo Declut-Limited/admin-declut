@@ -1,9 +1,10 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiArrowLeft, FiClock } from "react-icons/fi";
 import avatarPlaceholder from "@/assets/avatar.svg";
 import type { ActivityLogDetail } from "../types";
+import NotFoundState from "@/components/generic/NotFoundState";
 
-// placeholder 
+// placeholder
 const mockLogs: Record<string, ActivityLogDetail> = {
   "1": {
     logCode: "LOG-001",
@@ -32,7 +33,12 @@ export default function ActivityLogDetailPage() {
   const log = logId ? mockLogs[logId] : undefined;
 
   if (!log) {
-    return <div className="text-sm text-brand-gray-light">Log not found.</div>;
+    return (
+      <NotFoundState
+        icon={<FiClock className="w-5 h-5" />}
+        message="Log not found."
+      />
+    );
   }
 
   return (
@@ -46,7 +52,9 @@ export default function ActivityLogDetailPage() {
 
       {/* header */}
       <div className="bg-[#FAFAFA] dark:bg-gray-900/50 rounded-xl p-4 mb-6">
-        <h1 className="text-xl font-bold text-[#1D2939] dark:text-gray-100 tracking-wide">{log.action}</h1>
+        <h1 className="text-xl font-bold text-[#1D2939] dark:text-gray-100 tracking-wide">
+          {log.action}
+        </h1>
         <p className="text-xs text-brand-gray-light mt-1">
           {log.logCode} · {log.date} · IP {log.ipAddress}
         </p>
@@ -55,7 +63,9 @@ export default function ActivityLogDetailPage() {
       {/* main content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 detail-section-card border-none">
-          <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-3">Event Detail</p>
+          <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-3">
+            Event Detail
+          </p>
 
           <div className="profile-info-row">
             <span className="profile-info-label">Action</span>
@@ -78,7 +88,9 @@ export default function ActivityLogDetailPage() {
         </div>
 
         <div className="detail-section-card border-none">
-          <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-3">Actor</p>
+          <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-3">
+            Actor
+          </p>
 
           <div className="flex items-center gap-2.5 mb-3">
             <img
@@ -87,7 +99,9 @@ export default function ActivityLogDetailPage() {
               className="w-9 h-9 rounded-full object-cover"
             />
             <div>
-              <p className="text-sm font-semibold text-[#1D2939] tracking-wide dark:text-gray-100">{log.actor.name}</p>
+              <p className="text-sm font-semibold text-[#1D2939] tracking-wide dark:text-gray-100">
+                {log.actor.name}
+              </p>
               <p className="text-xs text-brand-gray-light">
                 {log.actor.id} · {log.actor.email} · {log.actor.company}
               </p>
@@ -110,7 +124,9 @@ export default function ActivityLogDetailPage() {
           </div>
           <div className="profile-info-row">
             <span className="profile-info-label">Total Listings</span>
-            <span className="profile-info-value">{log.actor.totalListings}</span>
+            <span className="profile-info-value">
+              {log.actor.totalListings}
+            </span>
           </div>
           <div className="profile-info-row">
             <span className="profile-info-label">Member Since</span>
@@ -120,7 +136,14 @@ export default function ActivityLogDetailPage() {
             <span className="profile-info-label">Rating</span>
             <span className="flex gap-0.5">
               {Array.from({ length: 5 }).map((_, i) => (
-                <span key={i} className={i < log.actor.rating ? "text-amber-400" : "text-gray-200"}>★</span>
+                <span
+                  key={i}
+                  className={
+                    i < log.actor.rating ? "text-amber-400" : "text-gray-200"
+                  }
+                >
+                  ★
+                </span>
               ))}
             </span>
           </div>

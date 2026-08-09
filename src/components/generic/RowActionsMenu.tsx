@@ -10,6 +10,7 @@ export interface RowAction {
 
 interface RowActionsMenuProps {
   actions: RowAction[];
+  triggerClassName?: string;
 }
 
 const variantClass: Record<NonNullable<RowAction["variant"]>, string> = {
@@ -18,7 +19,7 @@ const variantClass: Record<NonNullable<RowAction["variant"]>, string> = {
   success: "text-[#12B76A]",
 };
 
-export default function RowActionsMenu({ actions }: RowActionsMenuProps) {
+export default function RowActionsMenu({ actions, triggerClassName }: RowActionsMenuProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -34,10 +35,10 @@ export default function RowActionsMenu({ actions }: RowActionsMenuProps) {
     <div className="relative inline-block" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="p-1.5 rounded-full border-2 border-[#475467] hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+        className={triggerClassName ?? "p-1.5 rounded-full border-2 border-brand-gray-dark hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"}
         aria-label="Row actions"
       >
-        <FiMoreHorizontal className="w-4 h-4 text-[#475467]" />
+        <FiMoreHorizontal className="w-4 h-4 text-brand-grborder-brand-gray-dark" />
       </button>
 
       {open && (

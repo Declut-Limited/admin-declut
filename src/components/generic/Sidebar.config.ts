@@ -8,7 +8,7 @@ import starIcon from '@/assets/icons/star.svg'
 import moneySendIcon from '@/assets/icons/money-send.svg'
 import lockIcon from '@/assets/icons/lock.svg'
 // import infoCircleIcon from '@/assets/icons/info-circle.svg'
-import moneysIcon from '@/assets/icons/moneys.svg'
+// import moneysIcon from '@/assets/icons/moneys.svg'
 import documentTextIcon from '@/assets/icons/document-text.svg'
 import layerIcon from '@/assets/icons/layer.svg'
 import ticketDiscountIcon from '@/assets/icons/ticket-discount.svg'
@@ -49,7 +49,7 @@ export const navGroups: NavGroup[] = [
       { label: 'Transactions', path: '/transactions', icon: moneySendIcon },
       { label: 'Escrow', path: '/escrow', icon: lockIcon },
       // { label: 'Disputes', path: '/money-disputes', icon: infoCircleIcon },
-      { label: 'Finance', path: '/finance', icon: moneysIcon },
+      // { label: 'Finance', path: '/finance', icon: moneysIcon },
     ],
   },
   {

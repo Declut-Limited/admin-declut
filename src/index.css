@@ -90,6 +90,16 @@
   font-display: swap;
 }
 
+[data-sonner-toast] {
+  border-left: 4px solid transparent;
+}
+[data-sonner-toast][data-type="success"] {
+  border-left-color: #22c55e;
+}
+[data-sonner-toast][data-type="error"] {
+  border-left-color: #ef4444;
+}
+
 body {
   font-family:
     "Standerd",
@@ -213,7 +223,7 @@ body {
   }
 
   .category-row-count {
-    @apply text-xs text-[#667085] dark:text-gray-400;
+    @apply text-xs text-brand-gray-light dark:text-gray-400;
   }
 
   .category-row-value {
@@ -221,7 +231,7 @@ body {
   }
 
   .category-row-percent {
-    @apply text-xs text-[#667085] dark:text-gray-400;
+    @apply text-xs text-brand-gray-light dark:text-gray-400;
   }
 
   .category-progress-track {
@@ -265,7 +275,7 @@ body {
   }
 
   .detail-stat-label {
-    @apply flex items-center gap-1.5 text-xs text-[#475467] dark:text-gray-400 mt-2;
+    @apply flex items-center gap-1.5 text-xs text-brand-gray-dark dark:text-gray-400 mt-2;
   }
 
   .detail-section-card {
@@ -273,7 +283,7 @@ body {
   }
 
   .detail-empty-state {
-    @apply flex items-center justify-center py-10 text-sm text-[#667085] dark:text-gray-500;
+    @apply flex items-center justify-center py-10 text-sm text-brand-gray-light dark:text-gray-500;
   }
 
   .profile-info-row {
@@ -281,10 +291,10 @@ body {
   }
 
   .profile-info-label {
-    @apply text-sm text-[#667085] dark:text-gray-400;
+    @apply text-sm text-brand-gray-light dark:text-gray-400;
   }
 
   .profile-info-value {
-    @apply text-sm font-medium text-[#475467] dark:text-gray-100;
+    @apply text-sm font-medium text-brand-gray-dark dark:text-gray-100;
   }
 }

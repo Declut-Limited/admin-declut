@@ -1,17 +1,19 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiArrowLeft, FiFileText } from "react-icons/fi";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import Button from "@/components/generic/Button";
 import avatarPlaceholder from "@/assets/avatar.svg";
 import type { ContentDetail } from "../types";
 import edit from "@/assets/icons/edit-2.svg";
+import NotFoundState from "@/components/generic/NotFoundState";
 
 const statusPillClass: Record<ContentDetail["status"], string> = {
   Draft: "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800",
-  Published: "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
+  Published:
+    "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
 };
 
-// placeholder 
+// placeholder
 const mockContent: Record<string, ContentDetail> = {
   "2": {
     code: "CNT-002",
@@ -46,7 +48,12 @@ export default function ContentDetailPage() {
   const content = contentId ? mockContent[contentId] : undefined;
 
   if (!content) {
-    return <div className="text-sm text-brand-gray-light">Content not found.</div>;
+    return (
+      <NotFoundState
+        icon={<FiFileText className="w-5 h-5" />}
+        message="Content not found."
+      />
+    );
   }
 
   const isPublished = content.status === "Published";
@@ -64,13 +71,18 @@ export default function ContentDetailPage() {
       <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 mb-6">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold text-[#1D2939] dark:text-gray-100">{content.title}</h1>
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusPillClass[content.status]}`}>
+            <h1 className="text-lg font-bold text-[#1D2939] dark:text-gray-100">
+              {content.title}
+            </h1>
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusPillClass[content.status]}`}
+            >
               {content.status}
             </span>
           </div>
           <p className="text-xs text-brand-gray-light mt-0.5">
-            {content.code} · {content.type} · {content.placement} · Updated {content.updated}
+            {content.code} · {content.type} · {content.placement} · Updated{" "}
+            {content.updated}
           </p>
         </div>
 
@@ -93,25 +105,37 @@ export default function ContentDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 flex flex-col gap-6">
           <div className="detail-section-card border-none">
-            <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-2">Rendered Preview</p>
-            <p className="text-sm text-brand-gray-dark dark:text-gray-300">{content.renderedPreview}</p>
+            <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-2">
+              Rendered Preview
+            </p>
+            <p className="text-sm text-brand-gray-dark dark:text-gray-300">
+              {content.renderedPreview}
+            </p>
           </div>
 
           <div className="detail-section-card border-none">
-            <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-2">Placement</p>
+            <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-2">
+              Placement
+            </p>
             <div className="profile-info-row">
               <span className="profile-info-label">Appears On</span>
-              <span className="profile-info-value">{content.placementDetail.appearsOn}</span>
+              <span className="profile-info-value">
+                {content.placementDetail.appearsOn}
+              </span>
             </div>
             <div className="profile-info-row">
               <span className="profile-info-label">Page URL</span>
-              <span className="profile-info-value">{content.placementDetail.pageUrl}</span>
+              <span className="profile-info-value">
+                {content.placementDetail.pageUrl}
+              </span>
             </div>
           </div>
         </div>
 
         <div className="detail-section-card border-none">
-          <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-3">Author</p>
+          <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-3">
+            Author
+          </p>
 
           <div className="flex items-center gap-2.5 mb-3">
             <img
@@ -120,9 +144,12 @@ export default function ContentDetailPage() {
               className="w-9 h-9 rounded-full object-cover"
             />
             <div>
-              <p className="text-sm font-semibold text-[#1D2939] dark:text-gray-100">{content.author.name}</p>
+              <p className="text-sm font-semibold text-[#1D2939] dark:text-gray-100">
+                {content.author.name}
+              </p>
               <p className="text-xs text-brand-gray-light">
-                {content.author.id} · {content.author.email} · {content.author.company}
+                {content.author.id} · {content.author.email} ·{" "}
+                {content.author.company}
               </p>
             </div>
           </div>
@@ -143,17 +170,30 @@ export default function ContentDetailPage() {
           </div>
           <div className="profile-info-row">
             <span className="profile-info-label">Total Listings</span>
-            <span className="profile-info-value">{content.author.totalListings}</span>
+            <span className="profile-info-value">
+              {content.author.totalListings}
+            </span>
           </div>
           <div className="profile-info-row">
             <span className="profile-info-label">Member Since</span>
-            <span className="profile-info-value">{content.author.memberSince}</span>
+            <span className="profile-info-value">
+              {content.author.memberSince}
+            </span>
           </div>
           <div className="profile-info-row">
             <span className="profile-info-label">Rating</span>
             <span className="flex gap-0.5">
               {Array.from({ length: 5 }).map((_, i) => (
-                <span key={i} className={i < content.author.rating ? "text-amber-400" : "text-gray-200"}>★</span>
+                <span
+                  key={i}
+                  className={
+                    i < content.author.rating
+                      ? "text-amber-400"
+                      : "text-gray-200"
+                  }
+                >
+                  ★
+                </span>
               ))}
             </span>
           </div>
