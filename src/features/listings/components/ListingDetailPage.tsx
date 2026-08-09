@@ -10,6 +10,8 @@ import { IoMail } from "react-icons/io5";
 import listingHeader from "@/assets/listing-header.jpg";
 import listingMain from "@/assets/listing-main.jpg";
 import { AiOutlineExport } from "react-icons/ai";
+import NotFoundState from "@/components/generic/NotFoundState";
+import { FiPackage } from "react-icons/fi";
 
 const statusPillClass: Record<ListingDetail["status"], string> = {
   Active: "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
@@ -149,7 +151,7 @@ export default function ListingDetailPage() {
 
   if (!listing) {
     return (
-      <div className="text-sm text-brand-gray-light">Listing not found.</div>
+      <NotFoundState icon={<FiPackage className="w-5 h-5" />} message="Listing not found." />
     );
   }
 

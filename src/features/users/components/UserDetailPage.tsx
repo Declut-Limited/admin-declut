@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { FiMail, FiEye, FiStar } from "react-icons/fi";
+import { FiMail, FiEye, FiStar, FiUserX } from "react-icons/fi";
 import Button from "@/components/generic/Button";
 import EmptyState from "@/components/generic/EmptyState";
 import avatarPlaceholder from "@/assets/avatar.svg";
@@ -8,6 +8,7 @@ import { FaArrowLeftLong, FaArrowRightArrowLeft } from "react-icons/fa6";
 import { IoAlertCircle, IoCard } from "react-icons/io5";
 import { FaTags } from "react-icons/fa";
 import { TiStarFullOutline } from "react-icons/ti";
+import NotFoundState from "@/components/generic/NotFoundState";
 
 const verificationStatusClass: Record<
   UserDetail["verification"]["status"],
@@ -111,7 +112,7 @@ export default function UserDetailPage() {
   const user = userId ? mockUsers[userId] : undefined;
 
   if (!user) {
-    return <div className="text-sm text-gray-500">User not found.</div>;
+    return <NotFoundState icon={<FiUserX className="w-5 h-5" />} message="User not found." />;
   }
 
   const isAdmin = user.accountType === "Admin";

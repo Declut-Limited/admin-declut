@@ -119,7 +119,7 @@ export default function UsersPage() {
           <>
             <Button
               leftIcon={<PiExportFill className="w-4 h-4 text-[#98A2B3]" />}
-              rightIcon={<FiChevronDown className="w-4 h-4 text-[#475467]" />}
+              rightIcon={<FiChevronDown className="w-4 h-4 text-brand-gray-dark" />}
               onClick={() => {
                 /* export logic */
               }}

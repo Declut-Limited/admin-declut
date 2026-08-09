@@ -19,14 +19,14 @@ export default function TableToolbar({
   filterSlot,
 }: TableToolbarProps) {
   return (
-    <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-900/50 rounded-t-xl">
-      <p className="text-xs font-semibold text-[#667085] dark:text-gray-400 uppercase tracking-wide">
+    <div className="flex items-center justify-between px-4 py-3">
+      <p className="text-xs font-semibold text-brand-gray-light dark:text-gray-400 uppercase tracking-wide">
         {label} · {count}
       </p>
 
       <div className="flex items-center gap-2">
         <div className="relative">
-          <RiSearch2Line className="absolute left-3 top-1/2 -translate-y-1/2 text-[#667085] w-4 h-4" />
+          <RiSearch2Line className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-gray-light w-4 h-4" />
           <input
             type="text"
             placeholder={searchPlaceholder}

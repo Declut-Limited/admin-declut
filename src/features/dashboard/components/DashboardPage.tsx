@@ -554,7 +554,7 @@ export default function DashboardPage() {
         </p>
 
         <div className="chart-container">
-          <p className="chart-total-label">Total Listings</p>
+          <p className="chart-total-label">No. Of Listings</p>
           <p className="chart-total-value pb-4 border-b border-gray-200 dark:border-gray-800">
             ₦29,517
             <span className="text-green-500 text-xs font-normal">
