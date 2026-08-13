@@ -27,7 +27,7 @@ export default function ForgotPasswordPage() {
             <h2 className="text-[40px] font-bold text-[#1F1F1F] dark:text-gray-100">
               Forgot password?
             </h2>
-            <p className="text-sm text-[#667085] dark:text-gray-400 mt-1">
+            <p className="text-sm text-brand-gray-light dark:text-gray-400 mt-1">
               Enter your work email address and we’ll send you a secure password
               reset link.
             </p>
@@ -54,7 +54,7 @@ export default function ForgotPasswordPage() {
 
           <button
             type="submit"
-            className="w-full bg-[#2563EB] text-white text-sm font-medium py-3 rounded-lg hover:bg-[#3F5EE0] transition-colors"
+            className="w-full bg-brand-blue text-white text-sm font-medium py-3 rounded-lg hover:bg-[#3F5EE0] transition-colors"
           >
             Send Reset Link
           </button>

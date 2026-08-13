@@ -49,7 +49,7 @@ export default function ResendPasswordResetLinkPage() {
             <h2 className="text-[40px] font-bold text-[#1F1F1F] dark:text-gray-100">
               Check Your Email
             </h2>
-            <p className="text-sm text-[#667085] dark:text-gray-400 mt-1">
+            <p className="text-sm text-brand-gray-light dark:text-gray-400 mt-1">
               We've sent a secure password reset link to{" "}
               <span className="font-semibold text-[#1F1F1F] dark:text-gray-200">your email</span>. The
               link expires in 30 minutes.
@@ -60,7 +60,7 @@ export default function ResendPasswordResetLinkPage() {
             <button
               type="button"
               onClick={handleOpenEmailApp}
-              className="w-full bg-[#2563EB] text-white text-sm font-medium py-3 rounded-lg hover:bg-[#3F5EE0] transition-colors"
+              className="w-full bg-brand-blue text-white text-sm font-medium py-3 rounded-lg hover:bg-[#3F5EE0] transition-colors"
             >
               Open Email App
             </button>
@@ -78,7 +78,7 @@ export default function ResendPasswordResetLinkPage() {
           <div className="flex justify-center">
             <a
               href="/sign-in"
-              className="flex items-center gap-1.5 text-center text-sm text-[#2563EB] mt-2 cursor-pointer hover:underline font-medium"
+              className="flex items-center gap-1.5 text-center text-sm text-brand-blue mt-2 cursor-pointer hover:underline font-medium"
             >
               <FaArrowLeftLong className="w-4 h-4" />
               Back to Sign In

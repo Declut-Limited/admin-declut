@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { FiChevronDown } from "react-icons/fi";
-import calendar from "../../assets/icons/calendar.svg"
+import calendar from "../../assets/icons/calendar-grey.svg"
 
 interface DateFilterDropdownProps {
   value: string;

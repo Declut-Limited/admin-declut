@@ -32,7 +32,7 @@ export default function SignInPage() {
             <h2 className="text-[40px] font-bold text-[#1F1F1F] dark:text-gray-100">
               Welcome Back
             </h2>
-            <p className="text-sm text-[#667085] dark:text-gray-400 mt-1">
+            <p className="text-sm text-brand-gray-light dark:text-gray-400 mt-1">
               Sign in to the Declut administration console.
             </p>
           </div>
@@ -87,7 +87,7 @@ export default function SignInPage() {
             </label>
             <a
               href="/forgot-password"
-              className="text-sm text-[#2563EB] font-semibold hover:underline"
+              className="text-sm text-brand-blue font-semibold hover:underline"
             >
               Forgot Password?
             </a>
@@ -95,14 +95,14 @@ export default function SignInPage() {
 
           <button
             type="submit"
-            className="w-full bg-[#2563EB] text-white text-sm font-medium py-3 rounded-lg hover:bg-[#3F5EE0] transition-colors"
+            className="w-full bg-brand-blue text-white text-sm font-medium py-3 rounded-lg hover:bg-[#3F5EE0] transition-colors cursor-pointer"
           >
             Sign In
           </button>
 
           <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-4">
             Access is by invitation only. Need an account?{" "}
-            <a href="#" className="text-[#2563EB] underline">
+            <a href="#" className="text-brand-blue underline cursor-pointer">
               Contact your administrator.
             </a>
           </p>

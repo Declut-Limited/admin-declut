@@ -71,6 +71,7 @@ export function createTransactionColumns(
         label: "View Buyer Profile",
         icon: <HiOutlineUser className="w-4 h-4" />,
         onClick: () => callbacks.onViewBuyerProfile(row),
+        dividerAfter: true
       },
       {
         label: "View Seller Profile",
@@ -81,6 +82,7 @@ export function createTransactionColumns(
         label: "Contact Buyer",
         icon: <IoMailOutline className="w-4 h-4" />,
         onClick: () => callbacks.onContactBuyer(row),
+        dividerAfter: true
       },
       {
         label: "Contact Seller",

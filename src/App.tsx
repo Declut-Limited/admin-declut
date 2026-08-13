@@ -25,6 +25,8 @@ import ContentDetailPage from "./features/content/components/ContentDetailPage";
 import ContentPage from "./features/content/components/ContentPage";
 import TransactionsPage from "./features/transactions/components/TransactionsPage";
 import TransactionDetailPage from "./features/transactions/components/TransactionDetailPage";
+import EscrowPage from "./features/escrows/components/EscrowsPage";
+import EscrowDetailPage from "./features/escrows/components/EscrowDetailPage";
 
 function App() {
   return (
@@ -87,6 +89,10 @@ function App() {
           path="/transactions/:transactionId"
           element={<TransactionDetailPage />}
         />
+
+        <Route path="/escrows" element={<EscrowPage />} />
+        <Route path="/escrow/:escrowId" element={<EscrowDetailPage />} />
+        
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

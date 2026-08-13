@@ -9,158 +9,131 @@ import DataTable from "@/components/generic/DataTable";
 import Pagination from "@/components/generic/Pagination";
 import Button from "@/components/generic/Button";
 import { PiExportFill } from "react-icons/pi";
-import { FiChevronDown } from "react-icons/fi";
+import { FiChevronDown, FiDollarSign } from "react-icons/fi";
 import { getYearOptions } from "@/lib/utils/getYearOptions";
-import { createTransactionColumns } from "./columns";
-import type { TransactionRow } from "../types";
+import { createEscrowColumns } from "./columns";
+import type { EscrowRow } from "../types";
 import { showToast } from "@/lib/utils/toast";
 
-const tabs = [
-  "All",
-  "Awaiting Inspection",
-  "Completed",
-  "Refunded",
-  "Disputed",
-];
+const tabs = ["All", "Held", "Frozen", "Refunds", "Released"];
 const yearOptions = getYearOptions();
 
-const transactions: TransactionRow[] = [
+const escrows: EscrowRow[] = [
   {
     id: "1",
-    transactionCode: "TXN-84312",
+    escrowId: "ESC-84312",
+    transactionId: "TXN-84312",
     buyerName: "Yussuf Ahmed",
     buyerEmail: "debra.holt@example.com",
     sellerName: "Yussuf Ahmed",
     sellerEmail: "debra.holt@example.com",
-    amount: "₦364.9M",
     product: "Iphone 14 Pro Max 256GB",
-    escrow: "Held",
-    inspection: "Awaiting",
-    countdown: "21h 14m",
-    status: "Active",
-    created: "Apr 6, 2026",
+    amountHeld: "₦364.9M",
+    platformFee: "₦364.9M",
+    sellerReceivable: "₦364.9M",
+    status: "Held",
   },
   {
     id: "2",
-    transactionCode: "TXN-84312",
+    escrowId: "ESC-84312",
+    transactionId: "TXN-84312",
     buyerName: "Emmanuel Amuneke",
     buyerEmail: "willie.jennings@example.com",
     sellerName: "Emmanuel Amuneke",
     sellerEmail: "willie.jennings@example.com",
-    amount: "₦364.9M",
     product: "Iphone 14 Pro Max 256GB",
-    escrow: "Held",
-    inspection: "Awaiting",
-    countdown: "21h 14m",
-    status: "Active",
-    created: "Apr 6, 2026",
+    amountHeld: "₦364.9M",
+    platformFee: "₦364.9M",
+    sellerReceivable: "₦364.9M",
+    status: "Held",
   },
   {
     id: "3",
-    transactionCode: "TXN-84312",
+    escrowId: "ESC-84312",
+    transactionId: "TXN-84312",
     buyerName: "Ebubechukwu Agnes",
     buyerEmail: "bill.sanders@example.com",
     sellerName: "Ebubechukwu Agnes",
     sellerEmail: "bill.sanders@example.com",
-    amount: "₦364.9M",
     product: "Iphone 14 Pro Max 256GB",
-    escrow: "Held",
-    inspection: "Awaiting",
-    countdown: "21h 14m",
-    status: "Active",
-    created: "Mar 6, 2026",
+    amountHeld: "₦364.9M",
+    platformFee: "₦364.9M",
+    sellerReceivable: "₦364.9M",
+    status: "Held",
   },
   {
     id: "4",
-    transactionCode: "TXN-84312",
+    escrowId: "ESC-84312",
+    transactionId: "TXN-84312",
     buyerName: "Toluwani Bakare",
     buyerEmail: "michael.mitc@example.com",
     sellerName: "Toluwani Bakare",
     sellerEmail: "michael.mitc@example.com",
-    amount: "₦364.9M",
     product: "Iphone 14 Pro Max 256GB",
-    escrow: "Held",
-    inspection: "Awaiting",
-    countdown: "4h 14m",
-    status: "Active",
-    created: "Feb 6, 2026",
+    amountHeld: "₦364.9M",
+    platformFee: "₦364.9M",
+    sellerReceivable: "₦364.9M",
+    status: "Held",
   },
   {
     id: "5",
-    transactionCode: "TXN-84312",
+    escrowId: "ESC-84312",
+    transactionId: "TXN-84312",
     buyerName: "Tolani Bayode",
     buyerEmail: "jackson.graham@example.com",
     sellerName: "Tolani Bayode",
     sellerEmail: "jackson.graham@example.com",
-    amount: "₦364.9M",
     product: "Iphone 14 Pro Max 256GB",
-    escrow: "Held",
-    inspection: "Awaiting",
-    countdown: "2h 14m",
-    status: "Active",
-    created: "Jan 5, 2026",
+    amountHeld: "₦364.9M",
+    platformFee: "₦364.9M",
+    sellerReceivable: "₦364.9M",
+    status: "Held",
   },
   {
     id: "6",
-    transactionCode: "TXN-84312",
+    escrowId: "ESC-84312",
+    transactionId: "TXN-84312",
     buyerName: "Solomon Ideh",
     buyerEmail: "georgiayoung@example.com",
     sellerName: "Solomon Ideh",
     sellerEmail: "georgiayoung@example.com",
-    amount: "₦364.9M",
     product: "Iphone 14 Pro Max 256GB",
-    escrow: "Released",
-    inspection: "Completed",
-    countdown: "-",
-    status: "Completed",
-    created: "Feb 6, 2026",
+    amountHeld: "₦364.9M",
+    platformFee: "₦364.9M",
+    sellerReceivable: "₦364.9M",
+    status: "Held",
   },
   {
     id: "7",
-    transactionCode: "TXN-84312",
+    escrowId: "ESC-84312",
+    transactionId: "TXN-84312",
     buyerName: "Ogunmodede-Smart",
     buyerEmail: "nathan.roberts@example.com",
     sellerName: "Ogunmodede-Smart",
     sellerEmail: "nathan.roberts@example.com",
-    amount: "₦364.9M",
     product: "Iphone 14 Pro Max 256GB",
-    escrow: "Released",
-    inspection: "Completed",
-    countdown: "-",
-    status: "Completed",
-    created: "Jan 5, 2026",
-  },
-  {
-    id: "8",
-    transactionCode: "TXN-84312",
-    buyerName: "Hannah Pedro",
-    buyerEmail: "sara.cruz@example.com",
-    sellerName: "Hannah Pedro",
-    sellerEmail: "sara.cruz@example.com",
-    amount: "₦364.9M",
-    product: "Iphone 14 Pro Max 256GB",
-    escrow: "Refunded",
-    inspection: "Failed",
-    countdown: "-",
-    status: "Refunded",
-    created: "Jan 5, 2026",
+    amountHeld: "₦364.9M",
+    platformFee: "₦364.9M",
+    sellerReceivable: "₦364.9M",
+    status: "Held",
   },
 ];
 
-export default function TransactionsPage() {
+export default function EscrowPage() {
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
   const [year, setYear] = useState(String(new Date().getFullYear()));
   const [currentPage, setCurrentPage] = useState(1);
 
   const navigate = useNavigate();
+
   const columns = useMemo(
     () =>
-      createTransactionColumns({
-        onViewDetails: (txn) => navigate(`/transactions/${txn.id}`),
-        onViewItem: (txn) => console.log("view item", txn.id),
-        onViewBuyerProfile: (txn) => navigate(`/users/buyer-${txn.id}`),
-        onViewSellerProfile: (txn) => navigate(`/users/seller-${txn.id}`),
+      createEscrowColumns({
+        onViewTransaction: (escrow) => navigate(`/escrow/${escrow.id}`),
+        onViewItem: (escrow) => console.log("view item", escrow.id),
+        onViewBuyerProfile: (escrow) => navigate(`/users/buyer-${escrow.id}`),
+        onViewSellerProfile: (escrow) => navigate(`/users/seller-${escrow.id}`),
         onContactBuyer: () => console.log("contact buyer"),
         onContactSeller: () => console.log("contact seller"),
         onDownloadReceipt: () =>
@@ -177,30 +150,28 @@ export default function TransactionsPage() {
     [],
   );
 
-  const tabStatusMap: Record<
-    string,
-    TransactionRow["status"] | "AwaitingInspection"
-  > = {
-    "Awaiting Inspection": "Active",
-    Completed: "Completed",
-    Refunded: "Refunded",
-    Disputed: "Disputed",
+  const tabStatusMap: Record<string, EscrowRow["status"]> = {
+    Held: "Held",
+    Frozen: "Frozen",
+    Refunds: "Refunded",
+    Released: "Released",
   };
 
-  const filteredTransactions = transactions.filter((txn) => {
+  const filteredEscrows = escrows.filter((escrow) => {
     const matchesTab =
-      activeTab === "All" || txn.status === tabStatusMap[activeTab];
+      activeTab === "All" || escrow.status === tabStatusMap[activeTab];
     const matchesSearch =
-      txn.transactionCode.toLowerCase().includes(search.toLowerCase()) ||
-      txn.buyerName.toLowerCase().includes(search.toLowerCase()) ||
-      txn.sellerName.toLowerCase().includes(search.toLowerCase());
+      escrow.escrowId.toLowerCase().includes(search.toLowerCase()) ||
+      escrow.transactionId.toLowerCase().includes(search.toLowerCase()) ||
+      escrow.buyerName.toLowerCase().includes(search.toLowerCase()) ||
+      escrow.sellerName.toLowerCase().includes(search.toLowerCase());
     return matchesTab && matchesSearch;
   });
 
   return (
     <div>
       <PageHeader
-        title="Transactions"
+        title="Escrow"
         subtitle="Manage every order from offer to escrow to hand-over — with full payment context."
         actions={
           <Button
@@ -221,11 +192,11 @@ export default function TransactionsPage() {
 
       <div className="overflow-hidden">
         <TableToolbar
-          label="Users"
-          count={filteredTransactions.length}
+          label="Escrow"
+          count={filteredEscrows.length}
           searchValue={search}
           onSearchChange={setSearch}
-          searchPlaceholder="Search by transaction ID, buyer, seller..."
+          searchPlaceholder="Search by escrow ID, transaction ID, buyer, seller..."
           filterSlot={
             <>
               <DateFilterDropdown
@@ -242,8 +213,13 @@ export default function TransactionsPage() {
           }
         />
         <div className="overflow-x-auto">
-          {/* TODO:If tab filter not found render empty table component let it not just collapse do everywhere */}
-          <DataTable data={filteredTransactions} columns={columns} />
+          <DataTable
+            data={filteredEscrows}
+            columns={columns}
+            //TODO:add in other tables  
+            emptyIcon={<FiDollarSign className="w-5 h-5" />}
+            emptyMessage="No escrow records match your search."
+          />
         </div>
 
         <Pagination

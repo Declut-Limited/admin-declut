@@ -47,7 +47,7 @@ export const navGroups: NavGroup[] = [
     label: 'Money',
     items: [
       { label: 'Transactions', path: '/transactions', icon: moneySendIcon },
-      { label: 'Escrow', path: '/escrow', icon: lockIcon },
+      { label: 'Escrow', path: '/escrows', icon: lockIcon },
       // { label: 'Disputes', path: '/money-disputes', icon: infoCircleIcon },
       // { label: 'Finance', path: '/finance', icon: moneysIcon },
     ],

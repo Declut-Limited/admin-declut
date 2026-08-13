@@ -35,13 +35,14 @@ import {
   FiMail,
 } from "react-icons/fi";
 import { FaRotate, FaRotateRight } from "react-icons/fa6";
-import { LuCircleDollarSign, LuNotepadText } from "react-icons/lu";
+import { LuNotepadText } from "react-icons/lu";
 import { RiLockPasswordFill } from "react-icons/ri";
 import layers from "@/assets/icons/layer-black.svg";
 import { IoDocumentTextOutline } from "react-icons/io5";
 import { showToast } from "@/lib/utils/toast";
 import { BsCheckCircleFill } from "react-icons/bs";
 import listingMain from "@/assets/listing-main.jpg";
+import { AiFillDollarCircle } from "react-icons/ai";
 
 const statusPillClass: Record<TransactionDetail["status"], string> = {
   Active: "text-[#B54708] bg-[#FFFAEB] dark:text-amber-400 dark:bg-amber-950",
@@ -759,7 +760,7 @@ export default function TransactionDetailPage() {
         <div className="detail-stat-card">
           <p className="detail-stat-value">{txn.transactionAmount}</p>
           <p className="detail-stat-label">
-            <LuCircleDollarSign className="w-3.5 h-3.5" /> Transaction Amount
+            <AiFillDollarCircle className="w-3.5 h-3.5" /> Transaction Amount
           </p>
         </div>
         <div className="detail-stat-card">
@@ -810,7 +811,7 @@ export default function TransactionDetailPage() {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`pb-3 text-sm font-medium whitespace-nowrap ${
+            className={`pb-3 text-sm font-semibold whitespace-nowrap ${
               activeTab === tab
                 ? "text-brand-blue"
                 : "text-brand-gray-light hover:text-brand-gray-dark"
@@ -1478,20 +1479,22 @@ function NotesTab({ notes }: { notes: TransactionDetail["notes"] }) {
         ))}
       </div>
 
-      <textarea
-        value={newNote}
-        onChange={(e) => setNewNote(e.target.value)}
-        placeholder="Add a private note... Use @name to mention a team member"
-        rows={3}
-        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-      />
-      <div className="flex items-center justify-between mt-2">
-        <span className="text-xs text-brand-gray-light">
-          Visible to admins only
-        </span>
-        <button className="flex items-center gap-1.5 bg-brand-blue text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-[#3F5EE0]">
-          <LuNotepadText className="w-3 h-3" /> Add Note
-        </button>
+      <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <textarea
+          value={newNote}
+          onChange={(e) => setNewNote(e.target.value)}
+          placeholder="Add a private note... Use @name to mention a team member"
+          rows={3}
+          className="w-full px-3 py-2.5 bg-white dark:bg-gray-800 text-sm placeholder:text-gray-400 focus:outline-none resize-none"
+        />
+        <div className="flex items-center justify-between px-3 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+          <span className="text-xs text-brand-gray-light">
+            Visible to admins only
+          </span>
+          <button className="flex items-center gap-1.5 bg-brand-blue text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-[#3F5EE0]">
+            <LuNotepadText className="w-3 h-3" /> Add Note
+          </button>
+        </div>
       </div>
     </div>
   );

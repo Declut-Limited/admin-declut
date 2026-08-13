@@ -69,7 +69,7 @@ export default function ResetPasswordPage() {
             <h2 className="text-[40px] font-bold text-[#1F1F1F] dark:text-gray-100">
               Set A New Password
             </h2>
-            <p className="text-sm text-[#667085] dark:text-gray-400 mt-1">
+            <p className="text-sm text-brand-gray-light dark:text-gray-400 mt-1">
               Resetting password for{" "}
               <span className="font-semibold text-[#1F1F1F] dark:text-gray-200">
                 your account
@@ -150,7 +150,7 @@ export default function ResetPasswordPage() {
                       className={
                         passed
                           ? "text-[#027A48] dark:text-green-400"
-                          : "text-[#667085] dark:text-gray-400"
+                          : "text-brand-gray-light dark:text-gray-400"
                       }
                     >
                       {rule.label}
@@ -202,7 +202,7 @@ export default function ResetPasswordPage() {
           <button
             type="submit"
             disabled={!allRulesPassed || !passwordsMatch}
-            className="w-full bg-[#2563EB] text-white text-sm font-medium py-3 rounded-lg hover:bg-[#3F5EE0] transition-colors mt-5 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-brand-blue text-white text-sm font-medium py-3 rounded-lg hover:bg-[#3F5EE0] transition-colors mt-5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Reset Password
           </button>
@@ -210,7 +210,7 @@ export default function ResetPasswordPage() {
           <div className="flex justify-center">
             <a
               href="/sign-in"
-              className="flex items-center gap-1.5 text-center text-sm text-[#667085] dark:text-gray-400 mt-4 cursor-pointer hover:underline"
+              className="flex items-center gap-1.5 text-center text-sm text-brand-gray-light dark:text-gray-400 mt-4 cursor-pointer hover:underline"
             >
               <FaArrowLeftLong className="w-4 h-4" />
               Back
