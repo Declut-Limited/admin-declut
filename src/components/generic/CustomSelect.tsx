@@ -31,7 +31,7 @@ export default function CustomSelect({
   return (
     <div ref={ref}>
       {label && (
-        <label className="block text-xs text-gray-600 dark:text-gray-300 mb-1.5">
+        <label className="block text-xs text-[#1D2939] dark:text-gray-300 mb-1.5 font-medium">
           {label}{" "}
           {required && (
             <span className="text-brand-blue text-xs font-medium tracking-wide">
