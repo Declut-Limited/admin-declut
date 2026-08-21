@@ -1,22 +1,43 @@
 import { useState, useRef, useEffect } from "react";
 import { FiUser, FiSettings, FiLogOut } from "react-icons/fi";
-import avatarPlaceholder from "@/assets/avatar.svg";
 import { useTheme } from "@/lib/theme/useTheme";
 import { IoIosArrowDown } from "react-icons/io";
+import Skeleton from "./Skeleton";
 
 interface ProfileDropdownProps {
   name: string;
   role: string;
-  userId: string;
-  avatarUrl?: string;
+  email: string;
+  isLoading?: boolean;
   onLogout: () => void;
+}
+
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function Avatar({ name, size }: { name: string; size: number }) {
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        background: "linear-gradient(135deg, #D19E00, #2563EB)",
+      }}
+      className="rounded-full text-white flex items-center justify-center font-semibold shrink-0"
+    >
+      <span style={{ fontSize: size * 0.4 }}>{getInitials(name)}</span>
+    </div>
+  );
 }
 
 export default function ProfileDropdown({
   name,
   role,
-  userId,
-  avatarUrl,
+  email,
+  isLoading,
   onLogout,
 }: ProfileDropdownProps) {
   const [open, setOpen] = useState(false);
@@ -32,17 +53,24 @@ export default function ProfileDropdown({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 px-2 py-1">
+        <Skeleton className="w-8 h-8 rounded-full" />
+        <div className="hidden sm:block">
+          <Skeleton className="h-3.5 w-20 mb-1.5" />
+          <Skeleton className="h-3 w-14" />
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
       >
-        <img
-          src={avatarUrl || avatarPlaceholder}
-          alt={name}
-          className="w-8 h-8 rounded-full object-cover"
-        />
+        <Avatar name={name} size={32} />
         <div className="text-left hidden sm:block">
           <p className="text-sm font-medium text-[#454545] dark:text-gray-100 tracking-wide">
             {name}
@@ -55,11 +83,7 @@ export default function ProfileDropdown({
       {open && (
         <div className="absolute right-0 mt-2 w-64 bg-[#FAFAFA] dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 p-4 z-999">
           <div className="flex items-center gap-3 pb-3">
-            <img
-              src={avatarUrl || avatarPlaceholder}
-              alt={name}
-              className="w-10 h-10 rounded-full object-cover"
-            />
+            <Avatar name={name} size={40} />
             <div>
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {name}
@@ -70,10 +94,10 @@ export default function ProfileDropdown({
 
           <div className="bg-indigo-50 dark:bg-indigo-950 rounded-lg px-3 py-2 mb-3">
             <p className="text-[10px] uppercase text-gray-400 dark:text-gray-500">
-              user ID
+              email
             </p>
             <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
-              {userId}
+              {email}
             </p>
           </div>
 
@@ -133,7 +157,7 @@ export default function ProfileDropdown({
 
           <button
             onClick={onLogout}
-            className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+            className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950 cursor-pointer"
           >
             <FiLogOut className="w-4 h-4" /> Logout
           </button>

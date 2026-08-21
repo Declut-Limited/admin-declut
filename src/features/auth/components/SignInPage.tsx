@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import AuthBrandPanel from "@/components/generic/AuthBrandPanel";
 import { useState } from "react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
@@ -5,6 +6,8 @@ import logo from "@/assets/icons/round-logo.svg";
 import { IoMdMail } from "react-icons/io";
 import { RiLockPasswordFill } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
+import { useLogin } from "@/features/auth/queries";
+import { showToast } from "@/lib/utils/toast";
 
 export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,11 +16,29 @@ export default function SignInPage() {
   const [rememberDevice, setRememberDevice] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { mutate: login, isPending } = useLogin();
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    navigate("/dashboard");
-  };
 
+    login(
+      { email, password },
+      {
+        onSuccess: () => {
+          showToast.success("Welcome back!", {
+            description: "You've signed in successfully.",
+          });
+          navigate("/dashboard");
+        },
+        onError: (error: any) => {
+          showToast.error("Sign in failed", {
+            description:
+              error?.response?.data?.message ??
+              "Please check your credentials and try again.",
+          });
+        },
+      },
+    );
+  };
   return (
     <div className="min-h-screen flex tracking-wide">
       <AuthBrandPanel />
@@ -46,7 +67,7 @@ export default function SignInPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="auth-input"
-                // TODO: Uncomment required
+                required
               />
             </div>
 
@@ -58,7 +79,7 @@ export default function SignInPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="auth-input"
-                // required
+                required
               />
               <button
                 type="button"
@@ -95,9 +116,10 @@ export default function SignInPage() {
 
           <button
             type="submit"
-            className="w-full bg-brand-blue text-white text-sm font-medium py-3 rounded-lg hover:bg-[#3F5EE0] transition-colors cursor-pointer"
+            disabled={isPending}
+            className="w-full bg-brand-blue text-white text-sm font-medium py-3 rounded-lg hover:bg-[#3F5EE0] transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Sign In
+            {isPending ? "Signing in..." : "Sign In"}
           </button>
 
           <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-4">

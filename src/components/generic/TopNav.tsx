@@ -4,6 +4,7 @@ import {
 } from "react-icons/tb";
 import { FiSearch, FiBell } from "react-icons/fi";
 import ProfileDropdown from "./ProfileDropdown";
+import { useLogout, useMe } from "@/features/auth/queries";
 
 interface TopNavProps {
   collapsed: boolean;
@@ -11,6 +12,16 @@ interface TopNavProps {
 }
 
 export default function TopNav({ onToggleCollapse, collapsed }: TopNavProps) {
+  const { data: me, isLoading } = useMe();
+  const { mutate: logout } = useLogout();
+
+  function normalizeRole(role: string) {
+    return role
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  }
+
   return (
     <header className="h-16 flex items-center gap-4 px-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shrink-0">
       <button
@@ -26,7 +37,7 @@ export default function TopNav({ onToggleCollapse, collapsed }: TopNavProps) {
       </button>
 
       <div className="flex-1 max-w-md relative">
-        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-[#475467] w-4 h-4" />
+        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-gray-dark w-4 h-4" />
         <input
           type="text"
           placeholder="Search users, listings, transactions..."
@@ -36,12 +47,11 @@ export default function TopNav({ onToggleCollapse, collapsed }: TopNavProps) {
 
       <div className="ml-auto flex items-center gap-3">
         <ProfileDropdown
-          name="Ekeleme Oscar"
-          role="Super Admin"
-          userId="UID-0001"
-          onLogout={() => {
-            /* wire real logout once auth is set up */
-          }}
+          name={me?.name ?? "-"}
+          role={normalizeRole(me?.role ?? "")}
+          email={me?.email ?? ""}
+          isLoading={isLoading}
+          onLogout={() => logout()}
         />
 
         <button

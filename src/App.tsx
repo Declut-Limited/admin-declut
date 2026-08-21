@@ -27,76 +27,80 @@ import TransactionsPage from "./features/transactions/components/TransactionsPag
 import TransactionDetailPage from "./features/transactions/components/TransactionDetailPage";
 import EscrowPage from "./features/escrows/components/EscrowsPage";
 import EscrowDetailPage from "./features/escrows/components/EscrowDetailPage";
-import SettingsPage  from "./features/settings/components/SettingsPage";
+import SettingsPage from "./features/settings/components/SettingsPage";
+import PublicOnlyRoute from "./lib/auth/PublicOnlyRoute";
+import ProtectedRoute from "./lib/auth/ProtectedRoute";
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/sign-in" replace />} />
 
-      <Route path="/sign-in" element={<SignInPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/resend-link" element={<ResendPasswordResetLinkPage />} />
-      {/* pass token as prop to reset password page , we will need to check if token is valid and then show the page else re route back to resend link*/}
-      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-      <Route
-        path="/reset-password-success"
-        element={<PasswordResetSuccessPage />}
-      />
-      {/* protect the routes later */}
-      <Route element={<DashboardLayout />}>
-        <Route path="/dashboard" element={<DashboardPage />} />
-
-        <Route path="/users" element={<UsersPage />} />
-        <Route path="/users/:userId" element={<UserDetailPage />} />
-
-        <Route path="/listings" element={<ListingsPage />} />
-        <Route path="/listings/:listingId" element={<ListingDetailPage />} />
-
-        <Route path="/categories" element={<CategoriesPage />} />
-
-        <Route path="/reviews" element={<ReviewsPage />} />
-
-        <Route path="/disputes" element={<DisputesPage />} />
-        <Route path="/disputes/:reportCode" element={<DisputeDetailPage />} />
-
-        <Route path="/activity-logs" element={<ActivityLogsPage />} />
+      <Route element={<PublicOnlyRoute />}>
+        <Route path="/sign-in" element={<SignInPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/resend-link" element={<ResendPasswordResetLinkPage />} />
+        {/* pass token as prop to reset password page , we will need to check if token is valid and then show the page else re route back to resend link*/}
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         <Route
-          path="/activity-logs/:logId"
-          element={<ActivityLogDetailPage />}
+          path="/reset-password-success"
+          element={<PasswordResetSuccessPage />}
         />
+      </Route>
 
-        <Route path="/promotions" element={<PromotionsPage />} />
-        <Route
-          path="/promotions/:promotionId"
-          element={<PromotionDetailPage />}
-        />
+      <Route element={<ProtectedRoute />}>
+        <Route element={<DashboardLayout />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
 
-        <Route path="/notifications" element={<NotificationsPage />} />
-        <Route
-          path="/notifications/automation-rules"
-          element={<AutomationRulesPage />}
-        />
-        <Route
-          path="/notifications/:notificationId"
-          element={<NotificationDetailPage />}
-        />
+          <Route path="/users" element={<UsersPage />} />
+          <Route path="/users/:userId" element={<UserDetailPage />} />
 
-        <Route path="/content" element={<ContentPage />} />
-        <Route path="/content/:contentId" element={<ContentDetailPage />} />
+          <Route path="/listings" element={<ListingsPage />} />
+          <Route path="/listings/:listingId" element={<ListingDetailPage />} />
 
-        <Route path="/transactions" element={<TransactionsPage />} />
-        <Route
-          path="/transactions/:transactionId"
-          element={<TransactionDetailPage />}
-        />
+          <Route path="/categories" element={<CategoriesPage />} />
 
-        <Route path="/escrows" element={<EscrowPage />} />
-        <Route path="/escrow/:escrowId" element={<EscrowDetailPage />} />
+          <Route path="/reviews" element={<ReviewsPage />} />
 
-        <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/disputes" element={<DisputesPage />} />
+          <Route path="/disputes/:reportCode" element={<DisputeDetailPage />} />
 
-        
+          <Route path="/activity-logs" element={<ActivityLogsPage />} />
+          <Route
+            path="/activity-logs/:logId"
+            element={<ActivityLogDetailPage />}
+          />
+
+          <Route path="/promotions" element={<PromotionsPage />} />
+          <Route
+            path="/promotions/:promotionId"
+            element={<PromotionDetailPage />}
+          />
+
+          <Route path="/notifications" element={<NotificationsPage />} />
+          <Route
+            path="/notifications/automation-rules"
+            element={<AutomationRulesPage />}
+          />
+          <Route
+            path="/notifications/:notificationId"
+            element={<NotificationDetailPage />}
+          />
+
+          <Route path="/content" element={<ContentPage />} />
+          <Route path="/content/:contentId" element={<ContentDetailPage />} />
+
+          <Route path="/transactions" element={<TransactionsPage />} />
+          <Route
+            path="/transactions/:transactionId"
+            element={<TransactionDetailPage />}
+          />
+
+          <Route path="/escrows" element={<EscrowPage />} />
+          <Route path="/escrow/:escrowId" element={<EscrowDetailPage />} />
+
+          <Route path="/settings" element={<SettingsPage />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -25,6 +25,8 @@ import calendar from "../../../assets/icons/calendar.svg";
 import { LuDot } from "react-icons/lu";
 import avatarPlaceholder from "../../../assets/avatar.svg";
 import logo from "../../../assets/icons/logo.svg";
+import { useMe } from "@/features/auth/queries";
+import Skeleton from "@/components/generic/Skeleton";
 
 interface CategoryDistribution {
   label: string;
@@ -284,6 +286,7 @@ function formatNaira(value: number) {
 }
 
 export default function DashboardPage() {
+  const { data: me, isLoading } = useMe();
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
   const [period, setPeriod] = useState("This Month");
   const [periodOpen, setPeriodOpen] = useState(false);
@@ -314,7 +317,7 @@ export default function DashboardPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const userName = "Shirley"; //
+  const userName = me?.name ?? "";
 
   return (
     <React.Fragment>
@@ -326,7 +329,12 @@ export default function DashboardPage() {
         {/* text */}
         <div className="flex flex-col gap-1 text-white">
           <span className="font-bold text-2xl flex gap-1 tracking-wide">
-            <p className="text-[#DDDFFF]">{getGreeting()},</p> {userName}!
+            <p className="text-[#DDDFFF]">{getGreeting()},</p>{" "}
+            {isLoading ? (
+              <Skeleton className="h-6 w-24 bg-white/20" />
+            ) : (
+              `${userName}!`
+            )}
           </span>
           <p className="text-[15px] text-white/90 tracking-wide">
             Here's what's happening across Declut today.
