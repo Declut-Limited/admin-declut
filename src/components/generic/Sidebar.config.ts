@@ -16,6 +16,7 @@ import notificationBingIcon from '@/assets/icons/notification-bing.svg'
 // import chartIcon from '@/assets/icons/chart-2.svg'
 import textIcon from '@/assets/icons/text.svg'
 import setting2Icon from '@/assets/icons/setting-2.svg'
+import giftIcon from '@/assets/icons/gift.svg'
 // import setting4Icon from '@/assets/icons/setting-4.svg'
 
 export interface NavItem {
@@ -66,6 +67,7 @@ export const navGroups: NavGroup[] = [
       { label: 'Notifications', path: '/notifications', icon: notificationBingIcon },
       // { label: 'Analytics', path: '/analytics', icon: chartIcon },
       { label: 'Content', path: '/content', icon: textIcon },
+      { label: 'Referrals', path: '/referrals', icon: giftIcon },
     ],
   },
   {

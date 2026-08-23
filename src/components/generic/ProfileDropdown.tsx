@@ -102,9 +102,9 @@ export default function ProfileDropdown({
           </div>
 
           <div className="space-y-1 mb-4">
-            <button className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
+            <a href="/profile" className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
               <FiUser className="w-4 h-4" /> My Profile
-            </button>
+            </a>
             <button className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
               <FiSettings className="w-4 h-4" /> Settings
             </button>

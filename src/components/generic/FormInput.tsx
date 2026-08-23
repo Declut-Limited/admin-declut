@@ -1,7 +1,7 @@
 import type { InputHTMLAttributes } from "react";
 
 interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label: string;
+  label?: string;
   required?: boolean;
 }
 

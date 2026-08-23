@@ -9,7 +9,7 @@
 
 @theme {
   --font-standerd: "Standerd", system-ui, sans-serif;
-  --color-brand-blue: #2563EB;
+  --color-brand-blue: #2563eb;
   --color-brand-gray-dark: #475467;
   --color-brand-gray-light: #667085;
 }
@@ -57,7 +57,6 @@
     text-decoration-color: currentColor;
     text-underline-offset: 1px;
   }
-
 }
 
 @layer base {
@@ -262,6 +261,31 @@ body {
   .view-all-link {
     @apply text-sm font-medium text-[#4F6EF7] hover:underline cursor-pointer;
   }
+
+  .global-search-dropdown {
+    @apply absolute left-0 right-0 mt-1 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 py-1 z-50 max-h-72 overflow-y-auto;
+  }
+
+  .global-search-empty {
+    @apply px-3 py-4 text-sm text-brand-gray-light text-center;
+  }
+
+  .global-search-result {
+    @apply w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer;
+  }
+
+  .global-search-result-group {
+    @apply ml-auto text-xs text-brand-gray-light;
+  }
+
+  .global-search-result img {
+    @apply dark:invert-0;
+    filter: brightness(0) saturate(100%) opacity(0.6);
+  }
+
+  .dark .global-search-result img {
+    filter: none;
+  }
 }
 
 /* detail classes */
@@ -301,7 +325,6 @@ body {
 
 /* settings classes */
 @layer components {
-
   .settings-layout {
     @apply flex gap-6 mt-6;
   }
@@ -335,7 +358,7 @@ body {
   }
 
   .settings-field-row {
-    @apply flex gap-4;
+    @apply flex gap-4 items-center;
   }
 
   .settings-field-label {
@@ -358,39 +381,337 @@ body {
     @apply text-xs font-medium text-brand-gray-light;
   }
 
-  .roles-permissions-table {
-    @apply w-full border-collapse;
+  .roles-accordion {
+    @apply rounded-lg overflow-hidden bg-white dark:bg-gray-800;
   }
 
-  .roles-permissions-table-header-role,
-  .roles-permissions-table-header-users,
-  .roles-permissions-table-header-category {
-    @apply text-left text-xs font-semibold text-brand-gray-dark uppercase tracking-wide pb-3;
+  .roles-accordion-header-row {
+    @apply px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800;
   }
 
-  .roles-permissions-table-row {
+  .roles-accordion-header-role {
+    @apply text-xs font-bold text-brand-gray-light;
+  }
+
+  .roles-accordion-item {
+    @apply border-b border-gray-200 dark:border-gray-700 last:border-b-0;
+  }
+
+  .roles-accordion-row {
+    @apply flex items-center gap-4 px-4 py-3;
+  }
+
+  .roles-accordion-role-box {
+    @apply w-48 shrink-0;
+  }
+
+  .roles-accordion-role-name {
+    @apply block px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-brand-gray-dark dark:text-gray-100 bg-white dark:bg-gray-800;
+  }
+
+  .roles-accordion-role-input {
+    @apply w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-brand-gray-dark dark:text-gray-100 bg-white dark:bg-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-blue;
+  }
+
+  .roles-accordion-actions-label {
+    @apply flex-1 text-left text-sm font-semibold text-brand-gray-dark dark:text-gray-100 cursor-pointer;
+  }
+
+  .roles-accordion-controls {
+    @apply flex items-center gap-3 shrink-0;
+  }
+
+  .roles-accordion-chevron {
+    @apply text-brand-gray-light hover:text-brand-gray-dark cursor-pointer;
+  }
+
+  .roles-permissions-matrix-header-module {
+    @apply text-left text-xs font-medium text-brand-gray-light pb-2;
+  }
+
+  .roles-permissions-matrix-header-action {
+    @apply text-left text-xs font-medium text-brand-gray-light pb-2 w-24;
+  }
+
+  .roles-permissions-matrix-row {
     @apply border-t border-gray-200 dark:border-gray-700;
   }
 
-  .roles-permissions-table-role-name {
-    @apply text-sm font-medium text-brand-gray-dark dark:text-gray-200 py-3;
+  .roles-permissions-matrix-module {
+    @apply text-sm text-brand-gray-dark dark:text-gray-200 py-2.5;
   }
 
-  .roles-permissions-table-users-count {
-    @apply text-sm text-brand-gray-light py-3;
+  .roles-permissions-matrix-checkbox-cell {
+    @apply py-2.5;
   }
 
-  .roles-permissions-table-toggle-cell {
-    @apply py-3;
+  .roles-permissions-matrix-checkbox {
+    @apply w-4 h-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue cursor-pointer;
   }
 
-    .roles-permissions-table-header-users,
-  .roles-permissions-table-header-category {
-    @apply text-center;
+  .roles-permissions-matrix-scroll {
+    @apply max-h-64 overflow-y-auto;
   }
 
-  .roles-permissions-table-users-count,
-  .roles-permissions-table-toggle-cell {
-    @apply text-center;
+  .roles-accordion-row-expanded {
+    @apply bg-gray-50 dark:bg-gray-900/50;
+  }
+
+  .roles-accordion-panel {
+    @apply px-4 pb-4 bg-gray-50 dark:bg-gray-900/50;
+  }
+
+  .roles-permissions-matrix {
+    @apply w-2/3 ml-52 border-collapse bg-white dark:bg-gray-800 rounded-lg overflow-hidden;
+  }
+
+  .roles-permissions-matrix-header-module,
+  .roles-permissions-matrix-header-action {
+    @apply bg-white dark:bg-gray-800 px-4 pt-3;
+  }
+
+  .roles-permissions-matrix-module,
+  .roles-permissions-matrix-checkbox-cell {
+    @apply px-4;
+  }
+
+  .roles-accordion-delete {
+    @apply text-sm text-red-500 hover:underline cursor-pointer;
+  }
+}
+
+/* profile classes */
+@layer components {
+  .profile-photo-row {
+    @apply flex items-center gap-4 pb-5 border-b border-gray-200 dark:border-gray-700 mb-5;
+  }
+
+  .profile-photo-preview {
+    @apply w-14 h-14 rounded-full object-cover shrink-0;
+  }
+
+  .profile-photo-title {
+    @apply text-sm font-semibold text-brand-gray-dark dark:text-gray-100;
+  }
+
+  .profile-photo-hint {
+    @apply text-xs text-brand-gray-light;
+  }
+
+  .profile-photo-actions {
+    @apply flex items-center gap-4 shrink-0;
+  }
+
+  .profile-photo-remove {
+    @apply text-sm text-red-500 hover:underline cursor-pointer;
+  }
+
+  .settings-subsection {
+    @apply mb-2;
+  }
+
+  .settings-subsection-title {
+    @apply text-sm font-semibold text-brand-gray-dark dark:text-gray-100;
+  }
+
+  .settings-subsection-hint {
+    @apply text-xs text-brand-gray-light mb-3;
+  }
+
+  .appearance-options-grid {
+    @apply grid grid-cols-6 gap-3 mb-2;
+  }
+
+  .appearance-option {
+    @apply rounded-lg border border-gray-200 dark:border-gray-700 p-2 flex flex-col justify-between h-20 text-left transition-colors bg-white dark:bg-gray-800 cursor-pointer;
+  }
+
+  .appearance-option-active {
+    @apply border-brand-blue ring-1 ring-brand-blue;
+  }
+
+  .appearance-option-label {
+    @apply text-xs text-brand-gray-light;
+  }
+
+  .appearance-option-preview {
+    @apply flex items-center justify-center rounded-md h-7 text-xs font-medium;
+  }
+
+  .appearance-option-preview-light {
+    @apply bg-white border border-gray-200 text-gray-900;
+  }
+
+  .appearance-option-preview-dark {
+    @apply bg-gray-900 text-white;
+  }
+
+  .appearance-option-preview-split {
+    @apply flex rounded-md overflow-hidden h-7;
+  }
+
+  .appearance-option-preview-split > span {
+    @apply flex-1 flex items-center justify-center text-xs font-medium;
+  }
+
+  /* AccountTab */
+  .account-info-grid {
+    @apply grid grid-cols-4 gap-6 pb-5 border-b border-gray-200 dark:border-gray-700 mb-5;
+  }
+
+  .account-info-item {
+    @apply flex flex-col gap-1;
+  }
+
+  .account-info-label {
+    @apply text-xs text-brand-gray-light;
+  }
+
+  .account-info-value {
+    @apply text-sm font-medium text-brand-gray-dark dark:text-gray-100;
+  }
+
+  .account-info-value-link {
+    @apply text-brand-blue;
+  }
+
+  .account-role-banner {
+    @apply flex items-center justify-between bg-blue-50 dark:bg-blue-950/30 rounded-lg px-4 py-3 mb-5;
+  }
+
+  .account-role-banner-title {
+    @apply text-sm font-semibold text-brand-gray-dark dark:text-gray-100;
+  }
+
+  .account-role-banner-hint {
+    @apply text-xs text-brand-gray-light;
+  }
+
+  .account-stats-grid {
+    @apply grid grid-cols-4 gap-4;
+  }
+
+  .account-stat-card {
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4;
+  }
+
+  .account-stat-label {
+    @apply text-xs text-brand-gray-light mb-1;
+  }
+
+  .account-stat-value {
+    @apply text-sm font-semibold text-brand-gray-dark dark:text-gray-100;
+  }
+
+  /* SecurityLoginTab */
+  .security-login-layout {
+    @apply grid grid-cols-[1.4fr_1fr] gap-8;
+  }
+
+  .security-login-form {
+    @apply flex flex-col gap-5;
+  }
+
+  .password-input-wrapper {
+    @apply relative;
+  }
+
+  .password-input-toggle {
+    @apply absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer;
+  }
+
+  .password-strength-bar {
+    @apply flex gap-1 mt-2;
+  }
+
+  .password-strength-segment {
+    @apply h-1 flex-1 rounded-full bg-gray-200 dark:bg-gray-700;
+  }
+
+  .password-strength-segment-weak {
+    @apply bg-red-500;
+  }
+
+  .password-strength-label {
+    @apply text-xs text-red-500 mt-1;
+  }
+
+  .password-requirements-grid {
+    @apply grid grid-cols-2 gap-x-4 gap-y-1.5 mt-3;
+  }
+
+  .password-requirement {
+    @apply flex items-center gap-1.5 text-xs text-brand-gray-light;
+  }
+
+  .password-requirement-met {
+    @apply text-green-600 dark:text-green-500;
+  }
+
+  .active-sessions-panel {
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 h-fit;
+  }
+
+  .active-sessions-title {
+    @apply text-sm font-semibold text-brand-gray-dark dark:text-gray-100;
+  }
+
+  .active-sessions-hint {
+    @apply text-xs text-brand-gray-light mb-4;
+  }
+
+  .active-sessions-list {
+    @apply flex flex-col divide-y divide-gray-100 dark:divide-gray-700;
+  }
+
+  .active-session-row {
+    @apply flex items-start gap-3 py-3 first:pt-0 last:pb-0;
+  }
+
+  .active-session-icon {
+    @apply w-5 h-5 text-brand-gray-light mt-0.5 shrink-0;
+  }
+
+  .active-session-device-row {
+    @apply flex items-center gap-2;
+  }
+
+  .active-session-device {
+    @apply text-sm font-medium text-brand-gray-dark dark:text-gray-100;
+  }
+
+  .active-session-badge {
+    @apply text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400 font-medium;
+  }
+
+  .active-session-meta {
+    @apply text-xs text-brand-gray-light mt-0.5;
+  }
+
+  .active-session-signout {
+    @apply text-xs text-red-500 hover:underline cursor-pointer shrink-0;
+  }
+
+  .phone-input-container {
+    @apply flex items-center w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus-within:ring-2 focus-within:ring-brand-blue;
+  }
+
+  .phone-input-code-wrapper {
+    @apply rounded-l-lg relative shrink-0 border-r border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900;
+  }
+  .phone-input-code-trigger {
+    @apply flex items-center gap-1.5 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 cursor-pointer;
+  }
+
+  .phone-input-code-dropdown {
+    @apply absolute left-0 top-full mt-1 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 py-1 z-50 min-w-[80px];
+  }
+
+  .phone-input-code-option {
+    @apply w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800;
+  }
+
+  .phone-input-number-field {
+    @apply flex-1 px-3 py-2.5 text-sm text-brand-gray-dark dark:text-gray-100 bg-transparent focus:outline-none min-w-0;
   }
 }

@@ -29,3 +29,17 @@ export interface RoleCommissionOverride {
   trust_safety: boolean
   admin: boolean
 }
+
+export interface RolePermission {
+  module: string;
+  view: boolean;
+  write: boolean;
+  delete: boolean;
+}
+
+export interface RoleEntry {
+  id: string;
+  role: string;
+  permissions: RolePermission[];
+  isNew?: boolean;
+}

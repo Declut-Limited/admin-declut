@@ -1,25 +1,25 @@
 import PageHeader from "@/components/generic/PageHeader"
 import { useSearchParams } from "react-router-dom"
 import { GeneralTab } from "./GeneralTab"
-import PaymentsTab from "./PaymentsTab"
-import FeesCommissionTab from "./FeesCommissionTab"
-import { RolesPermissionsTab } from "./RolesPermissionsTab"
+import { PersonalizationTab } from "./PersonalizationTab"
+import { AccountTab } from "./AccountTab"
+import { SecurityLoginTab } from "./SecurityLoginTab"
 
-const TABS = ['General', 'Payments', 'Fees & Commission', 'Roles & Permissions'] as const
-type SettingsTab = typeof TABS[number]
+const TABS = ['General', 'Personalization', 'Account', 'Security & Login'] as const
+type ProfileTab = typeof TABS[number]
 
-export default function SettingsPage() {
+export default function ProfilePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
-  const activeTab: SettingsTab = TABS.includes(tabParam as SettingsTab) ? (tabParam as SettingsTab) : 'General'
+  const activeTab: ProfileTab = TABS.includes(tabParam as ProfileTab) ? (tabParam as ProfileTab) : 'General'
 
-  const setActiveTab = (tab: SettingsTab) => {
+  const setActiveTab = (tab: ProfileTab) => {
     setSearchParams({ tab })
   }
 
   return (
     <div className="settings-page">
-      <PageHeader title="Settings" subtitle="Configure how the Declut platform looks, accepts payments, and grants access." />
+      <PageHeader title="Profile Settings" subtitle="Manage your profile, preferences, security, and notification settings." />
       <div className="settings-layout">
         <nav className="settings-sidebar">
           {TABS.map(tab => (
@@ -34,9 +34,9 @@ export default function SettingsPage() {
         </nav>
         <div className="settings-content">
           {activeTab === 'General' && <GeneralTab />}
-          {activeTab === 'Payments' && <PaymentsTab />}
-          {activeTab === 'Fees & Commission' && <FeesCommissionTab />}
-          {activeTab === 'Roles & Permissions' && <RolesPermissionsTab />}
+          {activeTab === 'Personalization' && <PersonalizationTab />}
+          {activeTab === 'Account' && <AccountTab />}
+          {activeTab === 'Security & Login' && <SecurityLoginTab />}
         </div>
       </div>
     </div>

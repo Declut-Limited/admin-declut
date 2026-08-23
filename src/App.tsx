@@ -28,8 +28,10 @@ import TransactionDetailPage from "./features/transactions/components/Transactio
 import EscrowPage from "./features/escrows/components/EscrowsPage";
 import EscrowDetailPage from "./features/escrows/components/EscrowDetailPage";
 import SettingsPage from "./features/settings/components/SettingsPage";
+import ProfilePage from "./features/profile/components/ProfilePage";
 import PublicOnlyRoute from "./lib/auth/PublicOnlyRoute";
 import ProtectedRoute from "./lib/auth/ProtectedRoute";
+
 
 function App() {
   return (
@@ -100,6 +102,7 @@ function App() {
           <Route path="/escrow/:escrowId" element={<EscrowDetailPage />} />
 
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>
 
