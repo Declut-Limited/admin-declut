@@ -15,15 +15,49 @@ interface ListingColumnCallbacks {
   onRelist: (listing: ListingRow) => void;
 }
 
-const statusPillClass: Record<ListingRow["status"], string> = {
-  Active: "bg-green-50 text-green-600 dark:bg-green-950 dark:text-green-400",
-  Sold: "text-[#5925DC] bg-[#F4F3FF] dark:text-purple-400 dark:bg-purple-950",
-  "Pending Review":
+const statusPillClass: Record<string, string> = {
+  active: "bg-green-50 text-green-600 dark:bg-green-950 dark:text-green-400",
+  sold: "text-[#5925DC] bg-[#F4F3FF] dark:text-purple-400 dark:bg-purple-950",
+  pending_review:
     "text-[#B54708] bg-[#FFFAEB] dark:text-amber-400 dark:bg-amber-950",
-  Flagged: "text-[#B42318] bg-[#FEF3F2] dark:text-red-400 dark:bg-red-950",
-  Delisted:
+  flagged: "text-[#B42318] bg-[#FEF3F2] dark:text-red-400 dark:bg-red-950",
+  delisted:
     "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800",
+  deleted:
+    "text-[#B42318] bg-[#FEF3F2] dark:text-red-400 dark:bg-red-950",
 };
+
+const statusFallback =
+  "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400";
+
+const currency = new Intl.NumberFormat("en-NG", {
+  style: "currency",
+  currency: "NGN",
+  maximumFractionDigits: 0,
+});
+
+function formatStatus(status: string) {
+  return status
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function formatDate(iso: string) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 export function createListingColumns(
   callbacks: ListingColumnCallbacks,
@@ -42,19 +76,19 @@ export function createListingColumns(
       },
     ];
 
-    if (row.status === "Delisted" || row.status === "Sold") {
-      base.push({
-        label: "Relist",
-        icon: <BsCheckCircle className="w-4 h-4" />,
-        variant: "success",
-        onClick: () => callbacks.onRelist(row),
-      });
-    } else {
+    if (row.status === "active") {
       base.push({
         label: "Delist",
         icon: <CgDanger className="w-4 h-4" />,
         variant: "danger",
         onClick: () => callbacks.onDelist(row),
+      });
+    } else {
+      base.push({
+        label: "Relist",
+        icon: <BsCheckCircle className="w-4 h-4" />,
+        variant: "success",
+        onClick: () => callbacks.onRelist(row),
       });
     }
 
@@ -70,46 +104,65 @@ export function createListingColumns(
       cell: () => <input type="checkbox" className="rounded border-gray-300" />,
     },
     {
-      accessorKey: "name",
+      accessorKey: "title",
       header: "Listing",
       cell: ({ row }) => (
         <div className="flex items-center gap-2.5">
-          <span className="w-8 h-8 rounded-full bg-[#BFDBFE] dark:bg-indigo-950 flex items-center justify-center text-xs font-semibold text-[#2563EB] dark:text-indigo-400 shrink-0">
-            {row.original.sellerInitials}
+          <span className="w-8 h-8 rounded-full bg-[#BFDBFE] dark:bg-indigo-950 flex items-center justify-center text-xs font-semibold text-brand-blue dark:text-indigo-400 shrink-0">
+            {getInitials(row.original.title)}
           </span>
           <div>
             <p className="font-medium text-brand-gray-dark dark:text-gray-100">
-              {row.original.name}
+              {row.original.title}
             </p>
-            <p className="text-xs text-brand-gray-light">{row.original.code}</p>
+            <p className="text-xs text-brand-gray-light">
+              {row.original.slug ?? "—"}
+            </p>
           </div>
         </div>
       ),
     },
-    { accessorKey: "category", header: "Category" },
     {
-      accessorKey: "sellerName",
-      header: "Seller",
-      cell: ({ row }) => (
-        <a href="#" className="text-brand-blue underline-wavy">
-          {row.original.sellerName}
-        </a>
-      ),
+      accessorKey: "category",
+      header: "Category",
+      cell: ({ row }) => row.original.category?.title ?? "—",
     },
-    { accessorKey: "price", header: "Price" },
-    { accessorKey: "location", header: "Location" },
+    {
+      accessorKey: "seller",
+      header: "Seller",
+      cell: ({ row }) =>
+        row.original.seller ? (
+          <a href="#" className="text-brand-blue underline-wavy">
+            {row.original.seller.name}
+          </a>
+        ) : (
+          <span className="text-brand-gray-light">—</span>
+        ),
+    },
+    {
+      accessorKey: "price",
+      header: "Price",
+      cell: ({ row }) => currency.format(row.original.price),
+    },
+    { accessorKey: "locationLabel", header: "Location" },
     {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => (
         <span
-          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusPillClass[row.original.status]}`}
+          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+            statusPillClass[row.original.status] ?? statusFallback
+          }`}
         >
-          {row.original.status}
+          {formatStatus(row.original.status)}
         </span>
       ),
     },
-    { accessorKey: "date", header: "Date" },
+    {
+      accessorKey: "createdAt",
+      header: "Date",
+      cell: ({ row }) => formatDate(row.original.createdAt),
+    },
     {
       id: "actions",
       header: "Action",

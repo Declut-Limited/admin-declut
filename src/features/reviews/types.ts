@@ -1,16 +1,46 @@
-export interface ReviewRow {
+export type ReviewStatus = "visible" | "flagged" | "hidden";
+
+export interface ReviewListing {
   id: string;
-  reviewerName: string;
-  reviewerAvatarUrl?: string;
-  reviewerId: string;
-  reviewerEmail: string;
-  reviewerCompany: string;
-  listingName: string;
-  listingCode: string;
-  listingImageUrl?: string;
-  listingSubmittedDate: string;
+  title: string;
+  mainImage: string;
+  slug: string;
+  createdAt: string;
+}
+
+export interface ReviewReviewer {
+  id: string;
+  name: string;
+  email: string;
+  slug: string;
+  role: string;
+  status: string;
+}
+
+export interface ReviewRow {
+  _id: string;
+  transaction: string;
+  listing: ReviewListing | null;
+  reviewer: ReviewReviewer | null;
+  reviewee: string;
+  role: string;
   rating: number;
   comment: string;
-  status: "Published" | "Flagged";
-  date: string;
+  status: ReviewStatus;
+  createdAt: string;
+}
+
+export interface ReviewsListParams {
+  page?: number;
+  limit?: number;
+}
+
+export interface ReviewsListResponse {
+  success: boolean;
+  data: {
+    results: ReviewRow[];
+    total: number;
+    page: number;
+    limit: number;
+  };
 }

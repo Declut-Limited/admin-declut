@@ -4,158 +4,133 @@ import Button from "@/components/generic/Button";
 import ImageGallery from "@/components/generic/ImageGallery";
 import ListingLocationMap from "@/components/generic/ListingLocationMap";
 import avatarPlaceholder from "@/assets/avatar.svg";
-import type { ListingDetail } from "../types";
 import { FaArrowLeftLong } from "react-icons/fa6";
 import { IoMail } from "react-icons/io5";
 import listingHeader from "@/assets/listing-header.jpg";
-import listingMain from "@/assets/listing-main.jpg";
-import { AiOutlineExport } from "react-icons/ai";
 import NotFoundState from "@/components/generic/NotFoundState";
 import { FiPackage } from "react-icons/fi";
+import PageLoader from "@/components/generic/PageLoader";
+import { useListing, useDeleteListing, useEmailSeller } from "../queries";
+import { showToast } from "@/lib/utils/toast";
+import { useState } from "react";
+import type { EmailSellerPayload } from "../types";
+import EmailSellerModal from "./EmailSellerModal";
 
-const statusPillClass: Record<ListingDetail["status"], string> = {
-  Active: "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
-  "Pending Review":
+const NOT_IN_API_YET = "—";
+
+const statusPillClass: Record<string, string> = {
+  active: "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
+  pending_review:
     "text-[#B54708] bg-[#FFFAEB] dark:text-amber-400 dark:bg-amber-950",
-  Flagged: "text-[#B42318] bg-[#FEF3F2] dark:text-red-400 dark:bg-red-9",
-  Sold: "text-[#5925DC] bg-[#F4F3FF] dark:text-purple-400 dark:bg-purple-950",
-  Delisted:
+  pending: "text-[#B54708] bg-[#FFFAEB] dark:text-amber-400 dark:bg-amber-950",
+  flagged: "text-[#B42318] bg-[#FEF3F2] dark:text-red-400 dark:bg-red-9",
+  sold: "text-[#5925DC] bg-[#F4F3FF] dark:text-purple-400 dark:bg-purple-950",
+  delisted:
+    "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800",
+  deleted:
     "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800",
 };
 
-// placeholder
-const mockListings: Record<string, ListingDetail> = {
-  "1": {
-    id: "1",
-    code: "LST-001",
-    name: "6-Seater Dining Set",
-    status: "Sold",
-    category: "Home & Living",
-    postedDate: "Apr 9, 2026",
-    views: 1404,
-    saves: 131,
-    price: "₦954,000",
-    condition: "Used - Like New",
-    payoutAfterCommission: "₦882,450",
-    commissionPercent: "7.5%",
-    images: [
-      { id: "1", url: listingMain },
-      { id: "2", url: "https://placehold.co/600x400/222/fff?text=2" },
-      {
-        id: "3",
-        url: "https://placehold.co/600x400/333/fff?text=3",
-        isVideo: true,
-      },
-    ],
-    description:
-      "6-Seater Dining Set in used - like new condition, listed by Tunde Balogun (Lagos Mart). Available for immediate pickup or delivery within Abeokuta. All items are inspected by our marketplace team before approval. Buyers are protected by Declut Escrow for the full transaction value.",
-    brand: "Dangote",
-    itemCondition: "Neatly Used",
-    quantityAvailable: 16,
-    sku: "SKU-54012",
-    saleDetails: {
-      buyer: "Femi Lawal",
-      amountPaid: "₦274,000",
-      paymentMethod: "USSD",
-      transactionStatus: "Completed",
-      soldOn: "Feb 7, 2026",
-    },
-    review: {
-      reviewerName: "Ngozi Nwosu",
-      reviewerId: "USR-004",
-      reviewerEmail: "ngozi.nwosu@mail.com",
-      rating: 5,
-      comment: "Average experience, took a while to ship.",
-    },
-    activity: [
-      { id: "1", label: "Listing created", date: "Apr 9, 2026" },
-      { id: "2", label: "Reviewed by moderation", date: "Apr 10, 2026" },
-      { id: "3", label: "Status set to Active", date: "Jul 12, 2026" },
-      { id: "4", label: "Status set to Sold", date: "Jul 12, 2026" },
-    ],
-    location: {
-      address: "89 Allen Avenue, Abeokuta, Nigeria",
-      landmark: "Jara shopping mall",
-      lat: 6.5244,
-      lng: 3.3792,
-    },
-    seller: {
-      name: "Ngozi Nwosu",
-      id: "USR-004",
-      email: "ngozi.nwosu@mail.com",
-      role: "Seller/Buyer",
-      status: "Active",
-      company: "Delta Electronics",
-      totalListings: 2,
-      memberSince: "Apr 27, 2025",
-      rating: 4,
-    },
-  },
-  "2": {
-    id: "2",
-    code: "LST-001",
-    name: "6-Seater Dining Set",
-    status: "Active",
-    category: "Home & Living",
-    postedDate: "Apr 9, 2026",
-    views: 1404,
-    saves: 131,
-    price: "₦954,000",
-    condition: "Used - Like New",
-    payoutAfterCommission: "₦882,450",
-    commissionPercent: "7.5%",
-    images: [
-      { id: "1", url: listingMain },
-      { id: "2", url: "https://placehold.co/600x400/222/fff?text=2" },
-      {
-        id: "3",
-        url: "https://placehold.co/600x400/333/fff?text=3",
-        isVideo: true,
-      },
-    ],
-    description:
-      "6-Seater Dining Set in used - like new condition, listed by Tunde Balogun (Lagos Mart). Available for immediate pickup or delivery within Abeokuta. All items are inspected by our marketplace team before approval. Buyers are protected by Declut Escrow for the full transaction value.",
-    brand: "Dangote",
-    itemCondition: "Neatly Used",
-    quantityAvailable: 16,
-    sku: "SKU-54012",
-    activity: [
-      { id: "1", label: "Listing created", date: "Apr 9, 2026" },
-      { id: "2", label: "Reviewed by moderation", date: "Apr 10, 2026" },
-      { id: "3", label: "Status set to Active", date: "Jul 12, 2026" },
-    ],
-    location: {
-      address: "89 Allen Avenue, Abeokuta, Nigeria",
-      landmark: "Jara shopping mall",
-      lat: 6.5244,
-      lng: 3.3792,
-    },
-    seller: {
-      name: "Ngozi Nwosu",
-      id: "USR-004",
-      email: "ngozi.nwosu@mail.com",
-      role: "Seller/Buyer",
-      status: "Active",
-      company: "Delta Electronics",
-      totalListings: 2,
-      memberSince: "Apr 27, 2025",
-      rating: 4,
-    },
-  },
+const sellerStatusPillClass: Record<string, string> = {
+  active: "bg-[#ECFDF3] text-[#027A48] dark:bg-green-950 dark:text-green-400",
+  pending: "bg-[#FFFAEB] text-[#B54708] dark:bg-amber-950 dark:text-amber-400",
+  suspended: "bg-[#FEF3F2] text-[#B42318] dark:bg-red-950 dark:text-red-400",
+  banned: "bg-[#FEF3F2] text-[#B42318] dark:bg-red-950 dark:text-red-400",
 };
+
+const statusFallback =
+  "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800";
+
+const currency = new Intl.NumberFormat("en-NG", {
+  style: "currency",
+  currency: "NGN",
+  maximumFractionDigits: 0,
+});
+
+function formatStatus(status: string) {
+  return status
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function formatDate(iso: string) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatEventLabel(event: string) {
+  return event
+    .split(".")
+    .pop()!
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
 
 export default function ListingDetailPage() {
   const { listingId } = useParams<{ listingId: string }>();
   const navigate = useNavigate();
-  const listing = listingId ? mockListings[listingId] : undefined;
 
-  if (!listing) {
+  const { data: listing, isLoading, isError } = useListing(listingId);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const { mutateAsync: sendEmail, isPending: isSendingEmail } =
+    useEmailSeller();
+  const { mutateAsync: removeListing, isPending: isRemoving } =
+    useDeleteListing();
+
+  const handleSendEmail = (payload: EmailSellerPayload) => {
+    if (!listingId) return;
+
+    showToast.promise(
+      sendEmail({ listingId, payload }).then(() => setEmailModalOpen(false)),
+      {
+        loading: "Sending email...",
+        success: `Your message has been sent to ${seller?.name ?? "the seller"}.`,
+        error: "Couldn't send email.",
+      },
+    );
+  };
+
+  if (isLoading) return <PageLoader />;
+  if (isError || !listing) {
     return (
-      <NotFoundState icon={<FiPackage className="w-5 h-5" />} message="Listing not found." />
+      <NotFoundState
+        icon={<FiPackage className="w-5 h-5" />}
+        message="Listing not found."
+      />
     );
   }
 
-  const isSold = listing.status === "Sold";
+  const isSold = listing.status === "sold";
+  const seller = listing.seller;
+  const specs = listing.specs ?? {};
+  const coordinates = listing.location?.coordinates;
+  const lat = coordinates?.[1];
+  const lng = coordinates?.[0];
+
+  const galleryImages = listing.images.map((image, index) => ({
+    id: String(index),
+    url: image.url,
+  }));
+
+  const handleRemoveListing = () => {
+    if (!listingId) return;
+
+    showToast.promise(
+      removeListing(listingId).then(() => navigate("/listings")),
+      {
+        loading: `Removing ${listing.title}...`,
+        success: `${listing.title} has been removed.`,
+        error: "Couldn't remove listing.",
+      },
+    );
+  };
 
   return (
     <div>
@@ -166,12 +141,11 @@ export default function ListingDetailPage() {
         <FaArrowLeftLong className="w-4 h-4" /> Back to Listings
       </button>
 
-      {/* header */}
       <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 mb-6">
         <div className="flex items-center gap-3">
           <span className="w-10 h-10 rounded-lg shrink-0">
             <img
-              src={listingHeader}
+              src={listing.images[0]?.url ?? listingHeader}
               alt="header-image"
               className="w-10 h-10 rounded-lg shrink-0"
             />
@@ -180,38 +154,45 @@ export default function ListingDetailPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-semibold text-[#1D2939] dark:text-gray-100">
-                {listing.name}
+                {listing.title}
               </h1>
               <span
-                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusPillClass[listing.status]}`}
+                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                  statusPillClass[listing.status] ?? statusFallback
+                }`}
               >
-                {listing.status}
+                {formatStatus(listing.status)}
               </span>
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#F6F6F6] dark:bg-gray-800 text-brand-gray-dark dark:text-gray-300">
-                {listing.category}
+                {listing.category?.title ?? NOT_IN_API_YET}
               </span>
             </div>
             <p className="text-xs text-brand-gray-light mt-0.5">
-              {listing.code} · Posted {listing.postedDate} ·{" "}
-              {listing.views.toLocaleString()} views · {listing.saves} saves
+              {listing.slug ?? NOT_IN_API_YET} · Posted{" "}
+              {formatDate(listing.createdAt)} · {listing.views.toLocaleString()}{" "}
+              views · {listing.saves} saves
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <Button
+            onClick={() => setEmailModalOpen(true)}
+            disabled={!seller}
             leftIcon={<IoMail className="w-4 h-4 text-brand-gray-dark" />}
           >
             Email Seller
           </Button>
           {/* {!isSold && <Button leftIcon={<FiFlag className="w-4 h-4" />}>Flag</Button>} */}
           <Button
+            onClick={handleRemoveListing}
+            disabled={isRemoving}
             leftIcon={<RiDeleteBin6Line className="w-4 h-4" />}
             bgColor="bg-[#FFFBFA] dark:bg-gray-900"
             textColor="text-[#F04438]"
             borderColor="border-[#F04438] dark:border-red-900"
           >
-            Remove Listing
+            {isRemoving ? "Removing..." : "Remove Listing"}
           </Button>
         </div>
       </div>
@@ -220,16 +201,19 @@ export default function ListingDetailPage() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-baseline gap-2">
           <span className="text-2xl font-bold text-[#16A34A]">
-            {listing.price}
+            {currency.format(listing.price)}
           </span>
           <span className="text-sm text-brand-gray-light">
-            {listing.condition}
+            {(specs.condition ?? listing.condition)
+              ? formatStatus(String(specs.condition ?? listing.condition))
+              : NOT_IN_API_YET}
           </span>
         </div>
+        {/* TODO: commission percent and payout are not returned by the API */}
         <p className="text-sm text-brand-gray-light">
-          Payout after {listing.commissionPercent} commission:{" "}
+          Payout after {NOT_IN_API_YET} commission:{" "}
           <span className="font-semibold text-brand-gray-dark dark:text-gray-100">
-            {listing.payoutAfterCommission}
+            {NOT_IN_API_YET}
           </span>
         </p>
       </div>
@@ -238,7 +222,7 @@ export default function ListingDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* left column */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <ImageGallery images={listing.images} />
+          <ImageGallery images={galleryImages} />
 
           {/* description */}
           <div className="detail-section-card border-none">
@@ -253,13 +237,15 @@ export default function ListingDetailPage() {
               <div>
                 <p className="text-xs text-brand-gray-light">Brand</p>
                 <p className="text-sm font-medium text-brand-gray-dark dark:text-gray-100">
-                  {listing.brand}
+                  {String(specs.brand ?? NOT_IN_API_YET)}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-brand-gray-light">Item Condition</p>
                 <p className="text-sm font-medium text-brand-gray-dark dark:text-gray-100">
-                  {listing.itemCondition}
+                  {specs.condition
+                    ? formatStatus(String(specs.condition))
+                    : NOT_IN_API_YET}
                 </p>
               </div>
               <div>
@@ -267,109 +253,58 @@ export default function ListingDetailPage() {
                   Quantity Available
                 </p>
                 <p className="text-sm font-medium text-brand-gray-dark dark:text-gray-100">
-                  {listing.quantityAvailable}
+                  {String(specs.quantity ?? NOT_IN_API_YET)}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-brand-gray-light">SKU</p>
                 <p className="text-sm font-medium text-brand-gray-dark dark:text-gray-100">
-                  {listing.sku}
+                  {String(specs.sku ?? NOT_IN_API_YET)}
                 </p>
               </div>
             </div>
           </div>
 
           {/* sale details - only when sold */}
-          {isSold && listing.saleDetails && (
+          {/* TODO: no saleDetails object in the API response yet */}
+          {isSold && (
             <div className="detail-section-card border-none">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide">
                   Sale Details
                 </p>
-                <a
-                  href="#"
-                  className="text-xs text-[#DC6803]  underline flex items-center gap-1"
-                >
-                  View Transaction <AiOutlineExport className="w-4 h-4" />
-                </a>
               </div>
               <div className="profile-info-row">
                 <span className="profile-info-label">Buyer</span>
-                <a
-                  href="#"
-                  className="text-sm text-brand-blue hover:underline-wavy"
-                >
-                  {listing.saleDetails.buyer}
-                </a>
+                <span className="profile-info-value">{NOT_IN_API_YET}</span>
               </div>
               <div className="profile-info-row">
                 <span className="profile-info-label">Amount Paid</span>
-                <span className="profile-info-value">
-                  {listing.saleDetails.amountPaid}
-                </span>
+                <span className="profile-info-value">{NOT_IN_API_YET}</span>
               </div>
               <div className="profile-info-row">
                 <span className="profile-info-label">Payment Method</span>
-                <span className="profile-info-value">
-                  {listing.saleDetails.paymentMethod}
-                </span>
+                <span className="profile-info-value">{NOT_IN_API_YET}</span>
               </div>
               <div className="profile-info-row">
                 <span className="profile-info-label">Transaction Status</span>
-                <span className="text-sm font-medium bg-[#ECFDF3] text-[#027A48] rounded-2xl">
-                  {listing.saleDetails.transactionStatus}
-                </span>
+                <span className="profile-info-value">{NOT_IN_API_YET}</span>
               </div>
               <div className="profile-info-row">
                 <span className="profile-info-label">Sold On</span>
-                <span className="profile-info-value">
-                  {listing.saleDetails.soldOn}
-                </span>
+                <span className="profile-info-value">{NOT_IN_API_YET}</span>
               </div>
             </div>
           )}
 
           {/* buyer review - only when sold */}
-          {isSold && listing.review && (
+          {/* TODO: no review object in the API response yet */}
+          {isSold && (
             <div className="detail-section-card border-none">
               <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-3">
                 Buyer Review
               </p>
-              <div className="flex items-center gap-2.5 mb-2">
-                <img
-                  src={avatarPlaceholder}
-                  alt=""
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-                <div>
-                  <a
-                    href="#"
-                    className="text-sm text-brand-blue hover:underline-wavy"
-                  >
-                    {listing.review.reviewerName}
-                  </a>
-                  <p className="text-xs text-brand-gray-light">
-                    {listing.review.reviewerId} · {listing.review.reviewerEmail}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-0.5 mb-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <span
-                    key={i}
-                    className={
-                      i < listing.review!.rating
-                        ? "text-[#F79009]"
-                        : "text-gray-200"
-                    }
-                  >
-                    ★
-                  </span>
-                ))}
-              </div>
-              <p className="text-sm text-brand-gray-dark dark:text-gray-300">
-                {listing.review.comment}
-              </p>
+              <p className="text-sm text-brand-gray-light">{NOT_IN_API_YET}</p>
             </div>
           )}
 
@@ -379,16 +314,16 @@ export default function ListingDetailPage() {
               Activity
             </p>
             <div className="flex flex-col">
-              {listing.activity.map((event) => (
+              {listing.recentActivity.map((event) => (
                 <div
-                  key={event.id}
+                  key={event._id}
                   className="border-l-2 border-[#BFDBFE] border-b border-b-gray-100 dark:border-b-gray-800 pl-3 py-3 mb-2"
                 >
                   <p className="text-sm font-medium text-brand-gray-dark dark:text-gray-100">
-                    {event.label}
+                    {formatEventLabel(event.event)}
                   </p>
                   <p className="text-xs text-brand-gray-light mt-0.5">
-                    {event.date}
+                    {formatDate(event.createdAt)}
                   </p>
                 </div>
               ))}
@@ -402,100 +337,127 @@ export default function ListingDetailPage() {
             <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-3">
               Location
             </p>
-            <ListingLocationMap
-              lat={listing.location.lat}
-              lng={listing.location.lng}
-              label={listing.location.landmark}
-            />
+            {lat !== undefined && lng !== undefined && (
+              <ListingLocationMap
+                lat={lat}
+                lng={lng}
+                label={listing.locationLabel ?? listing.address}
+              />
+            )}
             <p className="text-sm text-brand-gray-dark dark:text-gray-200 mt-3">
-              {listing.location.address}
+              {listing.address}
             </p>
-            <a
-              href={`https://www.google.com/maps?q=${listing.location.lat},${listing.location.lng}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block text-center w-full bg-[#BFDBFE] text-brand-blue text-sm font-medium py-2.5 rounded-lg mt-3 cursor-pointer"
-            >
-              Open in Google Maps
-            </a>
+            {lat !== undefined && lng !== undefined && (
+              <a
+                href={`https://www.google.com/maps?q=${lat},${lng}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-center w-full bg-[#BFDBFE] text-brand-blue text-sm font-medium py-2.5 rounded-lg mt-3 cursor-pointer"
+              >
+                Open in Google Maps
+              </a>
+            )}
           </div>
 
           <div className="detail-section-card border-none">
             <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-3">
               Seller
             </p>
-            <div className="flex items-center gap-2.5 mb-3">
-              <img
-                src={listing.seller.avatarUrl || avatarPlaceholder}
-                alt=""
-                className="w-10 h-10 rounded-full object-cover"
-              />
-              <div>
-                <p className="text-sm font-semibold text-brand-gray-dark dark:text-gray-100">
-                  {listing.seller.name}
-                </p>
-                <p className="text-xs text-brand-gray-light">
-                  {listing.seller.id} · {listing.seller.email} ·{" "}
-                  {listing.seller.company}
-                </p>
-              </div>
-            </div>
 
-            <div className="profile-info-row">
-              <span className="profile-info-label">Role</span>
-              <span className="profile-info-value">{listing.seller.role}</span>
-            </div>
-            <div className="profile-info-row">
-              <span className="profile-info-label">Status</span>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#ECFDF3] text-[#027A48] dark:bg-green-950 dark:text-green-400">
-                {listing.seller.status}
-              </span>
-            </div>
-            <div className="profile-info-row">
-              <span className="profile-info-label">Company</span>
-              <span className="profile-info-value">
-                {listing.seller.company}
-              </span>
-            </div>
-            <div className="profile-info-row">
-              <span className="profile-info-label">Total Listings</span>
-              <span className="profile-info-value">
-                {listing.seller.totalListings}
-              </span>
-            </div>
-            <div className="profile-info-row">
-              <span className="profile-info-label">Member Since</span>
-              <span className="profile-info-value">
-                {listing.seller.memberSince}
-              </span>
-            </div>
-            <div className="profile-info-row">
-              <span className="profile-info-label">Rating</span>
-              <span className="flex gap-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <span
-                    key={i}
-                    className={
-                      i < listing.seller.rating
-                        ? "text-[#F79009]"
-                        : "text-gray-200"
-                    }
-                  >
-                    ★
+            {!seller ? (
+              <p className="text-sm text-brand-gray-light">
+                No seller attached to this listing.
+              </p>
+            ) : (
+              <>
+                <div className="flex items-center gap-2.5 mb-3">
+                  <img
+                    src={avatarPlaceholder}
+                    alt=""
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-brand-gray-dark dark:text-gray-100">
+                      {seller.name}
+                    </p>
+                    <p className="text-xs text-brand-gray-light">
+                      {seller.id} · {seller.contact}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="profile-info-row">
+                  <span className="profile-info-label">Role</span>
+                  <span className="profile-info-value">
+                    {seller.role ?? NOT_IN_API_YET}
                   </span>
-                ))}
-              </span>
-            </div>
+                </div>
+                <div className="profile-info-row">
+                  <span className="profile-info-label">Status</span>
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      sellerStatusPillClass[seller.status] ?? statusFallback
+                    }`}
+                  >
+                    {formatStatus(seller.status)}
+                  </span>
+                </div>
+                {/* TODO: seller company is not returned by the API */}
+                <div className="profile-info-row">
+                  <span className="profile-info-label">Company</span>
+                  <span className="profile-info-value">{NOT_IN_API_YET}</span>
+                </div>
+                <div className="profile-info-row">
+                  <span className="profile-info-label">Total Listings</span>
+                  <span className="profile-info-value">
+                    {seller.totalListings}
+                  </span>
+                </div>
+                <div className="profile-info-row">
+                  <span className="profile-info-label">Member Since</span>
+                  <span className="profile-info-value">
+                    {formatDate(seller.createdAt)}
+                  </span>
+                </div>
+                <div className="profile-info-row">
+                  <span className="profile-info-label">Rating</span>
+                  <span className="flex gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <span
+                        key={i}
+                        className={
+                          i < Math.round(Number(seller.rating) || 0)
+                            ? "text-[#F79009]"
+                            : "text-gray-200"
+                        }
+                      >
+                        ★
+                      </span>
+                    ))}
+                  </span>
+                </div>
 
-            <button
-              onClick={() => navigate(`/users/${listing.seller.id}`)}
-              className="w-full bg-[#BFDBFE] text-brand-blue text-sm font-medium py-2.5 rounded-lg mt-3 cursor-pointer"
-            >
-              View All Listings
-            </button>
+                <button
+                  onClick={() => navigate(`/users/${seller.id}`)}
+                  className="w-full bg-[#BFDBFE] text-brand-blue text-sm font-medium py-2.5 rounded-lg mt-3 cursor-pointer"
+                >
+                  View All Listings
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
+
+      {emailModalOpen && seller && (
+        <EmailSellerModal
+          sellerName={seller.name}
+          listingTitle={listing.title}
+          isSubmitting={isSendingEmail}
+          onClose={() => setEmailModalOpen(false)}
+          onConfirm={handleSendEmail}
+        />
+      )}
     </div>
   );
 }

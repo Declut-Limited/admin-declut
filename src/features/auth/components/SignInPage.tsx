@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import AuthBrandPanel from "@/components/generic/AuthBrandPanel";
 import { useState } from "react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
@@ -8,6 +7,7 @@ import { RiLockPasswordFill } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
 import { useLogin } from "@/features/auth/queries";
 import { showToast } from "@/lib/utils/toast";
+import { getApiErrorMessage } from "@/lib/utils/getApiErrorMessage";
 
 export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -29,11 +29,12 @@ export default function SignInPage() {
           });
           navigate("/dashboard");
         },
-        onError: (error: any) => {
+        onError: (error) => {
           showToast.error("Sign in failed", {
-            description:
-              error?.response?.data?.message ??
+            description: getApiErrorMessage(
+              error,
               "Please check your credentials and try again.",
+            ),
           });
         },
       },

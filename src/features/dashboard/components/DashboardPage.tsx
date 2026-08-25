@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { IoMdArrowDropdown } from "react-icons/io";
-import type { StatCard } from "../types";
+import type { DashboardCards, DashboardPeriod, StatCard } from "../types";
 import { FiChevronDown } from "react-icons/fi";
 import type { IconType } from "react-icons";
 import { IoArrowUpCircle } from "react-icons/io5";
@@ -27,6 +27,7 @@ import avatarPlaceholder from "../../../assets/avatar.svg";
 import logo from "../../../assets/icons/logo.svg";
 import { useMe } from "@/features/auth/queries";
 import Skeleton from "@/components/generic/Skeleton";
+import { useDashboardInsights } from "../queries";
 
 interface CategoryDistribution {
   label: string;
@@ -74,65 +75,72 @@ const trendConfig: Record<StatCard["trend"], { icon: IconType; text: string }> =
     },
   };
 
-const periodOptions = [
-  "This Month",
-  "Last Month",
-  "Last 3 Months",
-  "This Year",
-  "Custom Range",
+const periodOptions: { label: string; value: DashboardPeriod }[] = [
+  { label: "Today", value: "today" },
+  { label: "This Week", value: "week" },
+  { label: "This Month", value: "month" },
+  { label: "This Year", value: "year" },
+  { label: "All Time", value: "all" },
 ];
 
-// placeholder data
-const stats: StatCard[] = [
-  {
-    label: "Revenue",
-    value: "₦48.2M",
-    meta: "12% vs prior period",
-    trend: "positive",
-  },
-  {
-    label: "Escrow Balance",
-    value: "₦312.7M",
-    meta: "held across 4,182 transactions",
-    trend: "neutral",
-  },
-  {
-    label: "Transaction Today",
-    value: "1,284",
-    meta: "8.1% increase",
-    trend: "positive",
-  },
-  {
-    label: "Pending Inspections",
-    value: "96",
-    meta: "34 expiring in <6H",
-    trend: "neutral",
-  },
-  {
-    label: "Open Disputes",
-    value: "2",
-    meta: "5 breaching SLA",
-    trend: "negative",
-  },
-  {
-    label: "No of Users",
-    value: "18,904",
-    meta: "840 this week",
-    trend: "positive",
-  },
-  {
-    label: "New Listings",
-    value: "3,412",
-    meta: "840 this week",
-    trend: "positive",
-  },
-  {
-    label: "Completed Transactions",
-    value: "₦4,240,000",
-    meta: "98.4% rejection rate",
-    trend: "neutral",
-  },
-];
+const currencyFormatter = new Intl.NumberFormat("en-NG", {
+  style: "currency",
+  currency: "NGN",
+  maximumFractionDigits: 0,
+});
+
+function buildStats(cards: DashboardCards): StatCard[] {
+  return [
+    {
+      label: "Total Revenue",
+      value: currencyFormatter.format(cards.totalRevenue),
+      meta: "gross platform revenue",
+      trend: "positive",
+    },
+    {
+      label: "Avg Order Value",
+      value: currencyFormatter.format(cards.avgOrderValue),
+      meta: "per completed transaction",
+      trend: "neutral",
+    },
+    {
+      label: "Total Transactions",
+      value: cards.totalTransactions.toLocaleString(),
+      meta: `${cards.completedTransactions} completed`,
+      trend: "positive",
+    },
+    {
+      label: "Completed Transactions",
+      value: cards.completedTransactions.toLocaleString(),
+      meta: "successfully settled",
+      trend: "positive",
+    },
+    {
+      label: "Disputed Transactions",
+      value: cards.disputedTransactions.toLocaleString(),
+      meta: "require review",
+      trend: "negative",
+    },
+    {
+      label: "Stalled Transactions",
+      value: cards.stalledTransactions.toLocaleString(),
+      meta: "awaiting action",
+      trend: "neutral",
+    },
+    {
+      label: "New Users",
+      value: cards.newUsers.toLocaleString(),
+      meta: "joined this period",
+      trend: "positive",
+    },
+    {
+      label: "Active Listings",
+      value: cards.activeListings.toLocaleString(),
+      meta: "currently live",
+      trend: "positive",
+    },
+  ];
+}
 
 const revenueData = [
   { month: "Jan", gross: 0, commission: 0 },
@@ -288,7 +296,9 @@ function formatNaira(value: number) {
 export default function DashboardPage() {
   const { data: me, isLoading } = useMe();
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
-  const [period, setPeriod] = useState("This Month");
+  const [period, setPeriod] = useState<DashboardPeriod>("month");
+  const { data: insights, isLoading: insightsLoading } =
+    useDashboardInsights(period);
   const [periodOpen, setPeriodOpen] = useState(false);
   const [chartPeriod, setChartPeriod] = useState<"Monthly" | "Quarterly">(
     "Monthly",
@@ -318,6 +328,10 @@ export default function DashboardPage() {
   }, []);
 
   const userName = me?.name ?? "";
+
+  const stats = insights ? buildStats(insights.cards) : [];
+  const periodLabel =
+    periodOptions.find((o) => o.value === period)?.label ?? "";
 
   return (
     <React.Fragment>
@@ -375,7 +389,7 @@ export default function DashboardPage() {
           <p className="text-sm text-[#888888] dark:text-gray-400">
             Showing data for:{" "}
             <span className="font-medium text-[#454545] dark:text-gray-100">
-              {period}
+              {periodLabel}
             </span>
           </p>
 
@@ -385,7 +399,7 @@ export default function DashboardPage() {
               onClick={() => setPeriodOpen((o) => !o)}
             >
               <img src={calendar} alt="calendar" className="w-4 h-4" />
-              {period}
+              {periodLabel}
               <FiChevronDown
                 className={`w-4 h-4 transition-transform ${periodOpen ? "rotate-180" : ""}`}
               />
@@ -395,14 +409,14 @@ export default function DashboardPage() {
               <div className="period-filter-dropdown">
                 {periodOptions.map((option) => (
                   <button
-                    key={option}
+                    key={option.value}
                     className="period-filter-option"
                     onClick={() => {
-                      setPeriod(option);
+                      setPeriod(option.value);
                       setPeriodOpen(false);
                     }}
                   >
-                    {option}
+                    {option.label}
                   </button>
                 ))}
               </div>
@@ -411,28 +425,38 @@ export default function DashboardPage() {
         </div>
 
         <div className="stats-grid">
-          {stats.map((stat) => (
-            <div key={stat.label} className="stats-card">
-              <div className="bg-[#FAFAFA] rounded-md p-2 dark:bg-[#FFFFE71A]">
-                <p className="stats-card-label">{stat.label}</p>
-                <p className="stats-card-value">{stat.value}</p>
-              </div>
+          {insightsLoading
+            ? Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="stats-card">
+                  <div className="bg-[#FAFAFA] rounded-md p-2 dark:bg-[#FFFFE71A]">
+                    <Skeleton className="h-3 w-24 mb-2" />
+                    <Skeleton className="h-6 w-20" />
+                  </div>
+                  <div className="stats-card-meta">
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                </div>
+              ))
+            : stats.map((stat) => (
+                <div key={stat.label} className="stats-card">
+                  <div className="bg-[#FAFAFA] rounded-md p-2 dark:bg-[#FFFFE71A]">
+                    <p className="stats-card-label">{stat.label}</p>
+                    <p className="stats-card-value">{stat.value}</p>
+                  </div>
 
-              <div className="stats-card-meta">
-                {(() => {
-                  const { icon: Icon, text } = trendConfig[stat.trend];
-                  return (
-                    <span
-                      className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0`}
-                    >
-                      <Icon className={`w-4 h-4 ${text}`} />
-                    </span>
-                  );
-                })()}
-                <span>{stat.meta}</span>
-              </div>
-            </div>
-          ))}
+                  <div className="stats-card-meta">
+                    {(() => {
+                      const { icon: Icon, text } = trendConfig[stat.trend];
+                      return (
+                        <span className="w-4 h-4 rounded-full flex items-center justify-center shrink-0">
+                          <Icon className={`w-4 h-4 ${text}`} />
+                        </span>
+                      );
+                    })()}
+                    <span>{stat.meta}</span>
+                  </div>
+                </div>
+              ))}
         </div>
       </div>
 

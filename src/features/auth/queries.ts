@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { getMe, login, logout } from "./api"
-import type { LoginPayload } from "./types"
+import { changePassword, forgotPassword, getMe, login, logout, resetPassword, verifyResetToken } from "./api"
+import type { ChangePasswordPayload, ForgotPasswordPayload, LoginPayload, ResetPasswordPayload } from "./types"
 import { useNavigate } from "react-router-dom"
 import { showToast } from "@/lib/utils/toast"
 
@@ -44,3 +44,30 @@ export const useMe = () => {
     staleTime: 5 * 60 * 1000, //30 min
   })
 }
+
+export const useForgotPassword = () => {
+  return useMutation({
+    mutationFn: (payload: ForgotPasswordPayload) => forgotPassword(payload),
+  });
+};
+
+export const useVerifyResetToken = (token: string | undefined) => {
+  return useQuery({
+    queryKey: ["auth", "verify-reset-token", token],
+    queryFn: () => verifyResetToken(token as string),
+    enabled: !!token,
+    retry: false,
+  });
+};
+
+export const useResetPassword = (token: string | undefined) => {
+  return useMutation({
+    mutationFn: (payload: ResetPasswordPayload) => resetPassword(token as string, payload),
+  });
+};
+
+export const useChangePassword = () => {
+  return useMutation({
+    mutationFn: (payload: ChangePasswordPayload) => changePassword(payload),
+  });
+};

@@ -41,3 +41,45 @@ export interface MeResponse {
   success: boolean
   data: AdminProfile
 }
+
+export interface ForgotPasswordPayload {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  success: boolean;
+  data: {
+    sent: boolean;
+  };
+}
+
+export interface VerifyResetTokenResponse {
+  success: boolean;
+  data: {
+    valid: boolean;
+    email?: string;
+  };
+}
+
+export interface ResetPasswordPayload {
+  newPassword: string;
+}
+
+export interface ResetPasswordResponse {
+  success: boolean;
+  data: {
+    reset: boolean;
+  };
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ChangePasswordResponse {
+  success: boolean;
+  data: {
+    changed: boolean;
+  };
+}

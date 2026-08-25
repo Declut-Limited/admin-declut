@@ -13,10 +13,35 @@ interface CategoryColumnCallbacks {
   onRemove: (category: CategoryRow) => void;
 }
 
-const statusPillClass: Record<CategoryRow["status"], string> = {
-  Active: "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
-  Hidden: "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800",
+const statusPillClass: Record<string, string> = {
+  active: "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
+  hidden:
+    "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800",
 };
+
+const statusFallback =
+  "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800";
+
+function formatStatus(status: string) {
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+// function formatSlug(slug: string) {
+//   return slug
+//     .split("-")
+//     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+//     .join(" ");
+// }
+
+function formatDate(iso: string) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export function createCategoryColumns(
   callbacks: CategoryColumnCallbacks,
@@ -29,8 +54,13 @@ export function createCategoryColumns(
         onClick: () => callbacks.onEdit(row),
       },
       {
-        label: row.status === "Hidden" ? "Show" : "Hide",
-        icon: row.status === "Hidden" ? <FiEye className="w-4 h-4" /> : <FiEyeOff className="w-4 h-4" />,
+        label: row.status === "hidden" ? "Show" : "Hide",
+        icon:
+          row.status === "hidden" ? (
+            <FiEye className="w-4 h-4" />
+          ) : (
+            <FiEyeOff className="w-4 h-4" />
+          ),
         onClick: () => callbacks.onToggleVisibility(row),
       },
       {
@@ -45,25 +75,42 @@ export function createCategoryColumns(
   return [
     {
       id: "select",
-      header: () => <input type="checkbox" className="rounded border-gray-300" />,
+      header: () => (
+        <input type="checkbox" className="rounded border-gray-300" />
+      ),
       cell: () => <input type="checkbox" className="rounded border-gray-300" />,
     },
-    { accessorKey: "name", header: "Category" },
-    { accessorKey: "listings", header: "Listings" },
+    { accessorKey: "title", header: "Category" },
+    // {
+    //   accessorKey: "slug",
+    //   header: "Slug",
+    //   cell: ({ row }) => formatSlug(row.original.slug),
+    // },
+    { accessorKey: "listingCount", header: "Listings" },
     {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => (
-        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusPillClass[row.original.status]}`}>
-          {row.original.status}
+        <span
+          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+            statusPillClass[row.original.status] ?? statusFallback
+          }`}
+        >
+          {formatStatus(row.original.status)}
         </span>
       ),
     },
-    { accessorKey: "created", header: "Created" },
+    {
+      accessorKey: "createdAt",
+      header: "Created",
+      cell: ({ row }) => formatDate(row.original.createdAt),
+    },
     {
       id: "actions",
       header: "Action",
-      cell: ({ row }) => <RowActionsMenu actions={getRowActions(row.original)} />,
+      cell: ({ row }) => (
+        <RowActionsMenu actions={getRowActions(row.original)} />
+      ),
     },
   ];
 }

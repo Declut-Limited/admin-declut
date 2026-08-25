@@ -1,10 +1,17 @@
 import { api } from "@/lib/api/client";
 import type {
+  ChangePasswordPayload,
+  ChangePasswordResponse,
+  ForgotPasswordPayload,
+  ForgotPasswordResponse,
   LoginPayload,
   LoginResponse,
   LogoutPayload,
   LogoutResponse,
   MeResponse,
+  ResetPasswordPayload,
+  ResetPasswordResponse,
+  VerifyResetTokenResponse,
 } from "./types";
 
 export const login = async (payload: LoginPayload): Promise<LoginResponse> => {
@@ -21,5 +28,25 @@ export const logout = async (
 
 export const getMe = async (): Promise<MeResponse> => {
   const { data } = await api.get("/admin/auth/me");
+  return data;
+};
+
+export const forgotPassword = async (payload: ForgotPasswordPayload): Promise<ForgotPasswordResponse> => {
+  const { data } = await api.post("/admin/auth/forgot-password", payload);
+  return data;
+};
+
+export const verifyResetToken = async (token: string): Promise<VerifyResetTokenResponse> => {
+  const { data } = await api.get(`/admin/auth/verify-reset-token/${token}`);
+  return data;
+};
+
+export const resetPassword = async (token: string, payload: ResetPasswordPayload): Promise<ResetPasswordResponse> => {
+  const { data } = await api.post(`/admin/auth/reset-password/${token}`, payload);
+  return data;
+};
+
+export const changePassword = async (payload: ChangePasswordPayload): Promise<ChangePasswordResponse> => {
+  const { data } = await api.patch("/admin/auth/change-password", payload);
   return data;
 };

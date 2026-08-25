@@ -1,13 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import PageHeader from "@/components/generic/PageHeader";
 import TabFilter from "@/components/generic/TabFilter";
 import TableToolbar from "@/components/generic/TableToolbar";
-import DateFilterDropdown from "@/components/generic/DateFilterDropdown";
 import FiltersButton from "@/components/generic/FiltersButton";
 import DataTable from "@/components/generic/DataTable";
 import Pagination from "@/components/generic/Pagination";
-import { FiChevronDown } from "react-icons/fi";
-import type { UserRow } from "../types";
 import Button from "@/components/generic/Button";
 import { PiExportFill } from "react-icons/pi";
 import { FaCirclePlus } from "react-icons/fa6";
@@ -16,64 +13,26 @@ import InviteUserModal from "@/features/users/components/InviteUserModal";
 import { createUserColumns } from "./columns";
 import SuspendUserModal from "./SuspendUserModal";
 import { useNavigate } from "react-router-dom";
-import { getYearOptions } from "@/lib/utils/getYearOptions";
+import {
+  useUsers,
+  useExportUsers,
+  useSuspendUser,
+  useReactivateUser,
+} from "../queries";
+import type { SuspendUserPayload, UserRow } from "../types";
+import { showToast } from "@/lib/utils/toast";
+import type { DateRange } from "@/components/generic/DateRangeFilter";
+import DateRangeFilter from "@/components/generic/DateRangeFilter";
+import { PAGE_SIZE } from "@/lib/constants/pagination";
 
-const tabs = ["All", "Active", "Suspended", "Banned", "Pending"];
-const yearOptions = getYearOptions();
-
-const users: UserRow[] = [
-  {
-    id: "1",
-    name: "Yussuf Ahmed",
-    email: "debra.holt@example.com",
-    role: "Buyer & Seller",
-    listings: 5,
-    status: "Active",
-    joined: "Apr 6, 2026",
-  },
-  {
-    id: "2",
-    name: "Emmanuel Amuneke",
-    email: "willie.jennings@example.com",
-    role: "Admin",
-    listings: 0,
-    status: "Active",
-    joined: "Apr 6, 2026",
-  },
-  {
-    id: "3",
-    name: "Ebubechukwu Agnes",
-    email: "bill.sanders@example.com",
-    role: "Buyer & Seller",
-    listings: 5,
-    status: "Pending",
-    joined: "Mar 6, 2026",
-  },
-  {
-    id: "4",
-    name: "Toluwani Bakare",
-    email: "michael.mitc@example.com",
-    role: "Buyer & Seller",
-    listings: 5,
-    status: "Active",
-    joined: "Feb 6, 2026",
-  },
-  {
-    id: "5",
-    name: "Hannah Pedro",
-    email: "sara.cruz@example.com",
-    role: "Buyer & Seller",
-    listings: 5,
-    status: "Suspended",
-    joined: "Jan 5, 2026",
-  },
-];
+const tabs = ["All", "Active", "Suspended", "Pending"];
 
 export default function UsersPage() {
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
-  const [year, setYear] = useState("2026");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
   const [role, setRole] = useState("");
 
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
@@ -81,35 +40,115 @@ export default function UsersPage() {
 
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    setDateRange({ from: "", to: "" });
+    setRole("");
+  };
+
+  const { data, isLoading } = useUsers({
+    page: currentPage,
+    limit: PAGE_SIZE,
+    status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
+    search: debouncedSearch || undefined,
+  });
+
+  const { mutateAsync: exportUsers, isPending: isExporting } = useExportUsers();
+  const { mutateAsync: suspendUser, isPending: isSuspending } =
+    useSuspendUser();
+  const { mutateAsync: reactivateUser } = useReactivateUser();
+
+  const users = useMemo(() => data?.results ?? [], [data?.results]);
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const columns = useMemo(
     () =>
       createUserColumns({
         onSuspend: (user) => setSuspendingUser(user),
-        onReactivate: (user) => console.log("reactivate", user.id), // TODO: wire real reactivate flow
+        onReactivate: (user) => {
+          showToast.promise(reactivateUser(user.id), {
+            loading: `Reactivating ${user.name}...`,
+            success: `${user.name} can now access their account.`,
+            error: "Couldn't reactivate user.",
+          });
+        },
         onViewDetails: (user) => navigate(`/users/${user.id}`),
       }),
-    [],
+    [navigate, reactivateUser],
   );
 
-  const handleConfirmSuspend = (data: {
-    reason: string;
-    duration: string;
-    outcome: string;
-    notes: string;
-  }) => {
-    // TODO: wire to usersApi.suspendUser once endpoint is confirmed
-    console.log("suspending", suspendingUser?.id, data);
-    setSuspendingUser(null);
+  const handleConfirmSuspend = (payload: SuspendUserPayload) => {
+    if (!suspendingUser) return;
+
+    showToast.promise(
+      suspendUser({ userId: suspendingUser.id, payload }).then(() =>
+        setSuspendingUser(null),
+      ),
+      {
+        loading: `Suspending ${suspendingUser.name}...`,
+        success: `${suspendingUser.name} has been suspended.`,
+        error: "Couldn't suspend user.",
+      },
+    );
   };
 
-  const filteredUsers = users.filter((user) => {
-    const matchesTab = activeTab === "All" || user.status === activeTab;
-    const matchesSearch =
-      user.name.toLowerCase().includes(search.toLowerCase()) ||
-      user.email.toLowerCase().includes(search.toLowerCase());
-    return matchesTab && matchesSearch;
-  });
+  const visibleUsers = useMemo(() => {
+    return users.filter((user) => {
+      if (role && user.role !== role) return false;
 
+      if (dateRange.from || dateRange.to) {
+        const joined = new Date(user.joinedAt).getTime();
+        if (Number.isNaN(joined)) return false;
+        if (
+          dateRange.from &&
+          joined < new Date(dateRange.from).setHours(0, 0, 0, 0)
+        )
+          return false;
+        if (
+          dateRange.to &&
+          joined > new Date(dateRange.to).setHours(23, 59, 59, 999)
+        )
+          return false;
+      }
+
+      return true;
+    });
+  }, [users, role, dateRange]);
+
+  const activeFilterCount =
+    (role ? 1 : 0) + (dateRange.from || dateRange.to ? 1 : 0);
+
+  const handleExport = () => {
+    showToast.promise(
+      exportUsers({
+        status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
+        search: debouncedSearch || undefined,
+      }),
+      {
+        loading: "Preparing export...",
+        success: "Export downloaded.",
+        error: "Export failed.",
+      },
+    );
+  };
   return (
     <div>
       <PageHeader
@@ -119,12 +158,10 @@ export default function UsersPage() {
           <>
             <Button
               leftIcon={<PiExportFill className="w-4 h-4 text-[#98A2B3]" />}
-              rightIcon={<FiChevronDown className="w-4 h-4 text-brand-gray-dark" />}
-              onClick={() => {
-                /* export logic */
-              }}
+              onClick={handleExport}
+              disabled={isExporting}
             >
-              Export
+              {isExporting ? "Exporting..." : "Export"}
             </Button>
 
             <Button
@@ -140,27 +177,23 @@ export default function UsersPage() {
         }
       />
 
-      <TabFilter tabs={tabs} active={activeTab} onChange={setActiveTab} />
+      <TabFilter tabs={tabs} active={activeTab} onChange={handleTabChange} />
 
-      <div className="overflow-hidden">
+      <div>
         <TableToolbar
           label="Users"
-          count={filteredUsers.length}
+          count={activeFilterCount > 0 ? visibleUsers.length : total}
           searchValue={search}
           onSearchChange={setSearch}
           searchPlaceholder="Search users..."
           filterSlot={
             <>
-              <DateFilterDropdown
-                value={year}
-                options={yearOptions}
-                onChange={setYear}
-              />
+              <DateRangeFilter value={dateRange} onChange={setDateRange} />
               <FiltersButton activeCount={role ? 1 : 0}>
                 <CustomSelect
                   label="Role"
                   value={role || "All Roles"}
-                  options={["All Roles", "Admin", "Buyer & Seller"]}
+                  options={["All Roles", "Admin", "User"]}
                   onChange={(val) => setRole(val === "All Roles" ? "" : val)}
                 />
               </FiltersButton>
@@ -168,23 +201,27 @@ export default function UsersPage() {
           }
         />
 
-        <DataTable data={filteredUsers} columns={columns} />
+        <DataTable
+          data={visibleUsers}
+          columns={columns}
+          isLoading={isLoading}
+          emptyMessage="No users found."
+        />
 
         <Pagination
           currentPage={currentPage}
-          totalPages={10}
-          onPageChange={setCurrentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
         />
       </div>
 
-      {/* invite user modal */}
       {inviteModalOpen && (
         <InviteUserModal onClose={() => setInviteModalOpen(false)} />
       )}
-
       {suspendingUser && (
         <SuspendUserModal
           userName={suspendingUser.name}
+          isSubmitting={isSuspending}
           onClose={() => setSuspendingUser(null)}
           onConfirm={handleConfirmSuspend}
         />

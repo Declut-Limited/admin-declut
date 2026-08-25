@@ -3,21 +3,37 @@ import { useState } from "react";
 import { IoMdMail } from "react-icons/io";
 import { FaKey } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useForgotPassword } from "@/features/auth/queries";
+import { showToast } from "@/lib/utils/toast";
+import { getApiErrorMessage } from "@/lib/utils/getApiErrorMessage";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
+  const { mutate: forgotPassword, isPending } = useForgotPassword();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    navigate("/resend-link");
+
+    forgotPassword(
+      { email },
+      {
+        onSuccess: () => {
+          navigate("/resend-link", { state: { email } });
+        },
+        onError: (error) => {
+          showToast.error("Something went wrong", {
+            description: getApiErrorMessage(error),
+          });
+        },
+      },
+    );
   };
 
   return (
     <div className="min-h-screen flex tracking-wide">
       <AuthBrandPanel />
 
-      {/* right form panel */}
       <div className="w-full lg:w-1/2 flex items-center justify-center bg-[#FCFCFD] dark:bg-gray-950 p-6">
         <form onSubmit={handleSubmit} className="w-full max-w-125">
           <div className="flex flex-col items-center text-center mb-8">
@@ -28,7 +44,7 @@ export default function ForgotPasswordPage() {
               Forgot password?
             </h2>
             <p className="text-sm text-brand-gray-light dark:text-gray-400 mt-1">
-              Enter your work email address and we’ll send you a secure password
+              Enter your work email address and we'll send you a secure password
               reset link.
             </p>
           </div>
@@ -42,21 +58,22 @@ export default function ForgotPasswordPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="auth-input"
-                //TODO: Uncomment later required
+                required
               />
             </div>
 
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
-              For security, we’ll only send a link if this email belongs to an
+              For security, we'll only send a link if this email belongs to an
               admin account.
             </p>
           </div>
 
           <button
             type="submit"
-            className="w-full bg-brand-blue text-white text-sm font-medium py-3 rounded-lg hover:bg-[#3F5EE0] transition-colors"
+            disabled={isPending}
+            className="w-full bg-brand-blue text-white text-sm font-medium py-3 rounded-lg hover:bg-[#3F5EE0] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Send Reset Link
+            {isPending ? "Sending..." : "Send Reset Link"}
           </button>
 
           <div className="flex justify-center">

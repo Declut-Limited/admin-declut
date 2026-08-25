@@ -5,18 +5,23 @@ import CustomSelect from "@/components/generic/CustomSelect";
 import Button from "@/components/generic/Button";
 
 interface AddCategoryModalProps {
+  isSubmitting?: boolean;
   onClose: () => void;
-  onSubmit: (data: { name: string; status: string }) => void;
+  onSubmit: (data: { title: string }) => void;
 }
 
-const statusOptions = ["Active", "Hidden"];
+export default function AddCategoryModal({
+  isSubmitting,
+  onClose,
+  onSubmit,
+}: AddCategoryModalProps) {
+  const [title, setTitle] = useState("");
 
-export default function AddCategoryModal({ onClose, onSubmit }: AddCategoryModalProps) {
-  const [name, setName] = useState("");
-  const [status, setStatus] = useState("Active");
+  const canSubmit = title.trim().length > 0;
 
   const handleSubmit = () => {
-    onSubmit({ name, status });
+    if (!canSubmit) return;
+    onSubmit({ title: title.trim() });
   };
 
   return (
@@ -37,11 +42,12 @@ export default function AddCategoryModal({ onClose, onSubmit }: AddCategoryModal
           </Button>
           <Button
             onClick={handleSubmit}
+            disabled={!canSubmit || isSubmitting}
             bgColor="bg-brand-blue hover:bg-[#3F5EE0]"
             textColor="text-white"
             borderColor="border-transparent"
           >
-            Add Category
+            {isSubmitting ? "Adding..." : "Add Category"}
           </Button>
         </>
       }
@@ -56,10 +62,18 @@ export default function AddCategoryModal({ onClose, onSubmit }: AddCategoryModal
             label="Category Name"
             required
             placeholder="e.g. Baby Products"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
           />
-          <CustomSelect label="Status" value={status} options={statusOptions} onChange={setStatus} />
+          {/* New categories are always created active — toggle from the table afterwards */}
+          <div className="pointer-events-none opacity-60">
+            <CustomSelect
+              label="Status"
+              value="Active"
+              options={["Active"]}
+              onChange={() => {}}
+            />
+          </div>
         </div>
       </div>
     </BaseModal>

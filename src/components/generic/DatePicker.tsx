@@ -10,9 +10,16 @@ interface DatePickerProps {
   onChange: (value: string) => void;
 }
 
-export default function DatePicker({ label, required, value, onChange }: DatePickerProps) {
+export default function DatePicker({
+  label,
+  required,
+  value,
+  onChange,
+}: DatePickerProps) {
   const [open, setOpen] = useState(false);
-  const [viewDate, setViewDate] = useState(() => (value ? new Date(value) : new Date()));
+  const [viewDate, setViewDate] = useState(() =>
+    value ? new Date(value) : new Date(),
+  );
   const ref = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -20,7 +27,8 @@ export default function DatePicker({ label, required, value, onChange }: DatePic
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -30,15 +38,21 @@ export default function DatePicker({ label, required, value, onChange }: DatePic
   const month = viewDate.getMonth();
   const firstDayOfMonth = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const monthLabel = viewDate.toLocaleString("default", { month: "long", year: "numeric" });
+  const monthLabel = viewDate.toLocaleString("default", {
+    month: "long",
+    year: "numeric",
+  });
   const selectedDate = value ? new Date(value) : null;
   const displayValue = selectedDate
-    ? selectedDate.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" })
+    ? selectedDate.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
     : "dd/mm/yyyy";
-
   const handleSelectDay = (day: number) => {
     const picked = new Date(year, month, day);
-    const iso = picked.toISOString().split("T")[0];
+    const iso = `${picked.getFullYear()}-${String(picked.getMonth() + 1).padStart(2, "0")}-${String(picked.getDate()).padStart(2, "0")}`;
     onChange(iso);
     setOpen(false);
   };
@@ -76,7 +90,9 @@ export default function DatePicker({ label, required, value, onChange }: DatePic
               >
                 <FiChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-sm font-medium text-brand-gray-dark dark:text-gray-100">{monthLabel}</span>
+              <span className="text-sm font-medium text-brand-gray-dark dark:text-gray-100">
+                {monthLabel}
+              </span>
               <button
                 type="button"
                 onClick={() => setViewDate(new Date(year, month + 1, 1))}

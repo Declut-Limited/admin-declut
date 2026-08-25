@@ -2,64 +2,141 @@ import { useMemo, useState } from "react";
 import PageHeader from "@/components/generic/PageHeader";
 import TabFilter from "@/components/generic/TabFilter";
 import TableToolbar from "@/components/generic/TableToolbar";
-import DateFilterDropdown from "@/components/generic/DateFilterDropdown";
+import DateRangeFilter, {
+  type DateRange,
+} from "@/components/generic/DateRangeFilter";
 import FiltersButton from "@/components/generic/FiltersButton";
 import CustomSelect from "@/components/generic/CustomSelect";
 import DataTable from "@/components/generic/DataTable";
 import Pagination from "@/components/generic/Pagination";
 import Button from "@/components/generic/Button";
 import { PiExportFill } from "react-icons/pi";
-import { FiChevronDown } from "react-icons/fi";
+// import { FiChevronDown } from "react-icons/fi";
 import { FaCirclePlus } from "react-icons/fa6";
 import { createCategoryColumns } from "./columns";
 import AddCategoryModal from "./AddCategoryModal";
-import type { CategoryRow } from "../types";
-import { getYearOptions } from "@/lib/utils/getYearOptions";
-
+import { PAGE_SIZE } from "@/lib/constants/pagination";
+import { showToast } from "@/lib/utils/toast";
+import {
+  useCategories,
+  useCreateCategory,
+  useToggleCategoryStatus,
+  useExportCategories,
+} from "../queries";
 
 const tabs = ["All", "Active", "Hidden"];
-const yearOptions = getYearOptions();
-
-
-const categories: CategoryRow[] = [
-  { id: "1", name: "Electronics", listings: "2,364", status: "Hidden", created: "Aug 24, 2025" },
-  { id: "2", name: "Fashion", listings: "2,870", status: "Active", created: "Feb 28, 2026" },
-  { id: "3", name: "Home & Living", listings: "-", status: "Hidden", created: "Feb 7, 2026" },
-  { id: "4", name: "Vehicles", listings: "2,852", status: "Active", created: "Feb 1, 2025" },
-  { id: "5", name: "Real Estate", listings: "2,017", status: "Active", created: "Jan 9, 2025" },
-  { id: "6", name: "Beauty", listings: "234", status: "Hidden", created: "May 21, 2026" },
-  { id: "7", name: "Groceries", listings: "568", status: "Active", created: "Oct 11, 2025" },
-  { id: "8", name: "Furniture", listings: "45", status: "Hidden", created: "Mar 26, 2026" },
-];
 
 export default function CategoriesPage() {
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
-  const [year, setYear] = useState("2026");
+  const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
   const [addModalOpen, setAddModalOpen] = useState(false);
 
+  const { data: categories = [], isLoading } = useCategories();
+  const { mutateAsync: createCategory, isPending: isCreating } =
+    useCreateCategory();
+  const { mutateAsync: toggleStatus } = useToggleCategoryStatus();
+  const { mutateAsync: exportCategories } = useExportCategories();
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusFilterChange = (val: string) => {
+    setStatusFilter(val === "All Statuses" ? "" : val);
+    setCurrentPage(1);
+  };
+
+  const handleDateRangeChange = (range: DateRange) => {
+    setDateRange(range);
+    setCurrentPage(1);
+  };
   const columns = useMemo(
     () =>
       createCategoryColumns({
-        onEdit: (category) => console.log("edit", category.id), // TODO: wire edit flow
-        onToggleVisibility: (category) => console.log("toggle visibility", category.id), // TODO: wire visibility toggle
-        onRemove: (category) => console.log("remove", category.id), // TODO: wire remove flow / confirm modal
+        onEdit: (category) => console.log("edit", category.id), // TODO: no update endpoint yet
+        onToggleVisibility: (category) => {
+          const goingHidden = category.status === "active";
+          showToast.promise(toggleStatus(category.id), {
+            loading: `${goingHidden ? "Hiding" : "Showing"} ${category.title}...`,
+            success: `${category.title} is now ${goingHidden ? "hidden" : "active"}.`,
+            error: "Couldn't update category.",
+          });
+        },
+        onRemove: (category) => console.log("remove", category.id), // TODO: no delete endpoint yet
       }),
-    [],
+    [toggleStatus],
   );
 
-  const filteredCategories = categories.filter((category) => {
-    const matchesTab = activeTab === "All" || category.status === activeTab;
-    const matchesSearch = category.name.toLowerCase().includes(search.toLowerCase());
-    return matchesTab && matchesSearch;
-  });
+  const filteredCategories = useMemo(() => {
+    return categories.filter((category) => {
+      const matchesTab =
+        activeTab === "All" || category.status === activeTab.toLowerCase();
 
-  const handleAddCategory = (data: { name: string; status: string }) => {
-    // TODO: wire to categoriesApi.create
-    console.log("adding category", data);
-    setAddModalOpen(false);
+      const matchesSearch = category.title
+        .toLowerCase()
+        .includes(search.toLowerCase());
+
+      const matchesStatus =
+        !statusFilter || category.status === statusFilter.toLowerCase();
+
+      let matchesDate = true;
+      if (dateRange.from || dateRange.to) {
+        const created = new Date(category.createdAt).getTime();
+        if (Number.isNaN(created)) matchesDate = false;
+        else {
+          if (
+            dateRange.from &&
+            created < new Date(dateRange.from).setHours(0, 0, 0, 0)
+          )
+            matchesDate = false;
+          if (
+            dateRange.to &&
+            created > new Date(dateRange.to).setHours(23, 59, 59, 999)
+          )
+            matchesDate = false;
+        }
+      }
+
+      return matchesTab && matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [categories, activeTab, search, statusFilter, dateRange]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredCategories.length / PAGE_SIZE),
+  );
+
+  const paginatedCategories = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredCategories.slice(start, start + PAGE_SIZE);
+  }, [filteredCategories, currentPage]);
+
+  const handleAddCategory = (data: { title: string }) => {
+    showToast.promise(
+      createCategory(data).then(() => setAddModalOpen(false)),
+      {
+        loading: `Adding ${data.title}...`,
+        success: `${data.title} has been added.`,
+        error: "Couldn't add category.",
+      },
+    );
+  };
+
+  const handleExport = () => {
+    showToast.promise(exportCategories(), {
+      loading: "Preparing export...",
+      success: "Export downloaded.",
+      error: "Export failed.",
+    });
   };
 
   return (
@@ -71,10 +148,10 @@ export default function CategoriesPage() {
           <>
             <Button
               leftIcon={<PiExportFill className="w-4 h-4 text-[#98A2B3]" />}
-              rightIcon={<FiChevronDown className="w-4 h-4 text-brand-gray-dark" />}
-              onClick={() => {
-                /* export logic */
-              }}
+              // rightIcon={
+              //   <FiChevronDown className="w-4 h-4 text-brand-gray-dark" />
+              // }
+              onClick={handleExport}
             >
               Export
             </Button>
@@ -90,38 +167,53 @@ export default function CategoriesPage() {
           </>
         }
       />
+      <TabFilter tabs={tabs} active={activeTab} onChange={handleTabChange} />
 
-      <TabFilter tabs={tabs} active={activeTab} onChange={setActiveTab} />
-
-      <div className="overflow-hidden">
+      <div>
         <TableToolbar
           label="Categories"
           count={filteredCategories.length}
           searchValue={search}
-          onSearchChange={setSearch}
+          onSearchChange={handleSearchChange}
           searchPlaceholder="Search categories..."
           filterSlot={
             <>
-              <DateFilterDropdown value={year} options={yearOptions} onChange={setYear} />
+              <DateRangeFilter
+                value={dateRange}
+                onChange={handleDateRangeChange}
+              />
               <FiltersButton activeCount={statusFilter ? 1 : 0}>
                 <CustomSelect
                   label="Status"
                   value={statusFilter || "All Statuses"}
                   options={["All Statuses", "Active", "Hidden"]}
-                  onChange={(val) => setStatusFilter(val === "All Statuses" ? "" : val)}
+                  onChange={handleStatusFilterChange}
                 />
               </FiltersButton>
             </>
           }
         />
 
-        <DataTable data={filteredCategories} columns={columns} />
+        <DataTable
+          data={paginatedCategories}
+          columns={columns}
+          isLoading={isLoading}
+          emptyMessage="No categories found."
+        />
 
-        <Pagination currentPage={currentPage} totalPages={5} onPageChange={setCurrentPage} />
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {addModalOpen && (
-        <AddCategoryModal onClose={() => setAddModalOpen(false)} onSubmit={handleAddCategory} />
+        <AddCategoryModal
+          isSubmitting={isCreating}
+          onClose={() => setAddModalOpen(false)}
+          onSubmit={handleAddCategory}
+        />
       )}
     </div>
   );

@@ -2,168 +2,168 @@ import { useMemo, useState } from "react";
 import PageHeader from "@/components/generic/PageHeader";
 import TabFilter from "@/components/generic/TabFilter";
 import TableToolbar from "@/components/generic/TableToolbar";
-import DateFilterDropdown from "@/components/generic/DateFilterDropdown";
+import DateRangeFilter, {
+  type DateRange,
+} from "@/components/generic/DateRangeFilter";
 import FiltersButton from "@/components/generic/FiltersButton";
 import CustomSelect from "@/components/generic/CustomSelect";
 import DataTable from "@/components/generic/DataTable";
 import Pagination from "@/components/generic/Pagination";
 import Button from "@/components/generic/Button";
 import { PiExportFill } from "react-icons/pi";
-import { FiChevronDown } from "react-icons/fi";
+// import { FiChevronDown } from "react-icons/fi";
 import { createReviewColumns } from "./columns";
 import ViewReviewModal from "./ViewReviewModal";
 import type { ReviewRow } from "../types";
-import { getYearOptions } from "@/lib/utils/getYearOptions";
-import listingHeader from "@/assets/listing-header.jpg";
+import { PAGE_SIZE } from "@/lib/constants/pagination";
+import { showToast } from "@/lib/utils/toast";
+import {
+  useReviews,
+  useResolveReview,
+  useFlagReview,
+  useDeleteReview,
+} from "../queries";
 
-const tabs = ["All"];
-const yearOptions = getYearOptions();
-
-
-const reviews: ReviewRow[] = [
-  {
-    id: "1",
-    reviewerName: "Toluwani Bakare",
-    reviewerId: "USR-001",
-    reviewerEmail: "toluwani@mail.com",
-    reviewerCompany: "Lagos Mart",
-    listingName: "iPad Pro 2017 Model",
-    listingCode: "LST-011",
-    listingSubmittedDate: "Aug 24, 2025",
-    listingImageUrl: listingHeader,
-    rating: 4,
-    comment: "The product exceeded my expectations! It arrived on time and I loved it",
-    status: "Published",
-    date: "Aug 24, 2025",
-  },
-  {
-    id: "2",
-    reviewerName: "Hannah Pedro",
-    reviewerId: "USR-002",
-    reviewerEmail: "hannah@mail.com",
-    reviewerCompany: "Delta Electronics",
-    listingName: "Gopro hero 7 (with receipt)",
-    listingCode: "LST-012",
-    listingSubmittedDate: "Feb 28, 2026",
-    rating: 3,
-    comment: "I was disappointed with my purchase. The item did not...",
-    status: "Published",
-    date: "Feb 28, 2026",
-  },
-  {
-    id: "3",
-    reviewerName: "Oyebamiji Oluwasola",
-    reviewerId: "USR-003",
-    reviewerEmail: "oyebamiji@mail.com",
-    reviewerCompany: "Coastal Goods Ltd",
-    listingName: "Brand New Bike, Local buyer or International buyer",
-    listingCode: "LST-013",
-    listingSubmittedDate: "Feb 7, 2026",
-    rating: 4,
-    comment: "Fantastic quality! I love how it fits perfectly and works ac...",
-    status: "Published",
-    date: "Feb 7, 2026",
-  },
-  {
-    id: "4",
-    reviewerName: "Femi Babalola",
-    reviewerId: "USR-004",
-    reviewerEmail: "femi@mail.com",
-    reviewerCompany: "Zenith Traders",
-    listingName: "Playstation 4 Limited Edition (...",
-    listingCode: "LST-014",
-    listingSubmittedDate: "Feb 1, 2025",
-    rating: 4,
-    comment: "Not what I expected. The item was damaged upon arriv...",
-    status: "Published",
-    date: "Feb 1, 2025",
-  },
-  {
-    id: "5",
-    reviewerName: "Tolani Bayode",
-    reviewerId: "USR-005",
-    reviewerEmail: "tolani@mail.com",
-    reviewerCompany: "Lagos Mart",
-    listingName: "Dell Computer Monitor",
-    listingCode: "LST-015",
-    listingSubmittedDate: "Jan 9, 2025",
-    rating: 4,
-    comment: "Great value for the price! It performs well and I am very s...",
-    status: "Published",
-    date: "Jan 9, 2025",
-  },
-  {
-    id: "6",
-    reviewerName: "Folasayo Ogunnaike",
-    reviewerId: "USR-006",
-    reviewerEmail: "folasayo@mail.com",
-    reviewerCompany: "Delta Electronics",
-    listingName: "Coach Tabby 26 for sale",
-    listingCode: "LST-016",
-    listingSubmittedDate: "May 21, 2026",
-    rating: 1,
-    comment: "The product was okay, but it didn't live up to the hype. I...",
-    status: "Flagged",
-    date: "May 21, 2026",
-  },
-  {
-    id: "7",
-    reviewerName: "Emmanuel Amuneke",
-    reviewerId: "USR-007",
-    reviewerEmail: "emmanuel@mail.com",
-    reviewerCompany: "Coastal Goods Ltd",
-    listingName: "Heimer Miller Sofa (Mint Condi...",
-    listingCode: "LST-017",
-    listingSubmittedDate: "Oct 11, 2025",
-    rating: 4.5,
-    comment: "Absolutely love it! It works perfectly and has made my lif...",
-    status: "Published",
-    date: "Oct 11, 2025",
-  },
-  {
-    id: "8",
-    reviewerName: "Ebubechukwu Agnes",
-    reviewerId: "USR-008",
-    reviewerEmail: "ebube@mail.com",
-    reviewerCompany: "Zenith Traders",
-    listingName: "Macbook Pro 16 inch (2020) F...",
-    listingCode: "LST-018",
-    listingSubmittedDate: "Mar 26, 2026",
-    rating: 3,
-    comment: "I regret buying this. It broke after just a few uses and cus...",
-    status: "Published",
-    date: "Mar 26, 2026",
-  },
-];
+const tabs = ["All", "Visible", "Resolved", "Flagged"];
 
 export default function ReviewsPage() {
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
-  const [year, setYear] = useState("2026");
+  const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
   const [viewingReview, setViewingReview] = useState<ReviewRow | null>(null);
+
+  const { data, isLoading } = useReviews({
+    page: currentPage,
+    limit: PAGE_SIZE,
+  });
+
+  const { mutateAsync: resolveReview, isPending: isResolving } =
+    useResolveReview();
+  const { mutateAsync: flagReview, isPending: isFlagging } = useFlagReview();
+  const { mutateAsync: removeReview } = useDeleteReview();
+
+  const handleFlagFromModal = () => {
+    if (!viewingReview) return;
+
+    showToast.promise(
+      flagReview(viewingReview._id).then(() => setViewingReview(null)),
+      {
+        loading: "Flagging review...",
+        success: "Review flagged.",
+        error: "Couldn't flag review.",
+      },
+    );
+  };
+
+  const reviews = useMemo(() => data?.results ?? [], [data?.results]);
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusFilterChange = (val: string) => {
+    setStatusFilter(val === "All Statuses" ? "" : val);
+    setCurrentPage(1);
+  };
+
+  const handleDateRangeChange = (range: DateRange) => {
+    setDateRange(range);
+    setCurrentPage(1);
+  };
 
   const columns = useMemo(
     () =>
       createReviewColumns({
         onView: (review) => setViewingReview(review),
-        onResolve: (review) => console.log("resolve", review.id), // TODO: wire resolve flow
+        onResolve: (review) => {
+          showToast.promise(resolveReview(review._id), {
+            loading: "Resolving review...",
+            success: "Review resolved.",
+            error: "Couldn't resolve review.",
+          });
+        },
+        onFlag: (review) => {
+          showToast.promise(flagReview(review._id), {
+            loading: "Flagging review...",
+            success: "Review flagged.",
+            error: "Couldn't flag review.",
+          });
+        },
+        onRemove: (review) => {
+          showToast.promise(removeReview(review._id), {
+            loading: "Removing review...",
+            success: "Review removed.",
+            error: "Couldn't remove review.",
+          });
+        },
       }),
-    [],
+    [resolveReview, flagReview, removeReview],
   );
 
-  const filteredReviews = reviews.filter((review) => {
-    const matchesSearch =
-      review.reviewerName.toLowerCase().includes(search.toLowerCase()) ||
-      review.listingName.toLowerCase().includes(search.toLowerCase());
-    return matchesSearch;
-  });
+  const visibleReviews = useMemo(() => {
+    return reviews.filter((review) => {
+      const matchesTab =
+        activeTab === "All" || review.status === activeTab.toLowerCase();
+
+      const query = search.toLowerCase();
+      const matchesSearch =
+        !query ||
+        (review.reviewer?.name.toLowerCase().includes(query) ?? false) ||
+        (review.listing?.title.toLowerCase().includes(query) ?? false) ||
+        review.comment.toLowerCase().includes(query);
+
+      const matchesStatus =
+        !statusFilter || review.status === statusFilter.toLowerCase();
+
+      let matchesDate = true;
+      if (dateRange.from || dateRange.to) {
+        const created = new Date(review.createdAt).getTime();
+        if (Number.isNaN(created)) matchesDate = false;
+        else {
+          if (
+            dateRange.from &&
+            created < new Date(dateRange.from).setHours(0, 0, 0, 0)
+          )
+            matchesDate = false;
+          if (
+            dateRange.to &&
+            created > new Date(dateRange.to).setHours(23, 59, 59, 999)
+          )
+            matchesDate = false;
+        }
+      }
+
+      return matchesTab && matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [reviews, activeTab, search, statusFilter, dateRange]);
+
+  const isFiltering =
+    activeTab !== "All" ||
+    Boolean(search) ||
+    Boolean(statusFilter) ||
+    Boolean(dateRange.from || dateRange.to);
 
   const handleResolveFromModal = () => {
-    // TODO: wire to reviewsApi.resolve once endpoint is confirmed
-    console.log("resolving", viewingReview?.id);
-    setViewingReview(null);
+    if (!viewingReview) return;
+
+    showToast.promise(
+      resolveReview(viewingReview._id).then(() => setViewingReview(null)),
+      {
+        loading: "Resolving review...",
+        success: "Review resolved.",
+        error: "Couldn't resolve review.",
+      },
+    );
   };
 
   return (
@@ -174,9 +174,11 @@ export default function ReviewsPage() {
         actions={
           <Button
             leftIcon={<PiExportFill className="w-4 h-4 text-[#98A2B3]" />}
-            rightIcon={<FiChevronDown className="w-4 h-4 text-brand-gray-dark" />}
+            // rightIcon={
+            //   <FiChevronDown className="w-4 h-4 text-brand-gray-dark" />
+            // }
             onClick={() => {
-              /* export logic */
+              /* TODO: no reviews export endpoint yet */
             }}
           >
             Export
@@ -184,50 +186,51 @@ export default function ReviewsPage() {
         }
       />
 
-      <TabFilter tabs={tabs} active={activeTab} onChange={setActiveTab} />
+      <TabFilter tabs={tabs} active={activeTab} onChange={handleTabChange} />
 
-      <div className="overflow-hidden">
-        <TableToolbar
-          label="Reviews"
-          count={filteredReviews.length}
-          searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search categories..."
-          filterSlot={
-            <>
-              <DateFilterDropdown
-                value={year}
-                options={yearOptions}
-                onChange={setYear}
+      <TableToolbar
+        label="Reviews"
+        count={isFiltering ? visibleReviews.length : total}
+        searchValue={search}
+        onSearchChange={handleSearchChange}
+        searchPlaceholder="Search reviews..."
+        filterSlot={
+          <>
+            <DateRangeFilter
+              value={dateRange}
+              onChange={handleDateRangeChange}
+            />
+            <FiltersButton activeCount={statusFilter ? 1 : 0}>
+              <CustomSelect
+                label="Status"
+                value={statusFilter || "All Statuses"}
+                options={["All Statuses", "Visible", "Flagged", "Hidden"]}
+                onChange={handleStatusFilterChange}
               />
-              <FiltersButton activeCount={statusFilter ? 1 : 0}>
-                <CustomSelect
-                  label="Status"
-                  value={statusFilter || "All Statuses"}
-                  options={["All Statuses", "Published", "Flagged"]}
-                  onChange={(val) =>
-                    setStatusFilter(val === "All Statuses" ? "" : val)
-                  }
-                />
-              </FiltersButton>
-            </>
-          }
-        />
+            </FiltersButton>
+          </>
+        }
+      />
 
-        <DataTable data={filteredReviews} columns={columns} />
+      <DataTable
+        data={visibleReviews}
+        columns={columns}
+        isLoading={isLoading}
+        emptyMessage="No reviews found."
+      />
 
-        <Pagination
-          currentPage={currentPage}
-          totalPages={5}
-          onPageChange={setCurrentPage}
-        />
-      </div>
-
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
       {viewingReview && (
         <ViewReviewModal
           review={viewingReview}
+          isSubmitting={isResolving || isFlagging}
           onClose={() => setViewingReview(null)}
           onResolve={handleResolveFromModal}
+          onFlag={handleFlagFromModal}
         />
       )}
     </div>

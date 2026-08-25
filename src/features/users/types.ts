@@ -1,12 +1,139 @@
+export type UserStatus = "active" | "pending" | "suspended" | "banned";
+
 export interface UserRow {
+  type: "user" | "admin";
   id: string;
+   slug?: string; 
   name: string;
   email: string;
-  avatarUrl?: string;
   role: string;
-  listings: number;
-  status: "Active" | "Pending" | "Suspended";
-  joined: string;
+  listingsCount: number;
+  status: UserStatus;
+  joinedAt: string;
+}
+
+export interface UsersListParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  search?: string;
+}
+
+export interface UsersListResponse {
+  success: boolean;
+  data: {
+    results: UserRow[];
+    total: number;
+    page: number;
+    limit: number;
+  };
+}
+
+export interface SuspendUserPayload {
+  reason: string;
+  durationDays: number | null;
+  outcome: string;
+  notes?: string;
+}
+
+export interface PermissionSet {
+  view: boolean;
+  write: boolean;
+  delete: boolean;
+}
+
+export interface AdminUserDetails {
+  role: string;
+  title: string;
+  status: UserStatus;
+  createdAt: string;
+  email: string;
+  name?: string; // TODO: not returned by the API yet
+  permissions: Record<string, PermissionSet>;
+}
+
+export interface RegularUserDetails {
+  role: string;
+  status: UserStatus;
+  createdAt: string;
+  rating: string;
+  verification: string | null;
+  kycStatus: KycStatus; 
+  name?: string; // TODO: not returned by the API yet
+  slug: string;
+  email: string;
+  phone: string;
+}
+export interface UserInsights {
+  listings: { total: number; active: number };
+  sales: { total: number; completed: number };
+  purchases: { total: number; amountSpent: number };
+  rating: { value: string; reviewCount: number };
+}
+export interface UserRecentTransaction {
+  transactionId: string;
+  role: "seller" | "buyer";
+  direction: "inflow" | "outflow";
+  amount: number;
+  status: string;
+  createdAt: string;
+}
+
+export type UserDetailData =
+  | {
+      type: "admin";
+      details: AdminUserDetails;
+    }
+  | {
+      type: "user";
+      details: RegularUserDetails;
+      insights: UserInsights;
+      recentTransactions: UserRecentTransaction[];
+    };
+
+export interface UserDetailResponse {
+  success: boolean;
+  data: UserDetailData;
+}
+
+export interface UserListing {
+  _id: string;
+  seller: {
+    id: string;
+    name: string;
+    contact: string;
+    role: string;
+    status: string;
+    listingsCount: number;
+    createdAt: string;
+    rating: string;
+  };
+  title: string;
+  description: string;
+  category: { _id: string; title: string; slug: string };
+  condition: string;
+  price: number;
+  images: string[];
+  location: { type: string; coordinates: [number, number] };
+  locationLabel: string;
+  status: string;
+  slug: string;
+  views: number;
+  saves: number;
+  priceHistory: { price: number; changedAt: string }[];
+  specs: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserListingsResponse {
+  success: boolean;
+  data: {
+    results: UserListing[];
+    total: number;
+    page: number;
+    limit: number;
+  };
 }
 
 export interface ModulePermission {
@@ -48,31 +175,8 @@ export interface UserTransactionRow {
   amount: string;
 }
 
-export interface UserDetail {
-  id: string;
-  name: string;
-  email: string;
-  avatarUrl?: string;
-  status: "Active" | "Pending" | "Suspended";
-  accountType: "Buyer/Seller" | "Admin";
-  company: string;
-  memberSince: string;
-  rating: number;
-  reviewCount: number;
-  verification: {
-    type: string;
-    submitted: string;
-    status: "Approved" | "Rejected" | "Pending";
-  };
-  stats: {
-    totalListings: number;
-    activeListings: number;
-    salesAsSeller: string;
-    completedSales: number;
-    purchasesAsBuyer: number;
-    purchaseAmount: string;
-  };
-  listings: UserListingRow[];
-  transactions: UserTransactionRow[];
-  permissions?: ModulePermission[]; // only for Admin
+export type KycStatus = "unverified" | "pending" | "verified" | "rejected";
+
+export interface UpdateKycPayload {
+  status: KycStatus;
 }

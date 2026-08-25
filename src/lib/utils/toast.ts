@@ -1,4 +1,5 @@
 import { toast as sonnerToast } from "sonner";
+import { getApiErrorMessage } from "./getApiErrorMessage";
 
 interface ToastOptions {
   description?: string;
@@ -13,6 +14,15 @@ export const showToast = {
     sonnerToast.info(title, { ...options, icon: null }),
   warning: (title: string, options?: ToastOptions) =>
     sonnerToast.warning(title, { ...options, icon: null }),
+  promise: <T>(
+    promise: Promise<T>,
+    messages: { loading: string; success: string; error?: string },
+  ) =>
+    sonnerToast.promise(promise, {
+      loading: messages.loading,
+      success: messages.success,
+      error: (err: unknown) => getApiErrorMessage(err, messages.error),
+    }),
 };
 
 //USAGE

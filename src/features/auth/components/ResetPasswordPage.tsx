@@ -4,7 +4,11 @@ import { FiEye, FiEyeOff, FiCheck } from "react-icons/fi";
 import { FaArrowLeftLong } from "react-icons/fa6";
 import lockCircle from "../../../assets/icons/lock-circle.svg";
 import { RiLockPasswordFill } from "react-icons/ri";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams, Navigate } from "react-router-dom";
+import { useVerifyResetToken, useResetPassword } from "@/features/auth/queries";
+import { showToast } from "@/lib/utils/toast";
+import PageLoader from "@/components/generic/PageLoader";
+import { getApiErrorMessage } from "@/lib/utils/getApiErrorMessage";
 
 interface PasswordRule {
   label: string;
@@ -33,29 +37,56 @@ function getStrength(password: string) {
 }
 
 export default function ResetPasswordPage() {
+  const { token } = useParams<{ token: string }>();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate();
+
+  const {
+    data: verifyData,
+    isLoading: isVerifying,
+    isError: isVerifyError,
+  } = useVerifyResetToken(token);
+  const { mutate: resetPassword, isPending } = useResetPassword(token);
 
   const strength = useMemo(() => getStrength(password), [password]);
   const passwordsMatch =
     confirmPassword.length > 0 && password === confirmPassword;
   const allRulesPassed = passwordRules.every((rule) => rule.test(password));
-  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  if (isVerifying) return <PageLoader />;
+  if (isVerifyError || verifyData?.data?.valid === false) {
+    return <Navigate to="/resend-link" replace />;
+  }
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!allRulesPassed || !passwordsMatch) return;
-    // TODO: wire to authApi.resetPassword once endpoint is confirmed
-    navigate("/reset-password-success");
+
+    resetPassword(
+      { newPassword: password },
+      {
+        onSuccess: () => {
+          navigate("/reset-password-success");
+        },
+        onError: (error) => {
+          showToast.error("Couldn't reset password", {
+            description: getApiErrorMessage(
+              error,
+              "Please try again or request a new link.",
+            ),
+          });
+        },
+      },
+    );
   };
 
   return (
     <div className="min-h-screen flex tracking-wide">
       <AuthBrandPanel />
 
-      {/* right form panel */}
       <div className="w-full lg:w-1/2 flex items-center justify-center bg-[#FCFCFD] dark:bg-gray-950 p-6">
         <form onSubmit={handleSubmit} className="w-full max-w-125">
           <div className="flex flex-col items-center text-center mb-8">
@@ -72,6 +103,7 @@ export default function ResetPasswordPage() {
             <p className="text-sm text-brand-gray-light dark:text-gray-400 mt-1">
               Resetting password for{" "}
               <span className="font-semibold text-[#1F1F1F] dark:text-gray-200">
+                {/* {verifyData?.data?.email ?? "your account"} */}
                 your account
               </span>
               . Choose a strong password you haven't used before.
@@ -79,14 +111,12 @@ export default function ResetPasswordPage() {
           </div>
 
           <div className="flex flex-col gap-3">
-            {/* new password */}
             <div>
               <div className="auth-input-wrapper">
                 <RiLockPasswordFill
                   className="auth-input-icon"
                   color="#475467"
                 />
-
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="New Password"
@@ -128,7 +158,6 @@ export default function ResetPasswordPage() {
               )}
             </div>
 
-            {/* rules checklist */}
             <div className="bg-[#F2F4F7] dark:bg-gray-900 rounded-lg p-3 grid grid-cols-3 gap-x-4 gap-y-2">
               {passwordRules.map((rule) => {
                 const passed = rule.test(password);
@@ -160,14 +189,12 @@ export default function ResetPasswordPage() {
               })}
             </div>
 
-            {/* confirm password */}
             <div>
               <div className="auth-input-wrapper">
                 <RiLockPasswordFill
                   className="auth-input-icon"
                   color="#475467"
                 />
-
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm Password"
@@ -201,10 +228,10 @@ export default function ResetPasswordPage() {
 
           <button
             type="submit"
-            disabled={!allRulesPassed || !passwordsMatch}
+            disabled={!allRulesPassed || !passwordsMatch || isPending}
             className="w-full bg-brand-blue text-white text-sm font-medium py-3 rounded-lg hover:bg-[#3F5EE0] transition-colors mt-5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Reset Password
+            {isPending ? "Resetting..." : "Reset Password"}
           </button>
 
           <div className="flex justify-center">

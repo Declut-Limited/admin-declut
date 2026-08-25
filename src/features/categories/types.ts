@@ -1,7 +1,19 @@
+export type CategoryStatus = "active" | "hidden";
+
 export interface CategoryRow {
   id: string;
-  name: string;
-  listings: string;
-  status: "Active" | "Hidden";
-  created: string;
+  title: string;
+  slug: string;
+  status: CategoryStatus;
+  listingCount: number;
+  createdAt: string;
+}
+
+export interface CategoriesListResponse {
+  success: boolean;
+  data: CategoryRow[];
+}
+
+export interface CreateCategoryPayload {
+  title: string;
 }
