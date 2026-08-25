@@ -9,15 +9,25 @@ export interface StatCard {
 
 export type DashboardPeriod = "today" | "week" | "month" | "year" | "all";
 
+export type CardStatus = "productive" | "warning" | "negative";
+
+export interface DashboardCard {
+  value: number;
+  extra: {
+    status: CardStatus;
+    result: string;
+  };
+}
+
 export interface DashboardCards {
-  newUsers: number;
-  activeListings: number;
-  totalTransactions: number;
-  completedTransactions: number;
-  totalRevenue: number;
-  avgOrderValue: number;
-  disputedTransactions: number;
-  stalledTransactions: number;
+  newUsers: DashboardCard;
+  activeListings: DashboardCard;
+  totalTransactions: DashboardCard;
+  completedTransactions: DashboardCard;
+  totalRevenue: DashboardCard;
+  avgOrderValue: DashboardCard;
+  disputedTransactions: DashboardCard;
+  stalledTransactions: DashboardCard;
 }
 
 export interface DashboardInsightsResponse {

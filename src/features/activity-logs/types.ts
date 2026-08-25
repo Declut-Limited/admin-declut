@@ -1,31 +1,32 @@
 export interface ActivityLogRow {
-  id: string;
-  actorName: string;
-  actorAvatarUrl?: string;
-  action: string;
-  target: string;
-  targetLink?: string;
-  ipAddress: string;
-  timestamp: string;
+  _id: string;
+  entityType: string;
+  entityId: string;
+  event: string;
+  actor: string;
+  oldState?: string;
+  newState?: string;
+  ipAddress?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
 }
 
-export interface ActivityLogDetail {
-  logCode: string;
-  action: string;
-  date: string;
-  ipAddress: string;
-  target: string;
-  timestamp: string;
-  actor: {
-    name: string;
-    id: string;
-    email: string;
-    avatarUrl?: string;
-    role: string;
-    status: "Active" | "Suspended";
-    company: string;
-    totalListings: number;
-    memberSince: string;
-    rating: number;
+export interface ActivityLogsListParams {
+  page?: number;
+  limit?: number;
+}
+
+export interface ActivityLogsListResponse {
+  success: boolean;
+  data: {
+    results: ActivityLogRow[];
+    total: number;
+    page: number;
+    limit: number;
   };
+}
+
+export interface ActivityLogDetailResponse {
+  success: boolean;
+  data: ActivityLogRow;
 }

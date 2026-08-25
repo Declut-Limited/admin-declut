@@ -1,38 +1,26 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiClock } from "react-icons/fi";
-import avatarPlaceholder from "@/assets/avatar.svg";
-import type { ActivityLogDetail } from "../types";
 import NotFoundState from "@/components/generic/NotFoundState";
+import PageLoader from "@/components/generic/PageLoader";
+import { useActivityLog } from "../queries";
+import {
+  formatEvent,
+  formatEntityType,
+  formatState,
+  formatTimestamp,
+  formatActor,
+} from "../utils";
 
-// placeholder
-const mockLogs: Record<string, ActivityLogDetail> = {
-  "1": {
-    logCode: "LOG-001",
-    action: "Resolved dispute",
-    date: "Jun 25, 2026",
-    ipAddress: "10.214.24.227.20",
-    target: "DSP-012",
-    timestamp: "Jul 12, 2026",
-    actor: {
-      name: "Ngozi Nwosu",
-      id: "USR-004",
-      email: "ngozi.nwosu@mail.com",
-      role: "Admin",
-      status: "Active",
-      company: "Delta Electronics",
-      totalListings: 2,
-      memberSince: "Apr 27, 2025",
-      rating: 5,
-    },
-  },
-};
+const NOT_IN_API_YET = "—";
 
 export default function ActivityLogDetailPage() {
   const { logId } = useParams<{ logId: string }>();
   const navigate = useNavigate();
-  const log = logId ? mockLogs[logId] : undefined;
 
-  if (!log) {
+  const { data: log, isLoading, isError } = useActivityLog(logId);
+
+  if (isLoading) return <PageLoader />;
+  if (isError || !log) {
     return (
       <NotFoundState
         icon={<FiClock className="w-5 h-5" />}
@@ -40,6 +28,8 @@ export default function ActivityLogDetailPage() {
       />
     );
   }
+
+  const isSystemActor = log.actor === "system";
 
   return (
     <div>
@@ -53,10 +43,11 @@ export default function ActivityLogDetailPage() {
       {/* header */}
       <div className="bg-[#FAFAFA] dark:bg-gray-900/50 rounded-xl p-4 mb-6">
         <h1 className="text-xl font-bold text-[#1D2939] dark:text-gray-100 tracking-wide">
-          {log.action}
+          {formatEvent(log.event)}
         </h1>
         <p className="text-xs text-brand-gray-light mt-1">
-          {log.logCode} · {log.date} · IP {log.ipAddress}
+          {formatTimestamp(log.createdAt)}
+          {log.ipAddress ? ` · IP ${log.ipAddress}` : ""}
         </p>
       </div>
 
@@ -69,22 +60,59 @@ export default function ActivityLogDetailPage() {
 
           <div className="profile-info-row">
             <span className="profile-info-label">Action</span>
-            <span className="profile-info-value">{log.action}</span>
+            <span className="profile-info-value">{formatEvent(log.event)}</span>
           </div>
           <div className="profile-info-row">
-            <span className="profile-info-label">Target</span>
-            <span className="profile-info-value">{log.target}</span>
-          </div>
-          <div className="profile-info-row">
-            <span className="profile-info-label">IP Address</span>
-            <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-xs font-medium text-brand-gray-dark dark:text-gray-300">
-              {log.ipAddress}
+            <span className="profile-info-label">Entity Type</span>
+            <span className="profile-info-value">
+              {formatEntityType(log.entityType)}
             </span>
           </div>
           <div className="profile-info-row">
-            <span className="profile-info-label">Timestamp</span>
-            <span className="profile-info-value">{log.timestamp}</span>
+            <span className="profile-info-label">Entity ID</span>
+            <span className="profile-info-value">{log.entityId}</span>
           </div>
+          <div className="profile-info-row">
+            <span className="profile-info-label">Previous State</span>
+            <span className="profile-info-value">
+              {formatState(log.oldState)}
+            </span>
+          </div>
+          <div className="profile-info-row">
+            <span className="profile-info-label">New State</span>
+            <span className="profile-info-value">
+              {formatState(log.newState)}
+            </span>
+          </div>
+          <div className="profile-info-row">
+            <span className="profile-info-label">IP Address</span>
+            {log.ipAddress ? (
+              <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-xs font-medium text-brand-gray-dark dark:text-gray-300">
+                {log.ipAddress}
+              </span>
+            ) : (
+              <span className="profile-info-value">{NOT_IN_API_YET}</span>
+            )}
+          </div>
+          <div className="profile-info-row">
+            <span className="profile-info-label">Timestamp</span>
+            <span className="profile-info-value">
+              {formatTimestamp(log.createdAt)}
+            </span>
+          </div>
+
+          {log.metadata && Object.keys(log.metadata).length > 0 && (
+            <>
+              {Object.entries(log.metadata).map(([key, value]) => (
+                <div key={key} className="profile-info-row">
+                  <span className="profile-info-label">
+                    {key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase())}
+                  </span>
+                  <span className="profile-info-value">{String(value)}</span>
+                </div>
+              ))}
+            </>
+          )}
         </div>
 
         <div className="detail-section-card border-none">
@@ -92,68 +120,45 @@ export default function ActivityLogDetailPage() {
             Actor
           </p>
 
-          <div className="flex items-center gap-2.5 mb-3">
-            <img
-              src={log.actor.avatarUrl || avatarPlaceholder}
-              alt={log.actor.name}
-              className="w-9 h-9 rounded-full object-cover"
-            />
-            <div>
-              <p className="text-sm font-semibold text-[#1D2939] tracking-wide dark:text-gray-100">
-                {log.actor.name}
-              </p>
-              <p className="text-xs text-brand-gray-light">
-                {log.actor.id} · {log.actor.email} · {log.actor.company}
-              </p>
-            </div>
+          {/* TODO: `actor` is a bare id — name, email, role, status, company,
+              listings, member since and rating are not returned by the API. */}
+          <div className="profile-info-row">
+            <span className="profile-info-label">Actor</span>
+            <span className="profile-info-value">{formatActor(log.actor)}</span>
           </div>
-
+          <div className="profile-info-row">
+            <span className="profile-info-label">Name</span>
+            <span className="profile-info-value">{NOT_IN_API_YET}</span>
+          </div>
+          <div className="profile-info-row">
+            <span className="profile-info-label">Email</span>
+            <span className="profile-info-value">{NOT_IN_API_YET}</span>
+          </div>
           <div className="profile-info-row">
             <span className="profile-info-label">Role</span>
-            <span className="profile-info-value">{log.actor.role}</span>
+            <span className="profile-info-value">{NOT_IN_API_YET}</span>
           </div>
           <div className="profile-info-row">
             <span className="profile-info-label">Status</span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#F6FEF9] text-[#027A48] dark:bg-green-950 dark:text-green-400">
-              {log.actor.status}
-            </span>
+            <span className="profile-info-value">{NOT_IN_API_YET}</span>
           </div>
           <div className="profile-info-row">
             <span className="profile-info-label">Company</span>
-            <span className="profile-info-value">{log.actor.company}</span>
-          </div>
-          <div className="profile-info-row">
-            <span className="profile-info-label">Total Listings</span>
-            <span className="profile-info-value">
-              {log.actor.totalListings}
-            </span>
+            <span className="profile-info-value">{NOT_IN_API_YET}</span>
           </div>
           <div className="profile-info-row">
             <span className="profile-info-label">Member Since</span>
-            <span className="profile-info-value">{log.actor.memberSince}</span>
-          </div>
-          <div className="profile-info-row">
-            <span className="profile-info-label">Rating</span>
-            <span className="flex gap-0.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <span
-                  key={i}
-                  className={
-                    i < log.actor.rating ? "text-amber-400" : "text-gray-200"
-                  }
-                >
-                  ★
-                </span>
-              ))}
-            </span>
+            <span className="profile-info-value">{NOT_IN_API_YET}</span>
           </div>
 
-          <button
-            onClick={() => navigate(`/users/${log.actor.id}`)}
-            className="w-full bg-[#BFDBFE] text-brand-blue text-sm font-medium py-2.5 rounded-lg mt-3 cursor-pointer"
-          >
-            View User Profile
-          </button>
+          {!isSystemActor && (
+            <button
+              onClick={() => navigate(`/users/${log.actor}`)}
+              className="w-full bg-[#BFDBFE] text-brand-blue text-sm font-medium py-2.5 rounded-lg mt-3 cursor-pointer"
+            >
+              View User Profile
+            </button>
+          )}
         </div>
       </div>
     </div>

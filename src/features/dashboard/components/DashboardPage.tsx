@@ -1,6 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { IoMdArrowDropdown } from "react-icons/io";
-import type { DashboardCards, DashboardPeriod, StatCard } from "../types";
+import type {
+  CardStatus,
+  DashboardCards,
+  DashboardPeriod,
+  StatCard,
+} from "../types";
 import { FiChevronDown } from "react-icons/fi";
 import type { IconType } from "react-icons";
 import { IoArrowUpCircle } from "react-icons/io5";
@@ -89,55 +94,63 @@ const currencyFormatter = new Intl.NumberFormat("en-NG", {
   maximumFractionDigits: 0,
 });
 
+const statusToTrend: Record<CardStatus, StatCard["trend"]> = {
+  productive: "positive",
+  warning: "neutral",
+  negative: "negative",
+};
+
 function buildStats(cards: DashboardCards): StatCard[] {
   return [
     {
       label: "Total Revenue",
-      value: currencyFormatter.format(cards.totalRevenue),
-      meta: "gross platform revenue",
-      trend: "positive",
+      value: currencyFormatter.format(cards.totalRevenue.value),
+      meta: cards.totalRevenue.extra.result,
+      trend: statusToTrend[cards.totalRevenue.extra.status] ?? "neutral",
     },
     {
       label: "Avg Order Value",
-      value: currencyFormatter.format(cards.avgOrderValue),
-      meta: "per completed transaction",
-      trend: "neutral",
+      value: currencyFormatter.format(cards.avgOrderValue.value),
+      meta: cards.avgOrderValue.extra.result,
+      trend: statusToTrend[cards.avgOrderValue.extra.status] ?? "neutral",
     },
     {
       label: "Total Transactions",
-      value: cards.totalTransactions.toLocaleString(),
-      meta: `${cards.completedTransactions} completed`,
-      trend: "positive",
+      value: cards.totalTransactions.value.toLocaleString(),
+      meta: cards.totalTransactions.extra.result,
+      trend: statusToTrend[cards.totalTransactions.extra.status] ?? "neutral",
     },
     {
       label: "Completed Transactions",
-      value: cards.completedTransactions.toLocaleString(),
-      meta: "successfully settled",
-      trend: "positive",
+      value: cards.completedTransactions.value.toLocaleString(),
+      meta: cards.completedTransactions.extra.result,
+      trend:
+        statusToTrend[cards.completedTransactions.extra.status] ?? "neutral",
     },
     {
       label: "Disputed Transactions",
-      value: cards.disputedTransactions.toLocaleString(),
-      meta: "require review",
-      trend: "negative",
+      value: cards.disputedTransactions.value.toLocaleString(),
+      meta: cards.disputedTransactions.extra.result,
+      trend:
+        statusToTrend[cards.disputedTransactions.extra.status] ?? "neutral",
     },
     {
       label: "Stalled Transactions",
-      value: cards.stalledTransactions.toLocaleString(),
-      meta: "awaiting action",
-      trend: "neutral",
+      value: cards.stalledTransactions.value.toLocaleString(),
+      meta: cards.stalledTransactions.extra.result,
+      trend: statusToTrend[cards.stalledTransactions.extra.status] ?? "neutral",
     },
     {
       label: "New Users",
-      value: cards.newUsers.toLocaleString(),
-      meta: "joined this period",
-      trend: "positive",
+      value: cards.newUsers.value.toLocaleString(),
+      meta: cards.newUsers.extra.result,
+      trend: statusToTrend[cards.newUsers.extra.status] ?? "neutral",
     },
     {
       label: "Active Listings",
-      value: cards.activeListings.toLocaleString(),
-      meta: "currently live",
-      trend: "positive",
+      value: cards.activeListings.value.toLocaleString(),
+      meta: cards.activeListings.extra.result,
+      trend: statusToTrend[cards.activeListings.extra.status] ?? "neutral",
     },
   ];
 }

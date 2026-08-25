@@ -1,28 +1,52 @@
-export interface DisputeRow {
-  id: string;
-  reportCode: string;
-  target: string;
-  reporterName: string;
-  reason: string;
-  status: "New" | "Investigating" | "Dismissed" | "Resolved";
-  joined: string;
+export type ReportStatus = "new" | "investigating" | "dismissed" | "resolved";
+
+export interface ReportListing {
+  _id: string;
+  title: string;
+  slug: string;
+  mainImage: string;
 }
 
-export interface DisputeDetail {
-  reportCode: string;
-  category: string;
-  status: DisputeRow["status"];
-  listing: {
-    name: string;
-    code: string;
-    imageUrl?: string;
-    submittedDate: string;
+export interface ReportUser {
+  _id: string;
+  email: string;
+  name: string;
+  slug: string;
+}
+
+export interface DisputeRow {
+  _id: string;
+  slug: string;
+  title: string;
+  reason: string;
+  listing?: ReportListing | null;
+  user?: ReportUser | null;
+  createdBy: string;
+  status: ReportStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DisputesListParams {
+  page?: number;
+  limit?: number;
+}
+
+export interface DisputesListResponse {
+  success: boolean;
+  data: {
+    results: DisputeRow[];
+    total: number;
+    page: number;
+    limit: number;
   };
-  reporter: {
-    role: string;
-    status: "Active" | "Suspended";
-    company: string;
-    memberSince: string;
-    rating: number;
-  };
+}
+
+export interface DisputeDetailResponse {
+  success: boolean;
+  data: DisputeRow;
+}
+
+export interface UpdateReportStatusPayload {
+  status: ReportStatus;
 }
