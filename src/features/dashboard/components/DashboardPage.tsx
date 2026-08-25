@@ -310,8 +310,12 @@ export default function DashboardPage() {
   const { data: me, isLoading } = useMe();
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
   const [period, setPeriod] = useState<DashboardPeriod>("month");
-  const { data: insights, isLoading: insightsLoading } =
-    useDashboardInsights(period);
+  const {
+    data: insights,
+    isLoading: insightsLoading,
+    isError: insightsError,
+    refetch: refetchInsights,
+  } = useDashboardInsights(period);
   const [periodOpen, setPeriodOpen] = useState(false);
   const [chartPeriod, setChartPeriod] = useState<"Monthly" | "Quarterly">(
     "Monthly",
@@ -438,38 +442,52 @@ export default function DashboardPage() {
         </div>
 
         <div className="stats-grid">
-          {insightsLoading
-            ? Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="stats-card">
-                  <div className="bg-[#FAFAFA] rounded-md p-2 dark:bg-[#FFFFE71A]">
-                    <Skeleton className="h-3 w-24 mb-2" />
-                    <Skeleton className="h-6 w-20" />
-                  </div>
-                  <div className="stats-card-meta">
-                    <Skeleton className="h-3 w-32" />
-                  </div>
+          {insightsError ? (
+            <div className="col-span-full flex flex-col items-center justify-center gap-2 py-10 bg-[#FAFAFA] dark:bg-[#FFFFE71A] rounded-md">
+              <p className="text-sm text-brand-gray-dark dark:text-gray-300">
+                Couldn't load insights for this period.
+              </p>
+              <button
+                onClick={() => refetchInsights()}
+                className="text-sm text-brand-blue hover:underline cursor-pointer"
+              >
+                Try again
+              </button>
+            </div>
+          ) : insightsLoading ? (
+            Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="stats-card">
+                <div className="bg-[#FAFAFA] rounded-md p-2 dark:bg-[#FFFFE71A]">
+                  <Skeleton className="h-3 w-24 mb-2" />
+                  <Skeleton className="h-6 w-20" />
                 </div>
-              ))
-            : stats.map((stat) => (
-                <div key={stat.label} className="stats-card">
-                  <div className="bg-[#FAFAFA] rounded-md p-2 dark:bg-[#FFFFE71A]">
-                    <p className="stats-card-label">{stat.label}</p>
-                    <p className="stats-card-value">{stat.value}</p>
-                  </div>
+                <div className="stats-card-meta">
+                  <Skeleton className="h-3 w-32" />
+                </div>
+              </div>
+            ))
+          ) : (
+            stats.map((stat) => (
+              <div key={stat.label} className="stats-card">
+                <div className="bg-[#FAFAFA] rounded-md p-2 dark:bg-[#FFFFE71A]">
+                  <p className="stats-card-label">{stat.label}</p>
+                  <p className="stats-card-value">{stat.value}</p>
+                </div>
 
-                  <div className="stats-card-meta">
-                    {(() => {
-                      const { icon: Icon, text } = trendConfig[stat.trend];
-                      return (
-                        <span className="w-4 h-4 rounded-full flex items-center justify-center shrink-0">
-                          <Icon className={`w-4 h-4 ${text}`} />
-                        </span>
-                      );
-                    })()}
-                    <span>{stat.meta}</span>
-                  </div>
+                <div className="stats-card-meta">
+                  {(() => {
+                    const { icon: Icon, text } = trendConfig[stat.trend];
+                    return (
+                      <span className="w-4 h-4 rounded-full flex items-center justify-center shrink-0">
+                        <Icon className={`w-4 h-4 ${text}`} />
+                      </span>
+                    );
+                  })()}
+                  <span>{stat.meta}</span>
                 </div>
-              ))}
+              </div>
+            ))
+          )}
         </div>
       </div>
 
