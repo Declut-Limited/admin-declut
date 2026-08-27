@@ -86,49 +86,31 @@ export interface ListingSaleDetails {
   soldOn: string;
 }
 
-// export interface ListingDetail {
-//   id: string;
-//   code: string;
-//   name: string;
-//   status: "Active" | "Pending Review" | "Flagged" | "Sold" | "Delisted";
-//   category: string;
-//   postedDate: string;
-//   views: number;
-//   saves: number;
-//   price: string;
-//   condition: string;
-//   payoutAfterCommission: string;
-//   commissionPercent: string;
-//   images: ListingImage[];
-//   description: string;
-//   brand: string;
-//   itemCondition: string;
-//   quantityAvailable: number;
-//   sku: string;
-//   saleDetails?: ListingSaleDetails; // only when Sold
-//   review?: ListingReview; // only when Sold
-//   activity: ListingActivityEvent[];
-//   location: {
-//     address: string;
-//     landmark: string;
-//     lat: number;
-//     lng: number;
-//   };
-//   seller: {
-//     name: string;
-//     id: string;
-//     email: string;
-//     avatarUrl?: string;
-//     role: string;
-//     status: "Active" | "Suspended";
-//     company: string;
-//     totalListings: number;
-//     memberSince: string;
-//     rating: number;
-//   };
-// }
+export interface ListingDetailResponse {
+  success: boolean;
+  data: ListingDetailData;
+}
+
+export interface EmailSellerPayload {
+  subject: string;
+  message: string;
+}
+
+export interface ListingDetailSeller {
+  id: string;
+  slug: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: string;
+  totalListings: number;
+  rating: string;
+  createdAt: string;
+}
 
 export interface ListingDetailData {
+  id: string;
+  slug: string;
   images: { url: string }[];
   title: string;
   status: string;
@@ -142,21 +124,15 @@ export interface ListingDetailData {
   specs: Record<string, unknown> | null;
   priceHistory: { price: number; changedAt: string }[];
   recentActivity: ListingActivityEvent[];
-  seller: ListingSeller | null;
+  seller: ListingDetailSeller | null;
 
-  // TODO: present on the list endpoint, backend adding them here
-  slug?: string;
+  // TODO: present on the list endpoint, not the detail one
   locationLabel?: string;
   location?: { type: string; coordinates: [number, number] };
   condition?: string;
 }
 
-export interface ListingDetailResponse {
-  success: boolean;
-  data: ListingDetailData;
-}
-
-export interface EmailSellerPayload {
-  subject: string;
-  message: string;
+export interface UpdateListingPayload {
+  title: string;
+  price: number;
 }

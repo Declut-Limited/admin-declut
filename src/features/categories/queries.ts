@@ -4,8 +4,10 @@ import {
   createCategory,
   toggleCategoryStatus,
   exportCategories,
+  updateCategory,
+  deleteCategory,
 } from "./api";
-import type { CreateCategoryPayload } from "./types";
+import type { CreateCategoryPayload, UpdateCategoryPayload } from "./types";
 
 export const useCategories = () => {
   return useQuery({
@@ -49,6 +51,34 @@ export const useExportCategories = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+    },
+  });
+};
+
+export const useUpdateCategory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      categoryId,
+      payload,
+    }: {
+      categoryId: string;
+      payload: UpdateCategoryPayload;
+    }) => updateCategory(categoryId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+};
+
+export const useDeleteCategory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (categoryId: string) => deleteCategory(categoryId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
   });
 };

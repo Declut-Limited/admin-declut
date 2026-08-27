@@ -7,6 +7,7 @@ export interface UserRow {
   name: string;
   email: string;
   role: string;
+   roleId?: string;
   listingsCount: number;
   status: UserStatus;
   joinedAt: string;
@@ -48,7 +49,7 @@ export interface AdminUserDetails {
   status: UserStatus;
   createdAt: string;
   email: string;
-  name?: string; // TODO: not returned by the API yet
+  name?: string; 
   permissions: Record<string, PermissionSet>;
 }
 
@@ -59,7 +60,7 @@ export interface RegularUserDetails {
   rating: string;
   verification: string | null;
   kycStatus: KycStatus; 
-  name?: string; // TODO: not returned by the API yet
+  name?: string;
   slug: string;
   email: string;
   phone: string;
@@ -179,4 +180,17 @@ export type KycStatus = "unverified" | "pending" | "verified" | "rejected";
 
 export interface UpdateKycPayload {
   status: KycStatus;
+}
+
+export interface InviteSubAdminPayload {
+  email: string;
+  name: string;
+  password: string;
+  title: string;
+  company: string;
+  roleId: string;
+}
+
+export interface UpdateSubAdminRolePayload {
+  roleId: string;
 }

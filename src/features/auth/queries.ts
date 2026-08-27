@@ -1,40 +1,61 @@
-import { useMutation, useQuery } from "@tanstack/react-query"
-import { changePassword, forgotPassword, getMe, login, logout, resetPassword, verifyResetToken } from "./api"
-import type { ChangePasswordPayload, ForgotPasswordPayload, LoginPayload, ResetPasswordPayload } from "./types"
-import { useNavigate } from "react-router-dom"
-import { showToast } from "@/lib/utils/toast"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  changePassword,
+  forgotPassword,
+  getMe,
+  login,
+  logout,
+  resetPassword,
+  verifyResetToken,
+} from "./api";
+import type {
+  ChangePasswordPayload,
+  ForgotPasswordPayload,
+  LoginPayload,
+  ResetPasswordPayload,
+} from "./types";
+import { useNavigate } from "react-router-dom";
+import { showToast } from "@/lib/utils/toast";
 
 export const useLogin = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: (payload: LoginPayload) => login(payload),
     onSuccess: (res) => {
-      localStorage.setItem("access_token", res.data.accessToken)
-      localStorage.setItem("refresh_token", res.data.refreshToken)
+      localStorage.setItem("access_token", res.data.accessToken);
+      localStorage.setItem("refresh_token", res.data.refreshToken);
+      queryClient.clear();
     },
-  })
-}
+  });
+};
 
 export const useLogout = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: () => {
-      const refreshToken = localStorage.getItem("refresh_token") ?? ""
-      return logout({ refreshToken })
+      const refreshToken = localStorage.getItem("refresh_token") ?? "";
+      return logout({ refreshToken });
     },
     onSuccess: () => {
-      localStorage.removeItem("access_token")
-      localStorage.removeItem("refresh_token")
-      showToast.success("Signed out", { description: "You've been logged out." })
-      navigate("/sign-in")
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      queryClient.clear();
+      showToast.success("Signed out", {
+        description: "You've been logged out.",
+      });
+      navigate("/sign-in");
     },
     onError: () => {
-      localStorage.removeItem("access_token")
-      localStorage.removeItem("refresh_token")
-      navigate("/sign-in")
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      queryClient.clear();
+      navigate("/sign-in");
     },
-  })
-}
+  });
+};
 
 export const useMe = () => {
   return useQuery({
@@ -42,8 +63,8 @@ export const useMe = () => {
     queryFn: getMe,
     select: (res) => res.data,
     staleTime: 5 * 60 * 1000, //30 min
-  })
-}
+  });
+};
 
 export const useForgotPassword = () => {
   return useMutation({
@@ -62,7 +83,8 @@ export const useVerifyResetToken = (token: string | undefined) => {
 
 export const useResetPassword = (token: string | undefined) => {
   return useMutation({
-    mutationFn: (payload: ResetPasswordPayload) => resetPassword(token as string, payload),
+    mutationFn: (payload: ResetPasswordPayload) =>
+      resetPassword(token as string, payload),
   });
 };
 

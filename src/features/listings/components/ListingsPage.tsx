@@ -12,13 +12,23 @@ import DataTable from "@/components/generic/DataTable";
 import Pagination from "@/components/generic/Pagination";
 import Button from "@/components/generic/Button";
 import { PiExportFill } from "react-icons/pi";
-// import { FiChevronDown } from "react-icons/fi";
 import { createListingColumns } from "./columns";
-import { useDeleteListing, useListings } from "../queries";
 import { PAGE_SIZE } from "@/lib/constants/pagination";
 import { showToast } from "@/lib/utils/toast";
+import EditListingModal from "./EditListingModal";
+import type { ListingRow, UpdateListingPayload } from "../types";
+import {
+  useDeleteListing,
+  useListings,
+  useUpdateListing,
+  useFlagListing,
+  useUnflagListing,
+  useDelistListing,
+  useRelistListing,
+  useExportListings,
+} from "../queries";
 
-const tabs = ["All", "Active", "Sold", "Deleted"];
+const tabs = ["All", "Active", "Sold", "Deleted", "Flagged", "Archived"];
 
 export default function ListingsPage() {
   const [activeTab, setActiveTab] = useState("All");
@@ -49,34 +59,78 @@ export default function ListingsPage() {
     setCategory("");
   };
 
-  const { data, isLoading } = useListings({
+  const listingsQuery = useListings({
     page: currentPage,
     limit: PAGE_SIZE,
     status: activeTab === "All" ? "all" : activeTab.toLowerCase(),
     search: debouncedSearch || undefined,
   });
 
+  const { data } = listingsQuery;
+
+  const [editingListing, setEditingListing] = useState<ListingRow | null>(null);
+
   const { mutateAsync: removeListing } = useDeleteListing();
+  const { mutateAsync: updateListing, isPending: isUpdating } =
+    useUpdateListing();
+  const { mutateAsync: flagListing } = useFlagListing();
+  const { mutateAsync: unflagListing } = useUnflagListing();
+  const { mutateAsync: delistListing } = useDelistListing();
+  const { mutateAsync: relistListing } = useRelistListing();
+  const { mutateAsync: exportListings } = useExportListings();
 
   const listings = useMemo(() => data?.results ?? [], [data?.results]);
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-
   const columns = useMemo(
     () =>
       createListingColumns({
         onViewDetails: (listing) => navigate(`/listings/${listing.slug}`),
-        onEdit: (listing) => console.log("edit", listing._id), // TODO: wire edit flow
+        onEdit: (listing) => setEditingListing(listing),
+        onFlag: (listing) => {
+          showToast.promise(flagListing(listing._id), {
+            loading: `Flagging ${listing.title}...`,
+            success: `${listing.title} has been flagged.`,
+            error: "Couldn't flag listing.",
+          });
+        },
+        onUnflag: (listing) => {
+          showToast.promise(unflagListing(listing._id), {
+            loading: `Unflagging ${listing.title}...`,
+            success: `${listing.title} has been unflagged.`,
+            error: "Couldn't unflag listing.",
+          });
+        },
         onDelist: (listing) => {
-          showToast.promise(removeListing(listing._id), {
+          showToast.promise(delistListing(listing._id), {
             loading: `Delisting ${listing.title}...`,
+            success: `${listing.title} has been delisted.`,
+            error: "Couldn't delist listing.",
+          });
+        },
+        onRelist: (listing) => {
+          showToast.promise(relistListing(listing._id), {
+            loading: `Relisting ${listing.title}...`,
+            success: `${listing.title} has been relisted.`,
+            error: "Couldn't relist listing.",
+          });
+        },
+        onRemove: (listing) => {
+          showToast.promise(removeListing(listing._id), {
+            loading: `Removing ${listing.title}...`,
             success: `${listing.title} has been removed.`,
             error: "Couldn't remove listing.",
           });
         },
-        onRelist: (listing) => console.log("relist", listing._id), // TODO: wire relist endpoint
       }),
-    [navigate, removeListing],
+    [
+      navigate,
+      removeListing,
+      flagListing,
+      unflagListing,
+      delistListing,
+      relistListing,
+    ],
   );
 
   const visibleListings = useMemo(() => {
@@ -112,6 +166,35 @@ export default function ListingsPage() {
   const activeFilterCount =
     (category ? 1 : 0) + (dateRange.from || dateRange.to ? 1 : 0);
 
+  const handleConfirmEdit = (payload: UpdateListingPayload) => {
+    if (!editingListing) return;
+
+    showToast.promise(
+      updateListing({ listingId: editingListing._id, payload }).then(() =>
+        setEditingListing(null),
+      ),
+      {
+        loading: `Updating ${editingListing.title}...`,
+        success: "Listing updated.",
+        error: "Couldn't update listing.",
+      },
+    );
+  };
+
+  const handleExport = () => {
+    showToast.promise(
+      exportListings({
+        status: activeTab === "All" ? "all" : activeTab.toLowerCase(),
+        search: debouncedSearch || undefined,
+      }),
+      {
+        loading: "Preparing export...",
+        success: "Export downloaded.",
+        error: "Export failed.",
+      },
+    );
+  };
+
   return (
     <div>
       <PageHeader
@@ -120,10 +203,7 @@ export default function ListingsPage() {
         actions={
           <Button
             leftIcon={<PiExportFill className="w-4 h-4 text-[#98A2B3]" />}
-            // rightIcon={<FiChevronDown className="w-4 h-4 text-brand-gray-dark" />}
-            onClick={() => {
-              /* TODO: no listings export endpoint yet */
-            }}
+            onClick={handleExport}
           >
             Export
           </Button>
@@ -159,7 +239,7 @@ export default function ListingsPage() {
         <DataTable
           data={visibleListings}
           columns={columns}
-          isLoading={isLoading}
+          query={listingsQuery}
           emptyMessage="No listings found."
         />
 
@@ -169,6 +249,16 @@ export default function ListingsPage() {
           onPageChange={handlePageChange}
         />
       </div>
+
+      {editingListing && (
+        <EditListingModal
+          title={editingListing.title}
+          price={editingListing.price}
+          isSubmitting={isUpdating}
+          onClose={() => setEditingListing(null)}
+          onConfirm={handleConfirmEdit}
+        />
+      )}
     </div>
   );
 }

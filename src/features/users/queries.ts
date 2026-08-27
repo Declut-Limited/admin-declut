@@ -1,13 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getUsers, exportUsers, getUserById, suspendUser, reactivateUser, getListingsByUser, updateUserKyc } from "./api";
-import type { SuspendUserPayload, UpdateKycPayload, UsersListParams } from "./types";
+import { getUsers, exportUsers, getUserById, suspendUser, reactivateUser, getListingsByUser, updateUserKyc, inviteSubAdmin, updateSubAdminRole } from "./api";
+import type { InviteSubAdminPayload, SuspendUserPayload, UpdateKycPayload, UpdateSubAdminRolePayload, UsersListParams } from "./types";
 
 export const useUsers = (params: UsersListParams) => {
   return useQuery({
     queryKey: ["users", params],
     queryFn: () => getUsers(params),
     select: (res) => res.data,
-    placeholderData: (previous) => previous,
   });
 };
 
@@ -72,7 +71,6 @@ export const useListingsByUser = (
     enabled: !!userId && enabled,
     retry: false,
     select: (res) => res.data,
-    placeholderData: (previous) => previous,
   });
 };
 
@@ -85,6 +83,36 @@ export const useUpdateUserKyc = () => {
     onSuccess: (_data, { userId }) => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["users", "detail", userId] });
+    },
+  });
+};
+
+export const useInviteSubAdmin = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: InviteSubAdminPayload) => inviteSubAdmin(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+};
+
+export const useUpdateSubAdminRole = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      subAdminId,
+      payload,
+    }: {
+      subAdminId: string;
+      payload: UpdateSubAdminRolePayload;
+    }) => updateSubAdminRole(subAdminId, payload),
+    onSuccess: (_data, { subAdminId }) => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["users", "detail", subAdminId] });
+      queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
     },
   });
 };

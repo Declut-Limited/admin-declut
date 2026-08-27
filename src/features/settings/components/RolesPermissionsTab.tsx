@@ -1,152 +1,229 @@
 import Button from "@/components/generic/Button";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { FaCirclePlus } from "react-icons/fa6";
 import { BsCheckCircleFill } from "react-icons/bs";
-import type { RoleEntry } from "../types";
 import { TiArrowSortedDown, TiArrowSortedUp } from "react-icons/ti";
+import ConfirmModal from "@/components/generic/ConfirmModal";
+import PageLoader from "@/components/generic/PageLoader";
+import { showToast } from "@/lib/utils/toast";
+import {
+  useRoles,
+  useCreateRole,
+  useUpdateRole,
+  useDeleteRole,
+} from "../queries";
+import type { Role, RolePermissions } from "../types";
+import { getApiErrorMessage } from "@/lib/utils/getApiErrorMessage";
 
-const MODULES_FULL_PERMISSIONS = [
-  "Users",
-  "Listings",
-  "Categories",
-  "Reviews",
-  "Transactions",
-  "Reports",
-  "Activity",
-  "Content",
-  "Notifications",
-  "Settings",
+const MODULES = [
+  "dashboard",
+  "users",
+  "listings",
+  "categories",
+  "reviews",
+  "transactions",
+  "reports",
+  "activity",
+  "content",
+  "notifications",
+  "settings",
+  "roles",
 ] as const;
 
-const MODULES_VIEW_ONLY = ["Dashboard"] as const;
+const VIEW_ONLY_MODULES: readonly string[] = ["dashboard"];
 
-const ALL_MODULES = [...MODULES_VIEW_ONLY, ...MODULES_FULL_PERMISSIONS];
-
-function createEmptyPermissions() {
-  return ALL_MODULES.map((module) => ({
-    module,
-    view: false,
-    write: false,
-    delete: false,
-  }));
+interface DraftRole {
+  id: string;
+  name: string;
+  permissions: RolePermissions;
+  isNew?: boolean;
 }
 
-const initialRoles: RoleEntry[] = [
-  {
-    id: "1",
-    role: "Super Admin",
-    permissions: ALL_MODULES.map((m) => ({
-      module: m,
-      view: true,
-      write: true,
-      delete: true,
-    })),
-  },
-  {
-    id: "2",
-    role: "Finance Manager",
-    permissions: ALL_MODULES.map((m) => ({
-      module: m,
-      view: true,
-      write: true,
-      delete: true,
-    })),
-  },
-  {
-    id: "3",
-    role: "Trust & Safety",
-    permissions: ALL_MODULES.map((m) => ({
-      module: m,
-      view: true,
-      write: true,
-      delete: true,
-    })),
-  },
-  {
-    id: "4",
-    role: "Support Agent",
-    permissions: ALL_MODULES.map((m) => ({
-      module: m,
-      view: true,
+function formatModule(module: string) {
+  return module.charAt(0).toUpperCase() + module.slice(1);
+}
+
+function emptyPermissions(): RolePermissions {
+  return MODULES.reduce((acc, module) => {
+    acc[module] = { view: false, write: false, delete: false };
+    return acc;
+  }, {} as RolePermissions);
+}
+
+function normalizePermissions(permissions: RolePermissions): RolePermissions {
+  return MODULES.reduce((acc, module) => {
+    acc[module] = permissions[module] ?? {
+      view: false,
       write: false,
       delete: false,
-    })),
-  },
-];
+    };
+    return acc;
+  }, {} as RolePermissions);
+}
 
 export function RolesPermissionsTab() {
-  const [roles, setRoles] = useState<RoleEntry[]>(initialRoles);
+  const { data: roles = [], isLoading, isError, error, refetch } = useRoles();
+
+  const [drafts, setDrafts] = useState<Record<string, DraftRole>>({});
+  const [newRole, setNewRole] = useState<DraftRole | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [deletingRole, setDeletingRole] = useState<Role | null>(null);
+
+  const { mutateAsync: createRole, isPending: isCreating } = useCreateRole();
+  const { mutateAsync: updateRole, isPending: isUpdating } = useUpdateRole();
+  const { mutateAsync: removeRole, isPending: isDeleting } = useDeleteRole();
+
+  const rows: DraftRole[] = useMemo(() => {
+    const existing = roles.map(
+      (role) =>
+        drafts[role._id] ?? {
+          id: role._id,
+          name: role.name,
+          permissions: normalizePermissions(role.permissions),
+        },
+    );
+    return newRole ? [...existing, newRole] : existing;
+  }, [roles, drafts, newRole]);
 
   const toggleExpand = (id: string) => {
     setExpandedId((prev) => (prev === id ? null : id));
   };
 
+  const updateDraft = (row: DraftRole, next: Partial<DraftRole>) => {
+    if (row.isNew) {
+      setNewRole((prev) => (prev ? { ...prev, ...next } : prev));
+    } else {
+      setDrafts((prev) => ({ ...prev, [row.id]: { ...row, ...next } }));
+    }
+  };
+
   const togglePermission = (
-    roleId: string,
+    row: DraftRole,
     module: string,
     field: "view" | "write" | "delete",
   ) => {
-    setRoles((prev) =>
-      prev.map((r) =>
-        r.id === roleId
-          ? {
-              ...r,
-              permissions: r.permissions.map((p) =>
-                p.module === module ? { ...p, [field]: !p[field] } : p,
-              ),
-            }
-          : r,
-      ),
-    );
-  };
-
-  const updateRoleName = (id: string, name: string) => {
-    setRoles((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, role: name } : r)),
-    );
+    const current = row.permissions[module];
+    updateDraft(row, {
+      permissions: {
+        ...row.permissions,
+        [module]: { ...current, [field]: !current[field] },
+      },
+    });
   };
 
   const handleAddRole = () => {
-    const existingEmptyRole = roles.find((r) => r.isNew && !r.role.trim());
-    if (existingEmptyRole) {
-      setExpandedId(existingEmptyRole.id);
+    if (newRole) {
+      setExpandedId(newRole.id);
       return;
     }
 
-    const newRole: RoleEntry = {
+    const draft: DraftRole = {
       id: crypto.randomUUID(),
-      role: "",
-      permissions: createEmptyPermissions(),
+      name: "",
+      permissions: emptyPermissions(),
       isNew: true,
     };
-    setRoles((prev) => [...prev, newRole]);
-    setExpandedId(newRole.id);
+    setNewRole(draft);
+    setExpandedId(draft.id);
   };
 
-  const handleDeleteRole = (id: string) => {
-    setRoles((prev) => prev.filter((r) => r.id !== id));
-    if (expandedId === id) setExpandedId(null);
-  };
+  const handleSave = (row: DraftRole) => {
+    if (row.isNew) {
+      if (!row.name.trim()) {
+        showToast.error("Role name required", {
+          description: "Give the role a name before saving.",
+        });
+        return;
+      }
 
-  const handleSave = (id: string) => {
-    setRoles((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, isNew: false } : r)),
+      showToast.promise(
+        createRole({
+          name: row.name.trim(),
+          permissions: row.permissions,
+        }).then(() => {
+          setNewRole(null);
+          setExpandedId(null);
+        }),
+        {
+          loading: `Creating ${row.name.trim()}...`,
+          success: `${row.name.trim()} has been created.`,
+          error: "Couldn't create role.",
+        },
+      );
+      return;
+    }
+
+    showToast.promise(
+      updateRole({
+        roleId: row.id,
+        payload: { name: row.name.trim(), permissions: row.permissions },
+      }).then(() => {
+        setDrafts((prev) => {
+          const next = { ...prev };
+          delete next[row.id];
+          return next;
+        });
+        setExpandedId(null);
+      }),
+      {
+        loading: `Updating ${row.name}...`,
+        success: `${row.name} has been updated.`,
+        error: "Couldn't update role.",
+      },
     );
+  };
+
+  const handleDiscardNew = () => {
+    setNewRole(null);
     setExpandedId(null);
   };
 
+  const handleConfirmDelete = () => {
+    if (!deletingRole) return;
+
+    showToast.promise(
+      removeRole(deletingRole._id).then(() => setDeletingRole(null)),
+      {
+        loading: `Removing ${deletingRole.name}...`,
+        success: `${deletingRole.name} has been removed.`,
+        error: "Couldn't remove role.",
+      },
+    );
+  };
+
+  if (isLoading) return <PageLoader />;
+
+  if (isError) {
+    return (
+      <div className="settings-panel">
+        <h3 className="settings-panel-title">Roles &amp; Permissions</h3>
+        <div className="flex flex-col items-center justify-center gap-2 py-10">
+          <p className="text-sm text-brand-gray-dark dark:text-gray-300">
+            {getApiErrorMessage(error, "Couldn't load roles.")}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="text-sm text-brand-blue hover:underline cursor-pointer"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="settings-panel">
-      <h3 className="settings-panel-title">Category Commission Overrides</h3>
+      <h3 className="settings-panel-title">Roles &amp; Permissions</h3>
 
       <div className="roles-accordion">
         <div className="roles-accordion-header-row">
           <span className="roles-accordion-header-role">Role</span>
         </div>
 
-        {roles.map((r) => {
+        {rows.map((r) => {
           const isExpanded = expandedId === r.id;
+          const sourceRole = roles.find((role) => role._id === r.id);
+
           return (
             <div key={r.id} className="roles-accordion-item">
               <div
@@ -157,12 +234,12 @@ export function RolesPermissionsTab() {
                     <input
                       type="text"
                       placeholder="Enter role"
-                      value={r.role}
-                      onChange={(e) => updateRoleName(r.id, e.target.value)}
+                      value={r.name}
+                      onChange={(e) => updateDraft(r, { name: e.target.value })}
                       className="roles-accordion-role-input"
                     />
                   ) : (
-                    <span className="roles-accordion-role-name">{r.role}</span>
+                    <span className="roles-accordion-role-name">{r.name}</span>
                   )}
                 </div>
 
@@ -172,22 +249,39 @@ export function RolesPermissionsTab() {
                   onClick={() => toggleExpand(r.id)}
                 >
                   {isExpanded ? "Set actions" : "Actions"}
+                  {sourceRole ? (
+                    <span className="text-xs text-brand-gray-light ml-2">
+                      {sourceRole.userCount} user
+                      {sourceRole.userCount === 1 ? "" : "s"}
+                    </span>
+                  ) : null}
                 </button>
 
                 <div className="roles-accordion-controls">
                   {isExpanded && (
                     <>
-                      {r.isNew && (
+                      {r.isNew ? (
                         <button
                           type="button"
                           className="roles-accordion-delete"
-                          onClick={() => handleDeleteRole(r.id)}
+                          onClick={handleDiscardNew}
+                        >
+                          Discard
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="roles-accordion-delete"
+                          onClick={() =>
+                            sourceRole && setDeletingRole(sourceRole)
+                          }
                         >
                           Delete
                         </button>
                       )}
                       <Button
-                        onClick={() => handleSave(r.id)}
+                        onClick={() => handleSave(r)}
+                        disabled={isCreating || isUpdating}
                         bgColor="bg-green-600 hover:bg-green-700"
                         textColor="text-white"
                         borderColor="border-transparent"
@@ -233,24 +327,24 @@ export function RolesPermissionsTab() {
                         </tr>
                       </thead>
                       <tbody>
-                        {r.permissions.map((p) => {
-                          const isViewOnly = (
-                            MODULES_VIEW_ONLY as readonly string[]
-                          ).includes(p.module);
+                        {MODULES.map((module) => {
+                          const p = r.permissions[module];
+                          const isViewOnly = VIEW_ONLY_MODULES.includes(module);
+
                           return (
                             <tr
-                              key={p.module}
+                              key={module}
                               className="roles-permissions-matrix-row"
                             >
                               <td className="roles-permissions-matrix-module">
-                                {p.module}
+                                {formatModule(module)}
                               </td>
                               <td className="roles-permissions-matrix-checkbox-cell">
                                 <input
                                   type="checkbox"
                                   checked={p.view}
                                   onChange={() =>
-                                    togglePermission(r.id, p.module, "view")
+                                    togglePermission(r, module, "view")
                                   }
                                   className="roles-permissions-matrix-checkbox"
                                 />
@@ -261,7 +355,7 @@ export function RolesPermissionsTab() {
                                     type="checkbox"
                                     checked={p.write}
                                     onChange={() =>
-                                      togglePermission(r.id, p.module, "write")
+                                      togglePermission(r, module, "write")
                                     }
                                     className="roles-permissions-matrix-checkbox"
                                   />
@@ -273,7 +367,7 @@ export function RolesPermissionsTab() {
                                     type="checkbox"
                                     checked={p.delete}
                                     onChange={() =>
-                                      togglePermission(r.id, p.module, "delete")
+                                      togglePermission(r, module, "delete")
                                     }
                                     className="roles-permissions-matrix-checkbox"
                                   />
@@ -303,6 +397,23 @@ export function RolesPermissionsTab() {
           Add Role
         </Button>
       </div>
+
+      {deletingRole && (
+        <ConfirmModal
+          title="Remove role"
+          message={
+            deletingRole.userCount > 0
+              ? `${deletingRole.name} is assigned to ${deletingRole.userCount} user${
+                  deletingRole.userCount === 1 ? "" : "s"
+                }. Removing it can't be undone.`
+              : `Remove ${deletingRole.name}? This can't be undone.`
+          }
+          confirmLabel="Remove"
+          isSubmitting={isDeleting}
+          onClose={() => setDeletingRole(null)}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
     </div>
   );
 }

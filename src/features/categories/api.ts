@@ -1,5 +1,5 @@
 import { api } from "@/lib/api/client";
-import type { CategoriesListResponse, CreateCategoryPayload } from "./types";
+import type { CategoriesListResponse, CreateCategoryPayload, UpdateCategoryPayload } from "./types";
 
 export const getCategories = async (): Promise<CategoriesListResponse> => {
   const { data } = await api.get("/admin/categories");
@@ -20,5 +20,18 @@ export const exportCategories = async (): Promise<Blob> => {
   const { data } = await api.get("/admin/categories/export", {
     responseType: "blob",
   });
+  return data;
+};
+
+export const updateCategory = async (
+  categoryId: string,
+  payload: UpdateCategoryPayload,
+) => {
+  const { data } = await api.patch(`/admin/categories/${categoryId}`, payload);
+  return data;
+};
+
+export const deleteCategory = async (categoryId: string) => {
+  const { data } = await api.delete(`/admin/categories/${categoryId}`);
   return data;
 };

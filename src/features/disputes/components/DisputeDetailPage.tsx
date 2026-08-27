@@ -9,6 +9,7 @@ import PageLoader from "@/components/generic/PageLoader";
 import { useDispute, useUpdateReportStatus } from "../queries";
 import { showToast } from "@/lib/utils/toast";
 import type { ReportStatus } from "../types";
+import { getInitials } from "@/lib/utils/getInitials";
 
 const NOT_IN_API_YET = "—";
 
@@ -19,6 +20,13 @@ const statusPillClass: Record<string, string> = {
   dismissed:
     "bg-gray-50 text-brand-gray-light dark:bg-gray-800 dark:text-gray-400",
   resolved: "bg-[#F6FEF9] text-[#027A48] dark:bg-green-950 dark:text-green-400",
+};
+
+const reporterStatusPillClass: Record<string, string> = {
+  active: "bg-[#F6FEF9] text-[#027A48] dark:bg-green-950 dark:text-green-400",
+  pending: "bg-[#FFFAEB] text-[#B54708] dark:bg-amber-950 dark:text-amber-400",
+  suspended: "bg-[#FEF3F2] text-[#B42318] dark:bg-red-950 dark:text-red-400",
+  banned: "bg-[#FEF3F2] text-[#B42318] dark:bg-red-950 dark:text-red-400",
 };
 
 const statusFallback =
@@ -55,7 +63,7 @@ export default function DisputeDetailPage() {
     );
   }
 
-  const { listing, user } = dispute;
+  const { listing, reporter } = dispute;
 
   const changeStatus = (status: ReportStatus, verb: string) => {
     showToast.promise(
@@ -191,12 +199,12 @@ export default function DisputeDetailPage() {
         <div className="detail-section-card border-none">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide">
-              Reported User
+              Reporter
             </p>
-            {user && (
+            {reporter && (
               <button
                 type="button"
-                onClick={() => navigate(`/users/${user._id}`)}
+                onClick={() => navigate(`/users/${reporter._id}`)}
                 className="text-xs text-amber-600 hover:underline flex items-center gap-1 cursor-pointer"
               >
                 View User ↗
@@ -204,45 +212,74 @@ export default function DisputeDetailPage() {
             )}
           </div>
 
-          {!user ? (
+          {!reporter ? (
             <p className="text-sm text-brand-gray-light">
-              This report isn't tied to a user.
+              This report has no reporter attached.
             </p>
           ) : (
             <>
+              <div className="flex items-center gap-2.5 mb-3">
+                <span
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold text-white shrink-0"
+                  style={{
+                    background: "linear-gradient(135deg, #D19E00, #2563EB)",
+                  }}
+                >
+                  {getInitials(reporter.name)}
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-[#1D2939] dark:text-gray-100">
+                    {reporter.name}
+                  </p>
+                  <p className="text-xs text-brand-gray-light">
+                    {reporter.slug}
+                  </p>
+                </div>
+              </div>
+
               <div className="profile-info-row">
-                <span className="profile-info-label">Name</span>
-                <span className="profile-info-value">{user.name}</span>
+                <span className="profile-info-label">Status</span>
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                    reporterStatusPillClass[reporter.status] ?? statusFallback
+                  }`}
+                >
+                  {formatStatus(reporter.status)}
+                </span>
               </div>
               <div className="profile-info-row">
-                <span className="profile-info-label">ID</span>
-                <span className="profile-info-value">{user.slug}</span>
+                <span className="profile-info-label">Company</span>
+                <span className="profile-info-value">
+                  {reporter.company || NOT_IN_API_YET}
+                </span>
               </div>
               <div className="profile-info-row">
-                <span className="profile-info-label">Email</span>
-                <span className="profile-info-value">{user.email}</span>
+                <span className="profile-info-label">Member Since</span>
+                <span className="profile-info-value">
+                  {formatDate(reporter.createdAt)}
+                </span>
               </div>
-              {/* TODO: role, status, company, member since and rating are not
-                  returned by /admin/reports/{slug} */}
+              {/* TODO: reporter role and email are not returned by the API */}
               <div className="profile-info-row">
                 <span className="profile-info-label">Role</span>
                 <span className="profile-info-value">{NOT_IN_API_YET}</span>
               </div>
               <div className="profile-info-row">
-                <span className="profile-info-label">Status</span>
-                <span className="profile-info-value">{NOT_IN_API_YET}</span>
-              </div>
-              <div className="profile-info-row">
-                <span className="profile-info-label">Company</span>
-                <span className="profile-info-value">{NOT_IN_API_YET}</span>
-              </div>
-              <div className="profile-info-row">
-                <span className="profile-info-label">Member Since</span>
-                <span className="profile-info-value">{NOT_IN_API_YET}</span>
-              </div>
-              <div className="profile-info-row">
                 <span className="profile-info-label">Rating</span>
-                <span className="profile-info-value">{NOT_IN_API_YET}</span>
+                <span className="flex gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={
+                        i < Math.round(reporter.rating)
+                          ? "text-amber-400"
+                          : "text-gray-200"
+                      }
+                    >
+                      ★
+                    </span>
+                  ))}
+                </span>
               </div>
             </>
           )}

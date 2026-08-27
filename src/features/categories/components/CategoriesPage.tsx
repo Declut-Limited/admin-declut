@@ -17,12 +17,17 @@ import { createCategoryColumns } from "./columns";
 import AddCategoryModal from "./AddCategoryModal";
 import { PAGE_SIZE } from "@/lib/constants/pagination";
 import { showToast } from "@/lib/utils/toast";
+import EditCategoryModal from "./EditCategoryModal";
+import type { CategoryRow, UpdateCategoryPayload } from "../types";
 import {
   useCategories,
   useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
   useToggleCategoryStatus,
   useExportCategories,
 } from "../queries";
+import ConfirmModal from "@/components/generic/ConfirmModal";
 
 const tabs = ["All", "Active", "Hidden"];
 
@@ -34,9 +39,23 @@ export default function CategoriesPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [addModalOpen, setAddModalOpen] = useState(false);
 
-  const { data: categories = [], isLoading } = useCategories();
+  const [editingCategory, setEditingCategory] = useState<CategoryRow | null>(
+    null,
+  );
+
+  const categoriesQuery = useCategories();
+  const { data: categories = [] } = categoriesQuery;
+
   const { mutateAsync: createCategory, isPending: isCreating } =
     useCreateCategory();
+  const { mutateAsync: updateCategory, isPending: isUpdating } =
+    useUpdateCategory();
+  const [deletingCategory, setDeletingCategory] = useState<CategoryRow | null>(
+    null,
+  );
+
+  const { mutateAsync: removeCategory, isPending: isDeleting } =
+    useDeleteCategory();
   const { mutateAsync: toggleStatus } = useToggleCategoryStatus();
   const { mutateAsync: exportCategories } = useExportCategories();
 
@@ -62,7 +81,7 @@ export default function CategoriesPage() {
   const columns = useMemo(
     () =>
       createCategoryColumns({
-        onEdit: (category) => console.log("edit", category.id), // TODO: no update endpoint yet
+        onEdit: (category) => setEditingCategory(category),
         onToggleVisibility: (category) => {
           const goingHidden = category.status === "active";
           showToast.promise(toggleStatus(category.id), {
@@ -71,10 +90,25 @@ export default function CategoriesPage() {
             error: "Couldn't update category.",
           });
         },
-        onRemove: (category) => console.log("remove", category.id), // TODO: no delete endpoint yet
+        onRemove: (category) => setDeletingCategory(category),
       }),
     [toggleStatus],
   );
+
+  const handleEditCategory = (payload: UpdateCategoryPayload) => {
+    if (!editingCategory) return;
+
+    showToast.promise(
+      updateCategory({ categoryId: editingCategory.id, payload }).then(() =>
+        setEditingCategory(null),
+      ),
+      {
+        loading: `Updating ${editingCategory.title}...`,
+        success: "Category updated.",
+        error: "Couldn't update category.",
+      },
+    );
+  };
 
   const filteredCategories = useMemo(() => {
     return categories.filter((category) => {
@@ -139,6 +173,19 @@ export default function CategoriesPage() {
     });
   };
 
+  const handleConfirmDelete = () => {
+    if (!deletingCategory) return;
+
+    showToast.promise(
+      removeCategory(deletingCategory.id).then(() => setDeletingCategory(null)),
+      {
+        loading: `Removing ${deletingCategory.title}...`,
+        success: `${deletingCategory.title} has been removed.`,
+        error: "Couldn't remove category.",
+      },
+    );
+  };
+
   return (
     <div>
       <PageHeader
@@ -197,7 +244,7 @@ export default function CategoriesPage() {
         <DataTable
           data={paginatedCategories}
           columns={columns}
-          isLoading={isLoading}
+          query={categoriesQuery}
           emptyMessage="No categories found."
         />
 
@@ -213,6 +260,32 @@ export default function CategoriesPage() {
           isSubmitting={isCreating}
           onClose={() => setAddModalOpen(false)}
           onSubmit={handleAddCategory}
+        />
+      )}
+
+      {editingCategory && (
+        <EditCategoryModal
+          title={editingCategory.title}
+          isSubmitting={isUpdating}
+          onClose={() => setEditingCategory(null)}
+          onSubmit={handleEditCategory}
+        />
+      )}
+
+      {deletingCategory && (
+        <ConfirmModal
+          title="Remove category"
+          message={
+            deletingCategory.listingCount > 0
+              ? `${deletingCategory.title} has ${deletingCategory.listingCount} listing${
+                  deletingCategory.listingCount === 1 ? "" : "s"
+                } attached. Removing it can't be undone.`
+              : `Remove ${deletingCategory.title}? This can't be undone.`
+          }
+          confirmLabel="Remove"
+          isSubmitting={isDeleting}
+          onClose={() => setDeletingCategory(null)}
+          onConfirm={handleConfirmDelete}
         />
       )}
     </div>

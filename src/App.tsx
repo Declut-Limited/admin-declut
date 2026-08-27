@@ -31,7 +31,7 @@ import SettingsPage from "./features/settings/components/SettingsPage";
 import ProfilePage from "./features/profile/components/ProfilePage";
 import PublicOnlyRoute from "./lib/auth/PublicOnlyRoute";
 import ProtectedRoute from "./lib/auth/ProtectedRoute";
-
+import PermissionRoute, { DefaultRedirect } from "./lib/auth/PermissionRoute";
 
 function App() {
   return (
@@ -52,61 +52,89 @@ function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route element={<PermissionRoute module="dashboard" />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+          </Route>
 
-          <Route path="/users" element={<UsersPage />} />
-          <Route path="/users/:userId" element={<UserDetailPage />} />
+          <Route element={<PermissionRoute module="users" />}>
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/users/:userId" element={<UserDetailPage />} />
+          </Route>
 
-          <Route path="/listings" element={<ListingsPage />} />
-          <Route path="/listings/:listingId" element={<ListingDetailPage />} />
+          <Route element={<PermissionRoute module="listings" />}>
+            <Route path="/listings" element={<ListingsPage />} />
+            <Route
+              path="/listings/:listingId"
+              element={<ListingDetailPage />}
+            />
+          </Route>
 
-          <Route path="/categories" element={<CategoriesPage />} />
+          <Route element={<PermissionRoute module="categories" />}>
+            <Route path="/categories" element={<CategoriesPage />} />
+          </Route>
 
-          <Route path="/reviews" element={<ReviewsPage />} />
+          <Route element={<PermissionRoute module="reviews" />}>
+            <Route path="/reviews" element={<ReviewsPage />} />
+          </Route>
 
-          <Route path="/disputes" element={<DisputesPage />} />
-          <Route path="/disputes/:reportCode" element={<DisputeDetailPage />} />
+          <Route element={<PermissionRoute module="reports" />}>
+            <Route path="/disputes" element={<DisputesPage />} />
+            <Route
+              path="/disputes/:reportCode"
+              element={<DisputeDetailPage />}
+            />
+          </Route>
 
-          <Route path="/activity-logs" element={<ActivityLogsPage />} />
-          <Route
-            path="/activity-logs/:logId"
-            element={<ActivityLogDetailPage />}
-          />
+          <Route element={<PermissionRoute module="activity" />}>
+            <Route path="/activity-logs" element={<ActivityLogsPage />} />
+            <Route
+              path="/activity-logs/:logId"
+              element={<ActivityLogDetailPage />}
+            />
+          </Route>
 
+          <Route element={<PermissionRoute module="notifications" />}>
+            <Route path="/notifications" element={<NotificationsPage />} />
+            <Route
+              path="/notifications/automation-rules"
+              element={<AutomationRulesPage />}
+            />
+            <Route
+              path="/notifications/:notificationId"
+              element={<NotificationDetailPage />}
+            />
+          </Route>
+
+          <Route element={<PermissionRoute module="content" />}>
+            <Route path="/content" element={<ContentPage />} />
+            <Route path="/content/:contentId" element={<ContentDetailPage />} />
+          </Route>
+
+          <Route element={<PermissionRoute module="transactions" />}>
+            <Route path="/transactions" element={<TransactionsPage />} />
+            <Route
+              path="/transactions/:transactionId"
+              element={<TransactionDetailPage />}
+            />
+            <Route path="/escrows" element={<EscrowPage />} />
+            <Route path="/escrow/:escrowId" element={<EscrowDetailPage />} />
+          </Route>
+
+          <Route element={<PermissionRoute module="settings" />}>
+            <Route path="/settings" element={<SettingsPage />} />
+          </Route>
+
+          {/* no permission key for these yet */}
           <Route path="/promotions" element={<PromotionsPage />} />
           <Route
             path="/promotions/:promotionId"
             element={<PromotionDetailPage />}
           />
-
-          <Route path="/notifications" element={<NotificationsPage />} />
-          <Route
-            path="/notifications/automation-rules"
-            element={<AutomationRulesPage />}
-          />
-          <Route
-            path="/notifications/:notificationId"
-            element={<NotificationDetailPage />}
-          />
-
-          <Route path="/content" element={<ContentPage />} />
-          <Route path="/content/:contentId" element={<ContentDetailPage />} />
-
-          <Route path="/transactions" element={<TransactionsPage />} />
-          <Route
-            path="/transactions/:transactionId"
-            element={<TransactionDetailPage />}
-          />
-
-          <Route path="/escrows" element={<EscrowPage />} />
-          <Route path="/escrow/:escrowId" element={<EscrowDetailPage />} />
-
-          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>
 
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<DefaultRedirect />} />
     </Routes>
   );
 }

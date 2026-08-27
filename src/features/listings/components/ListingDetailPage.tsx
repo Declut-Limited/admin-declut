@@ -3,18 +3,28 @@ import { RiDeleteBin6Line } from "react-icons/ri";
 import Button from "@/components/generic/Button";
 import ImageGallery from "@/components/generic/ImageGallery";
 import ListingLocationMap from "@/components/generic/ListingLocationMap";
-import avatarPlaceholder from "@/assets/avatar.svg";
 import { FaArrowLeftLong } from "react-icons/fa6";
 import { IoMail } from "react-icons/io5";
 import listingHeader from "@/assets/listing-header.jpg";
 import NotFoundState from "@/components/generic/NotFoundState";
-import { FiPackage } from "react-icons/fi";
+import { FiEdit3, FiFlag, FiPackage } from "react-icons/fi";
 import PageLoader from "@/components/generic/PageLoader";
-import { useListing, useDeleteListing, useEmailSeller } from "../queries";
+import {
+  useListing,
+  useDeleteListing,
+  useEmailSeller,
+  useUpdateListing,
+  useFlagListing,
+  useUnflagListing,
+  useDelistListing,
+  useRelistListing,
+} from "../queries";
 import { showToast } from "@/lib/utils/toast";
 import { useState } from "react";
-import type { EmailSellerPayload } from "../types";
+import type { EmailSellerPayload, UpdateListingPayload } from "../types";
 import EmailSellerModal from "./EmailSellerModal";
+import EditListingModal from "./EditListingModal";
+import { getInitials } from "@/lib/utils/getInitials";
 
 const NOT_IN_API_YET = "—";
 
@@ -78,14 +88,24 @@ export default function ListingDetailPage() {
   const navigate = useNavigate();
 
   const { data: listing, isLoading, isError } = useListing(listingId);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+
+  const { mutateAsync: removeListing, isPending: isRemoving } =
+    useDeleteListing();
+  const { mutateAsync: updateListing, isPending: isUpdating } =
+    useUpdateListing();
+  const { mutateAsync: flagListing } = useFlagListing();
+  const { mutateAsync: unflagListing } = useUnflagListing();
+  const { mutateAsync: delistListing } = useDelistListing();
+  const { mutateAsync: relistListing } = useRelistListing();
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const { mutateAsync: sendEmail, isPending: isSendingEmail } =
     useEmailSeller();
-  const { mutateAsync: removeListing, isPending: isRemoving } =
-    useDeleteListing();
 
   const handleSendEmail = (payload: EmailSellerPayload) => {
-    if (!listingId) return;
+    if (!listing?.id) return;
+
+    const listingId = listing.id;
 
     showToast.promise(
       sendEmail({ listingId, payload }).then(() => setEmailModalOpen(false)),
@@ -120,14 +140,50 @@ export default function ListingDetailPage() {
   }));
 
   const handleRemoveListing = () => {
-    if (!listingId) return;
-
     showToast.promise(
-      removeListing(listingId).then(() => navigate("/listings")),
+      removeListing(listing.id).then(() => navigate("/listings")),
       {
         loading: `Removing ${listing.title}...`,
         success: `${listing.title} has been removed.`,
         error: "Couldn't remove listing.",
+      },
+    );
+  };
+
+  const handleToggleFlag = () => {
+    const isFlagged = listing.status === "flagged";
+    showToast.promise(
+      isFlagged ? unflagListing(listing.id) : flagListing(listing.id),
+      {
+        loading: isFlagged ? "Unflagging..." : "Flagging...",
+        success: isFlagged ? "Listing unflagged." : "Listing flagged.",
+        error: "Couldn't update listing.",
+      },
+    );
+  };
+
+  const handleToggleDelist = () => {
+    const isDelisted =
+      listing.status === "delisted" || listing.status === "deleted";
+    showToast.promise(
+      isDelisted ? relistListing(listing.id) : delistListing(listing.id),
+      {
+        loading: isDelisted ? "Relisting..." : "Delisting...",
+        success: isDelisted ? "Listing relisted." : "Listing delisted.",
+        error: "Couldn't update listing.",
+      },
+    );
+  };
+
+  const handleConfirmEdit = (payload: UpdateListingPayload) => {
+    showToast.promise(
+      updateListing({ listingId: listing.id, payload }).then(() =>
+        setEditModalOpen(false),
+      ),
+      {
+        loading: "Updating listing...",
+        success: "Listing updated.",
+        error: "Couldn't update listing.",
       },
     );
   };
@@ -183,7 +239,32 @@ export default function ListingDetailPage() {
           >
             Email Seller
           </Button>
-          {/* {!isSold && <Button leftIcon={<FiFlag className="w-4 h-4" />}>Flag</Button>} */}
+
+          <Button
+            onClick={() => setEditModalOpen(true)}
+            leftIcon={<FiEdit3 className="w-4 h-4 text-brand-gray-dark" />}
+          >
+            Edit
+          </Button>
+
+          <Button
+            onClick={handleToggleFlag}
+            leftIcon={<FiFlag className="w-4 h-4 text-brand-gray-dark" />}
+          >
+            {listing.status === "flagged" ? "Unflag" : "Flag"}
+          </Button>
+
+          <Button
+            onClick={handleToggleDelist}
+            bgColor="bg-white dark:bg-gray-900"
+            textColor="text-brand-gray-dark dark:text-gray-200"
+            borderColor="border-gray-200 dark:border-gray-700"
+          >
+            {listing.status === "delisted" || listing.status === "deleted"
+              ? "Relist"
+              : "Delist"}
+          </Button>
+
           <Button
             onClick={handleRemoveListing}
             disabled={isRemoving}
@@ -371,27 +452,32 @@ export default function ListingDetailPage() {
             ) : (
               <>
                 <div className="flex items-center gap-2.5 mb-3">
-                  <img
-                    src={avatarPlaceholder}
-                    alt=""
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
+                  <span
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold text-white shrink-0"
+                    style={{
+                      background: "linear-gradient(135deg, #D19E00, #2563EB)",
+                    }}
+                  >
+                    {getInitials(seller.name)}
+                  </span>
                   <div>
                     <p className="text-sm font-semibold text-brand-gray-dark dark:text-gray-100">
                       {seller.name}
                     </p>
-                    <p className="text-xs text-brand-gray-light">
-                      {seller.id} · {seller.contact}
-                    </p>
+                    <span className="text-xs text-brand-gray-light">
+                      <p className="text-xs text-brand-gray-light">
+                        {seller.slug} · {seller.email} · {seller.phone}
+                      </p>
+                    </span>
                   </div>
                 </div>
 
-                <div className="profile-info-row">
+                {/* <div className="profile-info-row">
                   <span className="profile-info-label">Role</span>
                   <span className="profile-info-value">
                     {seller.role ?? NOT_IN_API_YET}
                   </span>
-                </div>
+                </div> */}
                 <div className="profile-info-row">
                   <span className="profile-info-label">Status</span>
                   <span
@@ -404,8 +490,8 @@ export default function ListingDetailPage() {
                 </div>
                 {/* TODO: seller company is not returned by the API */}
                 <div className="profile-info-row">
-                  <span className="profile-info-label">Company</span>
-                  <span className="profile-info-value">{NOT_IN_API_YET}</span>
+                  <span className="profile-info-label">Name</span>
+                  <span className="profile-info-value">{seller.name}</span>
                 </div>
                 <div className="profile-info-row">
                   <span className="profile-info-label">Total Listings</span>
@@ -456,6 +542,16 @@ export default function ListingDetailPage() {
           isSubmitting={isSendingEmail}
           onClose={() => setEmailModalOpen(false)}
           onConfirm={handleSendEmail}
+        />
+      )}
+
+      {editModalOpen && (
+        <EditListingModal
+          title={listing.title}
+          price={listing.price}
+          isSubmitting={isUpdating}
+          onClose={() => setEditModalOpen(false)}
+          onConfirm={handleConfirmEdit}
         />
       )}
     </div>

@@ -16,7 +16,11 @@ import { PiExportFill } from "react-icons/pi";
 import { createDisputeColumns } from "./columns";
 import { PAGE_SIZE } from "@/lib/constants/pagination";
 import { showToast } from "@/lib/utils/toast";
-import { useDisputes, useUpdateReportStatus } from "../queries";
+import {
+  useDisputes,
+  useExportDisputes,
+  useUpdateReportStatus,
+} from "../queries";
 import type { ReportStatus } from "../types";
 
 const tabs = ["All", "New", "Investigating", "Resolved", "Dismissed"];
@@ -30,12 +34,19 @@ export default function DisputesPage() {
 
   const navigate = useNavigate();
 
-  const { data, isLoading } = useDisputes({
-    page: currentPage,
-    limit: PAGE_SIZE,
-  });
+const disputesQuery = useDisputes({ page: currentPage, limit: PAGE_SIZE });
+const { data } = disputesQuery;
 
   const { mutateAsync: updateStatus } = useUpdateReportStatus();
+  const { mutateAsync: exportDisputes } = useExportDisputes();
+
+  const handleExport = () => {
+    showToast.promise(exportDisputes({}), {
+      loading: "Preparing export...",
+      success: "Export downloaded.",
+      error: "Export failed.",
+    });
+  };
   const disputes = useMemo(() => data?.results ?? [], [data?.results]);
 
   const total = data?.total ?? 0;
@@ -78,7 +89,12 @@ export default function DisputesPage() {
     return createDisputeColumns({
       onViewDetails: (dispute) => navigate(`/disputes/${dispute.slug}`),
       onInvestigate: (dispute) =>
-        changeStatus(dispute._id, dispute.slug, "investigating", "Investigating"),
+        changeStatus(
+          dispute._id,
+          dispute.slug,
+          "investigating",
+          "Investigating",
+        ),
       onDismiss: (dispute) =>
         changeStatus(dispute._id, dispute.slug, "dismissed", "Dismissing"),
       onResolve: (dispute) =>
@@ -139,12 +155,8 @@ export default function DisputesPage() {
         actions={
           <Button
             leftIcon={<PiExportFill className="w-4 h-4 text-[#98A2B3]" />}
-            // rightIcon={
-            //   <FiChevronDown className="w-4 h-4 text-brand-gray-dark" />
-            // }
-            onClick={() => {
-              /* TODO: no reports export endpoint yet */
-            }}
+            // rightIcon={<FiChevronDown className="w-4 h-4 text-brand-gray-dark" />}
+            onClick={handleExport}
           >
             Export
           </Button>
@@ -186,7 +198,7 @@ export default function DisputesPage() {
       <DataTable
         data={visibleDisputes}
         columns={columns}
-        isLoading={isLoading}
+       query={disputesQuery}
         emptyMessage="No disputes found."
       />
 

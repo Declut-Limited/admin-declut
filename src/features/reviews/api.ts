@@ -22,3 +22,13 @@ export const flagReview = async (reviewId: string) => {
   const { data } = await api.patch(`/admin/reviews/${reviewId}/flag`);
   return data;
 };
+
+export const exportReviews = async (
+  params: Omit<ReviewsListParams, "page" | "limit">,
+): Promise<Blob> => {
+  const { data } = await api.get("/admin/reviews/export", {
+    params,
+    responseType: "blob",
+  });
+  return data;
+};

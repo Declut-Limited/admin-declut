@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={isPending}
-            className="w-full bg-brand-blue text-white text-sm font-medium py-3 rounded-lg hover:bg-[#3F5EE0] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full bg-brand-blue text-white text-sm font-medium py-3 rounded-lg hover:bg-[#3F5EE0] transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
           >
             {isPending ? "Sending..." : "Send Reset Link"}
           </button>

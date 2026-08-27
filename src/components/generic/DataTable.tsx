@@ -7,10 +7,12 @@ import {
 } from "@tanstack/react-table";
 import EmptyTableState from "./EmptyTableState";
 import TableLoadingState from "./TableLoadingState";
+import { getApiErrorMessage } from "@/lib/utils/getApiErrorMessage";
 
 interface DataTableProps<TData> {
   data: TData[];
   columns: ColumnDef<TData, any>[];
+  query?: { isLoading: boolean; isError: boolean; error: unknown };
   isLoading?: boolean;
   loadingRows?: number;
   emptyIcon?: React.ReactNode;
@@ -20,11 +22,17 @@ interface DataTableProps<TData> {
 export default function DataTable<TData>({
   data,
   columns,
-  isLoading,
+  query,
+  isLoading: isLoadingProp,
   loadingRows = 5,
   emptyIcon,
   emptyMessage,
 }: DataTableProps<TData>) {
+  const isLoading = query?.isLoading ?? isLoadingProp ?? false;
+  const errorMessage = query?.isError
+    ? getApiErrorMessage(query.error, "Couldn't load this data.")
+    : undefined;
+
   const table = useReactTable({
     data,
     columns,
@@ -59,6 +67,15 @@ export default function DataTable<TData>({
         <tbody>
           {isLoading ? (
             <TableLoadingState colSpan={columns.length} rows={loadingRows} />
+          ) : errorMessage ? (
+            <tr>
+              <td
+                colSpan={columns.length}
+                className="px-4 py-10 text-center text-sm text-brand-gray-dark dark:text-gray-300"
+              >
+                {errorMessage}
+              </td>
+            </tr>
           ) : data.length === 0 ? (
             <EmptyTableState
               colSpan={columns.length}

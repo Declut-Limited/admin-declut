@@ -43,3 +43,35 @@ export interface RoleEntry {
   permissions: RolePermission[];
   isNew?: boolean;
 }
+
+export interface PermissionSet {
+  view: boolean;
+  write: boolean;
+  delete: boolean;
+}
+
+export type RolePermissions = Record<string, PermissionSet>;
+
+export interface Role {
+  _id: string;
+  name: string;
+  permissions: RolePermissions;
+  createdBy: string;
+  createdAt: string;
+  userCount: number;
+}
+
+export interface RolesListResponse {
+  success: boolean;
+  data: Role[];
+}
+
+export interface CreateRolePayload {
+  name: string;
+  permissions: RolePermissions;
+}
+
+export interface UpdateRolePayload {
+  name?: string;
+  permissions?: Partial<Record<string, Partial<PermissionSet>>>;
+}

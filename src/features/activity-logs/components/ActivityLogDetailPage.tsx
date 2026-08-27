@@ -10,8 +10,19 @@ import {
   formatTimestamp,
   formatActor,
 } from "../utils";
+import { getInitials } from "@/lib/utils/getInitials";
 
 const NOT_IN_API_YET = "—";
+
+function formatDate(iso: string) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export default function ActivityLogDetailPage() {
   const { logId } = useParams<{ logId: string }>();
@@ -29,7 +40,8 @@ export default function ActivityLogDetailPage() {
     );
   }
 
-  const isSystemActor = log.actor === "system";
+  const actor = log.actor && log.actor !== "system" ? log.actor : null;
+  const actorName = formatActor(log.actor);
 
   return (
     <div>
@@ -43,9 +55,10 @@ export default function ActivityLogDetailPage() {
       {/* header */}
       <div className="bg-[#FAFAFA] dark:bg-gray-900/50 rounded-xl p-4 mb-6">
         <h1 className="text-xl font-bold text-[#1D2939] dark:text-gray-100 tracking-wide">
-          {formatEvent(log.event)}
+          {log.label ?? formatEvent(log.event)}
         </h1>
         <p className="text-xs text-brand-gray-light mt-1">
+          {log.slug ? `${log.slug} · ` : ""}
           {formatTimestamp(log.createdAt)}
           {log.ipAddress ? ` · IP ${log.ipAddress}` : ""}
         </p>
@@ -60,7 +73,13 @@ export default function ActivityLogDetailPage() {
 
           <div className="profile-info-row">
             <span className="profile-info-label">Action</span>
-            <span className="profile-info-value">{formatEvent(log.event)}</span>
+            <span className="profile-info-value">
+              {log.label ?? formatEvent(log.event)}
+            </span>
+          </div>
+          <div className="profile-info-row">
+            <span className="profile-info-label">Event</span>
+            <span className="profile-info-value">{log.event}</span>
           </div>
           <div className="profile-info-row">
             <span className="profile-info-label">Entity Type</span>
@@ -106,9 +125,13 @@ export default function ActivityLogDetailPage() {
               {Object.entries(log.metadata).map(([key, value]) => (
                 <div key={key} className="profile-info-row">
                   <span className="profile-info-label">
-                    {key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase())}
+                    {key
+                      .replace(/([A-Z])/g, " $1")
+                      .replace(/^./, (c) => c.toUpperCase())}
                   </span>
-                  <span className="profile-info-value">{String(value)}</span>
+                  <span className="profile-info-value">
+                    {Array.isArray(value) ? value.join(", ") : String(value)}
+                  </span>
                 </div>
               ))}
             </>
@@ -120,24 +143,42 @@ export default function ActivityLogDetailPage() {
             Actor
           </p>
 
-          {/* TODO: `actor` is a bare id — name, email, role, status, company,
-              listings, member since and rating are not returned by the API. */}
-          <div className="profile-info-row">
-            <span className="profile-info-label">Actor</span>
-            <span className="profile-info-value">{formatActor(log.actor)}</span>
+          <div className="flex items-center gap-2.5 mb-3">
+            <span
+              className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold text-white shrink-0"
+              style={{ background: "linear-gradient(135deg, #D19E00, #2563EB)" }}
+            >
+              {getInitials(actorName)}
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-[#1D2939] tracking-wide dark:text-gray-100">
+                {actorName}
+              </p>
+              <p className="text-xs text-brand-gray-light">
+                {actor?.email ?? NOT_IN_API_YET}
+              </p>
+            </div>
           </div>
+
           <div className="profile-info-row">
-            <span className="profile-info-label">Name</span>
-            <span className="profile-info-value">{NOT_IN_API_YET}</span>
+            <span className="profile-info-label">Role</span>
+            <span className="profile-info-value">
+              {actor?.role ?? "System"}
+            </span>
           </div>
           <div className="profile-info-row">
             <span className="profile-info-label">Email</span>
-            <span className="profile-info-value">{NOT_IN_API_YET}</span>
+            <span className="profile-info-value">
+              {actor?.email ?? NOT_IN_API_YET}
+            </span>
           </div>
           <div className="profile-info-row">
-            <span className="profile-info-label">Role</span>
-            <span className="profile-info-value">{NOT_IN_API_YET}</span>
+            <span className="profile-info-label">Member Since</span>
+            <span className="profile-info-value">
+              {actor ? formatDate(actor.createdAt) : NOT_IN_API_YET}
+            </span>
           </div>
+          {/* TODO: actor status and company are not returned by the API */}
           <div className="profile-info-row">
             <span className="profile-info-label">Status</span>
             <span className="profile-info-value">{NOT_IN_API_YET}</span>
@@ -146,14 +187,10 @@ export default function ActivityLogDetailPage() {
             <span className="profile-info-label">Company</span>
             <span className="profile-info-value">{NOT_IN_API_YET}</span>
           </div>
-          <div className="profile-info-row">
-            <span className="profile-info-label">Member Since</span>
-            <span className="profile-info-value">{NOT_IN_API_YET}</span>
-          </div>
 
-          {!isSystemActor && (
+          {actor && (
             <button
-              onClick={() => navigate(`/users/${log.actor}`)}
+              onClick={() => navigate(`/users/${actor.id}`)}
               className="w-full bg-[#BFDBFE] text-brand-blue text-sm font-medium py-2.5 rounded-lg mt-3 cursor-pointer"
             >
               View User Profile

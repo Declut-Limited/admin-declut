@@ -1,18 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ColumnDef } from "@tanstack/react-table";
-import { FiEye, FiEdit3 } from "react-icons/fi";
+import { FiEye, FiEdit3, FiFlag } from "react-icons/fi";
 import { BsCheckCircle } from "react-icons/bs";
 import RowActionsMenu, {
   type RowAction,
 } from "@/components/generic/RowActionsMenu";
 import type { ListingRow } from "../types";
 import { CgDanger } from "react-icons/cg";
+import { RiDeleteBin6Line } from "react-icons/ri";
 
 interface ListingColumnCallbacks {
   onViewDetails: (listing: ListingRow) => void;
   onEdit: (listing: ListingRow) => void;
   onDelist: (listing: ListingRow) => void;
   onRelist: (listing: ListingRow) => void;
+  onFlag: (listing: ListingRow) => void;
+  onUnflag: (listing: ListingRow) => void;
+  onRemove: (listing: ListingRow) => void;
 }
 
 const statusPillClass: Record<string, string> = {
@@ -23,8 +27,7 @@ const statusPillClass: Record<string, string> = {
   flagged: "text-[#B42318] bg-[#FEF3F2] dark:text-red-400 dark:bg-red-950",
   delisted:
     "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800",
-  deleted:
-    "text-[#B42318] bg-[#FEF3F2] dark:text-red-400 dark:bg-red-950",
+  deleted: "text-[#B42318] bg-[#FEF3F2] dark:text-red-400 dark:bg-red-950",
 };
 
 const statusFallback =
@@ -76,21 +79,43 @@ export function createListingColumns(
       },
     ];
 
-    if (row.status === "active") {
+    if (row.status === "flagged") {
       base.push({
-        label: "Delist",
-        icon: <CgDanger className="w-4 h-4" />,
-        variant: "danger",
-        onClick: () => callbacks.onDelist(row),
+        label: "Unflag",
+        icon: <BsCheckCircle className="w-4 h-4" />,
+        variant: "success",
+        onClick: () => callbacks.onUnflag(row),
       });
-    } else {
+    } else if (row.status === "active") {
+      base.push({
+        label: "Flag",
+        icon: <FiFlag className="w-4 h-4" />,
+        onClick: () => callbacks.onFlag(row),
+      });
+    }
+
+    if (row.status === "delisted" || row.status === "deleted") {
       base.push({
         label: "Relist",
         icon: <BsCheckCircle className="w-4 h-4" />,
         variant: "success",
         onClick: () => callbacks.onRelist(row),
       });
+    } else {
+      base.push({
+        label: "Delist",
+        icon: <CgDanger className="w-4 h-4" />,
+        variant: "danger",
+        onClick: () => callbacks.onDelist(row),
+      });
     }
+
+    base.push({
+      label: "Remove",
+      icon: <RiDeleteBin6Line className="w-4 h-4" />,
+      variant: "danger",
+      onClick: () => callbacks.onRemove(row),
+    });
 
     return base;
   }

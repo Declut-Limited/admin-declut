@@ -17,3 +17,7 @@ export interface CategoriesListResponse {
 export interface CreateCategoryPayload {
   title: string;
 }
+
+export interface UpdateCategoryPayload {
+  title: string;
+}

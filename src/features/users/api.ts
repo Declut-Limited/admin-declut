@@ -1,5 +1,5 @@
 import { api } from "@/lib/api/client";
-import type { SuspendUserPayload, UpdateKycPayload, UserDetailResponse, UserListingsResponse, UsersListParams, UsersListResponse } from "./types";
+import type { InviteSubAdminPayload, SuspendUserPayload, UpdateKycPayload, UpdateSubAdminRolePayload, UserDetailResponse, UserListingsResponse, UsersListParams, UsersListResponse } from "./types";
 
 export const getUsers = async (params: UsersListParams): Promise<UsersListResponse> => {
   const { data } = await api.get("/admin/users", { params });
@@ -39,5 +39,21 @@ export const getListingsByUser = async (
 
 export const updateUserKyc = async (userId: string, payload: UpdateKycPayload) => {
   const { data } = await api.patch(`/admin/users/${userId}/kyc`, payload);
+  return data;
+};
+
+export const inviteSubAdmin = async (payload: InviteSubAdminPayload) => {
+  const { data } = await api.post("/admin/auth/sub-admins", payload);
+  return data;
+};
+
+export const updateSubAdminRole = async (
+  subAdminId: string,
+  payload: UpdateSubAdminRolePayload,
+) => {
+  const { data } = await api.patch(
+    `/admin/auth/sub-admins/${subAdminId}/role`,
+    payload,
+  );
   return data;
 };

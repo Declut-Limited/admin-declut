@@ -27,3 +27,13 @@ export const updateReportStatus = async (
   const { data } = await api.patch(`/admin/reports/${reportId}/status`, payload);
   return data;
 };
+
+export const exportDisputes = async (
+  params: Omit<DisputesListParams, "page" | "limit">,
+): Promise<Blob> => {
+  const { data } = await api.get("/admin/reports/export", {
+    params,
+    responseType: "blob",
+  });
+  return data;
+};

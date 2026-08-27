@@ -7,7 +7,10 @@ import ProfileDropdown from "./ProfileDropdown";
 import { useLogout, useMe } from "@/features/auth/queries";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { searchIndex, type SearchableItem } from "@/lib/search/searchIndex";
+import {
+  getSearchIndex,
+  type SearchableItem,
+} from "@/lib/search/searchIndex";
 
 interface TopNavProps {
   collapsed: boolean;
@@ -33,18 +36,18 @@ export default function TopNav({ onToggleCollapse, collapsed }: TopNavProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const availableSearchItems = useMemo(
+    () => getSearchIndex(me?.role?.permissions),
+    [me],
+  );
+
   const results = useMemo(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
-    return searchIndex.filter((item) => item.label.toLowerCase().includes(q));
-  }, [query]);
-
-  function normalizeRole(role: string) {
-    return role
-      .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  }
+    return availableSearchItems.filter((item) =>
+      item.label.toLowerCase().includes(q),
+    );
+  }, [query, availableSearchItems]);
 
   function handleSelect(item: SearchableItem) {
     if (item.tab) {
@@ -117,7 +120,7 @@ export default function TopNav({ onToggleCollapse, collapsed }: TopNavProps) {
       <div className="ml-auto flex items-center gap-3">
         <ProfileDropdown
           name={me?.name ?? "-"}
-          role={normalizeRole(me?.role ?? "")}
+          role={me?.role?.name ?? ""}
           email={me?.email ?? ""}
           isLoading={isLoading}
           onLogout={() => logout()}

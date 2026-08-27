@@ -14,6 +14,7 @@ import {
   formatTimestamp,
   formatActor,
 } from "../utils";
+import { getInitials } from "@/lib/utils/getInitials";
 
 interface ActivityLogColumnCallbacks {
   onViewDetails: (log: ActivityLogRow) => void;
@@ -43,28 +44,35 @@ export function createActivityLogColumns(
     {
       accessorKey: "actor",
       header: "Actor",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2.5">
-          {/* TODO: no actor avatar in the API response */}
-          {/* <img
-            src={avatarPlaceholder}
-            alt=""
-            className="w-8 h-8 rounded-full object-cover"
-          /> */}
-          {/* TODO: actor is a bare id — no name until the API populates it */}
-          <p
-            title={row.original.actor}
-            className="font-medium text-brand-gray-dark dark:text-gray-100 max-w-40 truncate"
-          >
-            {formatActor(row.original.actor)}
-          </p>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const actor = row.original.actor;
+        const actorName = formatActor(actor);
+        const actorRole = actor && actor !== "system" ? actor.role : "System";
+
+        return (
+          <div className="flex items-center gap-2.5">
+            <span
+              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white shrink-0"
+              style={{
+                background: "linear-gradient(135deg, #D19E00, #2563EB)",
+              }}
+            >
+              {getInitials(actorName)}
+            </span>
+            <div>
+              <p className="font-medium text-brand-gray-dark dark:text-gray-100 max-w-40 truncate">
+                {actorName}
+              </p>
+              <p className="text-xs text-brand-gray-light">{actorRole}</p>
+            </div>
+          </div>
+        );
+      },
     },
     {
       accessorKey: "event",
       header: "Action",
-      cell: ({ row }) => formatEvent(row.original.event),
+      cell: ({ row }) => row.original.label ?? formatEvent(row.original.event),
     },
     {
       accessorKey: "entityType",

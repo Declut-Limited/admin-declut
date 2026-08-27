@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getDisputes, getDisputeBySlug, updateReportStatus } from "./api";
+import { getDisputes, getDisputeBySlug, updateReportStatus, exportDisputes } from "./api";
 import type { DisputesListParams, UpdateReportStatusPayload } from "./types";
 
 export const useDisputes = (params: DisputesListParams) => {
@@ -7,7 +7,6 @@ export const useDisputes = (params: DisputesListParams) => {
     queryKey: ["disputes", params],
     queryFn: () => getDisputes(params),
     select: (res) => res.data,
-    placeholderData: (previous) => previous,
   });
 };
 
@@ -33,6 +32,23 @@ export const useUpdateReportStatus = () => {
     }) => updateReportStatus(reportId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["disputes"] });
+    },
+  });
+};
+
+export const useExportDisputes = () => {
+  return useMutation({
+    mutationFn: (params: Omit<DisputesListParams, "page" | "limit">) =>
+      exportDisputes(params),
+    onSuccess: (blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `reports-${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
     },
   });
 };

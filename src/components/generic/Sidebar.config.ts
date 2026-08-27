@@ -30,51 +30,72 @@ export interface NavGroup {
   items: NavItem[]
 }
 
+export type PermissionModule =
+  | 'dashboard'
+  | 'users'
+  | 'listings'
+  | 'categories'
+  | 'reviews'
+  | 'transactions'
+  | 'reports'
+  | 'activity'
+  | 'content'
+  | 'notifications'
+  | 'settings'
+  | 'roles'
+
+export interface NavItem {
+  label: string
+  path: string
+  icon: IconType | string
+  module?: PermissionModule
+}
+
 export const navGroups: NavGroup[] = [
   {
     label: 'Overview',
-    items: [{ label: 'Dashboard', path: '/dashboard', icon: GoHome }],
+    items: [
+      { label: 'Dashboard', path: '/dashboard', icon: GoHome, module: 'dashboard' },
+    ],
   },
   {
     label: 'Marketplace',
     items: [
-      { label: 'Users', path: '/users', icon: profileIcon },
-      { label: 'Listings', path: '/listings', icon: tagIcon },
-      { label: 'Categories', path: '/categories', icon: categoriesIcon },
-      { label: 'Reviews', path: '/reviews', icon: starIcon },
+      { label: 'Users', path: '/users', icon: profileIcon, module: 'users' },
+      { label: 'Listings', path: '/listings', icon: tagIcon, module: 'listings' },
+      { label: 'Categories', path: '/categories', icon: categoriesIcon, module: 'categories' },
+      { label: 'Reviews', path: '/reviews', icon: starIcon, module: 'reviews' },
     ],
   },
   {
     label: 'Money',
     items: [
-      { label: 'Transactions', path: '/transactions', icon: moneySendIcon },
+      { label: 'Transactions', path: '/transactions', icon: moneySendIcon, module: 'transactions' },
+      // TODO: no `escrow` permission key in the API
       { label: 'Escrow', path: '/escrows', icon: lockIcon },
-      // { label: 'Disputes', path: '/money-disputes', icon: infoCircleIcon },
-      // { label: 'Finance', path: '/finance', icon: moneysIcon },
     ],
   },
   {
     label: 'Trust & Safety',
     items: [
-      { label: 'Disputes', path: '/disputes', icon: documentTextIcon },
-      { label: 'Activity Logs', path: '/activity-logs', icon: layerIcon },
+      { label: 'Disputes', path: '/disputes', icon: documentTextIcon, module: 'reports' },
+      { label: 'Activity Logs', path: '/activity-logs', icon: layerIcon, module: 'activity' },
     ],
   },
   {
     label: 'Growth',
     items: [
+      // TODO: no `promotions` or `referrals` permission key in the API
       { label: 'Promotions', path: '/promotions', icon: ticketDiscountIcon },
-      { label: 'Notifications', path: '/notifications', icon: notificationBingIcon },
-      // { label: 'Analytics', path: '/analytics', icon: chartIcon },
-      { label: 'Content', path: '/content', icon: textIcon },
+      { label: 'Notifications', path: '/notifications', icon: notificationBingIcon, module: 'notifications' },
+      { label: 'Content', path: '/content', icon: textIcon, module: 'content' },
       { label: 'Referrals', path: '/referrals', icon: giftIcon },
     ],
   },
   {
     label: 'Admin',
     items: [
-      { label: 'Settings', path: '/settings', icon: setting2Icon },
-      // { label: 'System Configuration', path: '/system-configuration', icon: setting4Icon },
+      { label: 'Settings', path: '/settings', icon: setting2Icon, module: 'settings' },
     ],
   },
 ]

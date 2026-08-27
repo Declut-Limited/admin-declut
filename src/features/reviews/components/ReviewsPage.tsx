@@ -22,6 +22,7 @@ import {
   useResolveReview,
   useFlagReview,
   useDeleteReview,
+  useExportReviews,
 } from "../queries";
 
 const tabs = ["All", "Visible", "Resolved", "Flagged"];
@@ -34,15 +35,22 @@ export default function ReviewsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [viewingReview, setViewingReview] = useState<ReviewRow | null>(null);
 
-  const { data, isLoading } = useReviews({
-    page: currentPage,
-    limit: PAGE_SIZE,
-  });
+  const reviewsQuery = useReviews({ page: currentPage, limit: PAGE_SIZE });
+  const { data } = reviewsQuery;
 
   const { mutateAsync: resolveReview, isPending: isResolving } =
     useResolveReview();
   const { mutateAsync: flagReview, isPending: isFlagging } = useFlagReview();
   const { mutateAsync: removeReview } = useDeleteReview();
+  const { mutateAsync: exportReviews } = useExportReviews();
+
+  const handleExport = () => {
+    showToast.promise(exportReviews({}), {
+      loading: "Preparing export...",
+      success: "Export downloaded.",
+      error: "Export failed.",
+    });
+  };
 
   const handleFlagFromModal = () => {
     if (!viewingReview) return;
@@ -177,9 +185,7 @@ export default function ReviewsPage() {
             // rightIcon={
             //   <FiChevronDown className="w-4 h-4 text-brand-gray-dark" />
             // }
-            onClick={() => {
-              /* TODO: no reviews export endpoint yet */
-            }}
+            onClick={handleExport}
           >
             Export
           </Button>
@@ -215,7 +221,7 @@ export default function ReviewsPage() {
       <DataTable
         data={visibleReviews}
         columns={columns}
-        isLoading={isLoading}
+        query={reviewsQuery}
         emptyMessage="No reviews found."
       />
 

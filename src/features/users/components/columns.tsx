@@ -5,15 +5,16 @@ import RowActionsMenu, {
   type RowAction,
 } from "@/components/generic/RowActionsMenu";
 import { BsCheckCircle } from "react-icons/bs";
-import type { UserRow, UserStatus } from "../types";
+import type { UserRow } from "../types";
 
 interface UserColumnCallbacks {
   onSuspend: (user: UserRow) => void;
+  onEdit: (user: UserRow) => void;
   onReactivate: (user: UserRow) => void;
   onViewDetails: (user: UserRow) => void;
 }
 
-const statusPillClass: Record<UserStatus, string> = {
+const statusPillClass: Record<string, string> = {
   active: "bg-green-50 text-green-600 dark:bg-green-950 dark:text-green-400",
   pending: "bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400",
   suspended: "bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400",
@@ -56,7 +57,7 @@ export function createUserColumns(
       {
         label: "Edit",
         icon: <FiEdit3 className="w-4 h-4" />,
-        onClick: () => console.log("edit", row.id),
+        onClick: () => callbacks.onEdit(row),
       },
     ];
 

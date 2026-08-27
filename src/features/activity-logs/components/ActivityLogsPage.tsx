@@ -9,7 +9,11 @@ import { PiExportFill } from "react-icons/pi";
 import { FiChevronDown } from "react-icons/fi";
 import { createActivityLogColumns } from "./columns";
 import { PAGE_SIZE } from "@/lib/constants/pagination";
-import { useActivityLogs } from "../queries";
+import ConfirmModal from "@/components/generic/ConfirmModal";
+import { useActivityLogs, useDeleteActivityLog } from "../queries";
+import { formatActor } from "../utils";
+import { showToast } from "@/lib/utils/toast";
+import type { ActivityLogRow } from "../types";
 
 export default function ActivityLogsPage() {
   const [search, setSearch] = useState("");
@@ -17,11 +21,13 @@ export default function ActivityLogsPage() {
 
   const navigate = useNavigate();
 
-  const { data, isLoading } = useActivityLogs({
-    page: currentPage,
-    limit: PAGE_SIZE,
-  });
-  
+const activityLogsQuery = useActivityLogs({ page: currentPage, limit: PAGE_SIZE });
+const { data } = activityLogsQuery;
+
+  const [deletingLog, setDeletingLog] = useState<ActivityLogRow | null>(null);
+  const { mutateAsync: removeLog, isPending: isDeleting } =
+    useDeleteActivityLog();
+
   const logs = useMemo(() => data?.results ?? [], [data?.results]);
 
   const total = data?.total ?? 0;
@@ -32,14 +38,27 @@ export default function ActivityLogsPage() {
     setCurrentPage(1);
   };
 
-const columns = useMemo(
-  () =>
-    createActivityLogColumns({
-      onViewDetails: (log) => navigate(`/activity-logs/${log._id}`),
-      onRemove: (log) => console.log("remove", log._id), // TODO: no delete endpoint yet
-    }),
-  [navigate],
-);
+  const columns = useMemo(
+    () =>
+      createActivityLogColumns({
+        onViewDetails: (log) => navigate(`/activity-logs/${log._id}`),
+        onRemove: (log) => setDeletingLog(log),
+      }),
+    [navigate],
+  );
+
+  const handleConfirmDelete = () => {
+    if (!deletingLog) return;
+
+    showToast.promise(
+      removeLog(deletingLog._id).then(() => setDeletingLog(null)),
+      {
+        loading: "Removing log entry...",
+        success: "Log entry removed.",
+        error: "Couldn't remove log entry.",
+      },
+    );
+  };
 
   const visibleLogs = useMemo(() => {
     const query = search.toLowerCase();
@@ -48,11 +67,11 @@ const columns = useMemo(
       (log) =>
         log.event.toLowerCase().includes(query) ||
         log.entityType.toLowerCase().includes(query) ||
-        log.actor.toLowerCase().includes(query) ||
+        formatActor(log.actor).toLowerCase().includes(query) ||
+        (log.slug?.toLowerCase().includes(query) ?? false) ||
         (log.ipAddress?.toLowerCase().includes(query) ?? false),
     );
   }, [logs, search]);
-
   return (
     <div>
       <PageHeader
@@ -81,13 +100,24 @@ const columns = useMemo(
         searchPlaceholder="Search activity logs..."
       />
 
-      <DataTable data={visibleLogs} columns={columns} isLoading={isLoading} />
+      <DataTable data={visibleLogs} columns={columns} query={activityLogsQuery} emptyMessage="No activity logs found." />
 
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
       />
+
+      {deletingLog && (
+        <ConfirmModal
+          title="Remove log entry"
+          message={`Remove ${deletingLog.slug ?? "this log entry"}? Audit history can't be recovered once deleted.`}
+          confirmLabel="Remove"
+          isSubmitting={isDeleting}
+          onClose={() => setDeletingLog(null)}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
     </div>
   );
 }

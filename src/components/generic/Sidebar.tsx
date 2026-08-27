@@ -1,28 +1,31 @@
 import { NavLink } from "react-router-dom";
+import { useMemo } from "react";
 import { navGroups } from "./Sidebar.config";
 import logo from "@/assets/icons/logo.svg";
 import { useMe } from "@/features/auth/queries";
 import Skeleton from "./Skeleton";
+import { getInitials } from "@/lib/utils/getInitials";
 
 interface SidebarProps {
   collapsed: boolean;
 }
 
-function getInitials(name: string) {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-function normalizeRole(role: string) {
-  return role
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
 export default function Sidebar({ collapsed }: SidebarProps) {
   const { data: me, isLoading } = useMe();
+
+  const visibleGroups = useMemo(() => {
+    const permissions = me?.role?.permissions;
+    if (!permissions) return [];
+
+    return navGroups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter(
+          (item) => !item.module || permissions[item.module]?.view,
+        ),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [me]);
 
   return (
     <aside
@@ -42,37 +45,47 @@ export default function Sidebar({ collapsed }: SidebarProps) {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 space-y-6 py-2">
-        {navGroups.map((group) => (
-          <div key={group.label} className="sidebar-nav-group">
-            {!collapsed && (
-              <p className="sidebar-group-label tracking-wider px-2 text-xs font-semibold text-blue-300 uppercase mb-2">
-                {group.label}
-              </p>
-            )}
-            <div className="space-y-1">
-              {group.items.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  className={({ isActive }) =>
-                    `sidebar-nav-item tracking-wider flex items-center gap-3 px-3 py-2 rounded-md text-sm font-semibold transition-colors ${
-                      isActive
-                        ? "bg-[#FFFFE71A] text-white"
-                        : "text-blue-100 hover:bg-[#FFFFE71A]"
-                    }`
-                  }
-                >
-                  {typeof item.icon === "string" ? (
-                    <img src={item.icon} alt="" className="w-5 h-5 shrink-0" />
-                  ) : (
-                    <item.icon className="w-5 h-5 shrink-0" />
-                  )}
-                  {!collapsed && <span>{item.label}</span>}
-                </NavLink>
-              ))}
-            </div>
-          </div>
-        ))}
+        {isLoading
+          ? Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="px-2">
+                <Skeleton className="h-4 w-full bg-white/10" />
+              </div>
+            ))
+          : visibleGroups.map((group) => (
+              <div key={group.label} className="sidebar-nav-group">
+                {!collapsed && (
+                  <p className="sidebar-group-label tracking-wider px-2 text-xs font-semibold text-blue-300 uppercase mb-2">
+                    {group.label}
+                  </p>
+                )}
+                <div className="space-y-1">
+                  {group.items.map((item) => (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      className={({ isActive }) =>
+                        `sidebar-nav-item tracking-wider flex items-center gap-3 px-3 py-2 rounded-md text-sm font-semibold transition-colors ${
+                          isActive
+                            ? "bg-[#FFFFE71A] text-white"
+                            : "text-blue-100 hover:bg-[#FFFFE71A]"
+                        }`
+                      }
+                    >
+                      {typeof item.icon === "string" ? (
+                        <img
+                          src={item.icon}
+                          alt=""
+                          className="w-5 h-5 shrink-0"
+                        />
+                      ) : (
+                        <item.icon className="w-5 h-5 shrink-0" />
+                      )}
+                      {!collapsed && <span>{item.label}</span>}
+                    </NavLink>
+                  ))}
+                </div>
+              </div>
+            ))}
       </nav>
 
       <div className="shrink-0 px-4 py-3">
@@ -100,7 +113,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
                 <>
                   <p className="text-sm font-medium truncate">{me?.name}</p>
                   <p className="text-xs text-blue-300 truncate">
-                    {normalizeRole(me?.role ?? "")}
+                    {me?.role?.name}
                   </p>
                 </>
               )}

@@ -42,11 +42,35 @@ export interface DisputesListResponse {
   };
 }
 
-export interface DisputeDetailResponse {
-  success: boolean;
-  data: DisputeRow;
-}
 
 export interface UpdateReportStatusPayload {
   status: ReportStatus;
+}
+
+export interface ReportReporter {
+  _id: string;
+  name: string;
+  slug: string;
+  company: string;
+  createdAt: string;
+  status: string;
+  rating: number;
+}
+
+export interface DisputeDetail {
+  _id: string;
+  slug: string;
+  title: string;
+  reason: string;
+  listing?: ReportListing | null;
+  reporter?: ReportReporter | null;
+  createdBy: string;
+  status: ReportStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DisputeDetailResponse {
+  success: boolean;
+  data: DisputeDetail;
 }

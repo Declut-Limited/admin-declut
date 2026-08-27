@@ -18,12 +18,14 @@ import {
   useExportUsers,
   useSuspendUser,
   useReactivateUser,
+  useUpdateSubAdminRole,
 } from "../queries";
 import type { SuspendUserPayload, UserRow } from "../types";
 import { showToast } from "@/lib/utils/toast";
 import type { DateRange } from "@/components/generic/DateRangeFilter";
 import DateRangeFilter from "@/components/generic/DateRangeFilter";
 import { PAGE_SIZE } from "@/lib/constants/pagination";
+import EditAdminRoleModal from "./EditAdminRoleModal";
 
 const tabs = ["All", "Active", "Suspended", "Pending"];
 
@@ -39,11 +41,6 @@ export default function UsersPage() {
   const [suspendingUser, setSuspendingUser] = useState<UserRow | null>(null);
 
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 400);
-    return () => clearTimeout(timer);
-  }, [search]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -64,17 +61,22 @@ export default function UsersPage() {
     setRole("");
   };
 
-  const { data, isLoading } = useUsers({
+  const usersQuery = useUsers({
     page: currentPage,
     limit: PAGE_SIZE,
     status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
     search: debouncedSearch || undefined,
   });
 
+  const { data } = usersQuery;
+
   const { mutateAsync: exportUsers, isPending: isExporting } = useExportUsers();
   const { mutateAsync: suspendUser, isPending: isSuspending } =
     useSuspendUser();
   const { mutateAsync: reactivateUser } = useReactivateUser();
+  const [editingAdmin, setEditingAdmin] = useState<UserRow | null>(null);
+  const { mutateAsync: updateSubAdminRole, isPending: isUpdatingRole } =
+    useUpdateSubAdminRole();
 
   const users = useMemo(() => data?.results ?? [], [data?.results]);
   const total = data?.total ?? 0;
@@ -89,6 +91,15 @@ export default function UsersPage() {
             success: `${user.name} can now access their account.`,
             error: "Couldn't reactivate user.",
           });
+        },
+        onEdit: (user) => {
+          if (user.type !== "admin") {
+            showToast.info("Not editable", {
+              description: "Only admin accounts have an assignable role.",
+            });
+            return;
+          }
+          setEditingAdmin(user);
         },
         onViewDetails: (user) => navigate(`/users/${user.id}`),
       }),
@@ -149,6 +160,23 @@ export default function UsersPage() {
       },
     );
   };
+
+  const handleConfirmRoleChange = (roleId: string) => {
+    if (!editingAdmin) return;
+
+    showToast.promise(
+      updateSubAdminRole({
+        subAdminId: editingAdmin.id,
+        payload: { roleId },
+      }).then(() => setEditingAdmin(null)),
+      {
+        loading: `Updating ${editingAdmin.name}'s role...`,
+        success: `${editingAdmin.name}'s role has been updated.`,
+        error: "Couldn't update role.",
+      },
+    );
+  };
+
   return (
     <div>
       <PageHeader
@@ -204,7 +232,7 @@ export default function UsersPage() {
         <DataTable
           data={visibleUsers}
           columns={columns}
-          isLoading={isLoading}
+          query={usersQuery}
           emptyMessage="No users found."
         />
 
@@ -224,6 +252,16 @@ export default function UsersPage() {
           isSubmitting={isSuspending}
           onClose={() => setSuspendingUser(null)}
           onConfirm={handleConfirmSuspend}
+        />
+      )}
+
+      {editingAdmin && (
+        <EditAdminRoleModal
+          adminName={editingAdmin.name}
+          currentRoleId={editingAdmin.roleId}
+          isSubmitting={isUpdatingRole}
+          onClose={() => setEditingAdmin(null)}
+          onConfirm={handleConfirmRoleChange}
         />
       )}
     </div>

@@ -1,4 +1,4 @@
-import { navGroups } from "@/components/generic/Sidebar.config";
+import { navGroups, type PermissionModule } from "@/components/generic/Sidebar.config";
 import { FiSettings, FiUser } from "react-icons/fi";
 
 export interface SearchableItem {
@@ -6,6 +6,7 @@ export interface SearchableItem {
   path: string;
   tab?: string;
   group: string;
+  module?: PermissionModule;
   icon?: React.ComponentType<{ className?: string }> | string;
 }
 
@@ -14,16 +15,16 @@ const navItems: SearchableItem[] = navGroups.flatMap((group) =>
     label: item.label,
     path: item.path,
     group: group.label,
+    module: item.module,
     icon: item.icon,
-  }))
+  })),
 );
 
 const settingsTabs: SearchableItem[] = [
-  { label: "General Settings", path: "/settings", tab: "General", group: "Settings", icon: FiSettings },
-  { label: "Branding", path: "/settings", tab: "Branding", group: "Settings", icon: FiSettings },
-  { label: "Payments Settings", path: "/settings", tab: "Payments", group: "Settings", icon: FiSettings },
-  { label: "Fees & Commission", path: "/settings", tab: "Fees & Commission", group: "Settings", icon: FiSettings },
-  { label: "Roles & Permissions", path: "/settings", tab: "Roles & Permissions", group: "Settings", icon: FiSettings },
+  { label: "General Settings", path: "/settings", tab: "General", group: "Settings", module: "settings", icon: FiSettings },
+  { label: "Payments Settings", path: "/settings", tab: "Payments", group: "Settings", module: "settings", icon: FiSettings },
+  { label: "Fees & Commission", path: "/settings", tab: "Fees & Commission", group: "Settings", module: "settings", icon: FiSettings },
+  { label: "Roles & Permissions", path: "/settings", tab: "Roles & Permissions", group: "Settings", module: "settings", icon: FiSettings },
 ];
 
 const profileTabs: SearchableItem[] = [
@@ -33,4 +34,17 @@ const profileTabs: SearchableItem[] = [
   { label: "Security & Login", path: "/profile", tab: "Security & Login", group: "Profile", icon: FiUser },
 ];
 
-export const searchIndex: SearchableItem[] = [...navItems, ...settingsTabs, ...profileTabs];
+export const searchIndex: SearchableItem[] = [
+  ...navItems,
+  ...settingsTabs,
+  ...profileTabs,
+];
+
+export function getSearchIndex(
+  permissions?: Record<string, { view: boolean }>,
+): SearchableItem[] {
+  if (!permissions) return [];
+  return searchIndex.filter(
+    (item) => !item.module || permissions[item.module]?.view,
+  );
+}

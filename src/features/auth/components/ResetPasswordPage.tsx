@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import AuthBrandPanel from "@/components/generic/AuthBrandPanel";
 import { FiEye, FiEyeOff, FiCheck } from "react-icons/fi";
 import { FaArrowLeftLong } from "react-icons/fa6";
@@ -56,9 +56,22 @@ export default function ResetPasswordPage() {
     confirmPassword.length > 0 && password === confirmPassword;
   const allRulesPassed = passwordRules.every((rule) => rule.test(password));
 
+  const isInvalidToken = isVerifyError || verifyData?.data?.valid === false;
+
+  useEffect(() => {
+    if (isInvalidToken) {
+      showToast.error("Link expired", {
+        description: "Request a new password reset link.",
+      });
+      navigate("/forgot-password", { replace: true });
+    }
+  }, [isInvalidToken, navigate]);
+
+  if (isVerifying || isInvalidToken) return <PageLoader />;
+
   if (isVerifying) return <PageLoader />;
   if (isVerifyError || verifyData?.data?.valid === false) {
-    return <Navigate to="/resend-link" replace />;
+    return <Navigate to="/forgot-password" replace />;
   }
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -66,7 +79,7 @@ export default function ResetPasswordPage() {
     if (!allRulesPassed || !passwordsMatch) return;
 
     resetPassword(
-      { newPassword: password },
+      { password, passwordConfirm: confirmPassword },
       {
         onSuccess: () => {
           navigate("/reset-password-success");
@@ -229,7 +242,7 @@ export default function ResetPasswordPage() {
           <button
             type="submit"
             disabled={!allRulesPassed || !passwordsMatch || isPending}
-            className="w-full bg-brand-blue text-white text-sm font-medium py-3 rounded-lg hover:bg-[#3F5EE0] transition-colors mt-5 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-brand-blue text-white text-sm font-medium py-3 rounded-lg hover:bg-[#3F5EE0] transition-colors mt-5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {isPending ? "Resetting..." : "Reset Password"}
           </button>

@@ -1,31 +1,32 @@
 import { useState, useMemo } from "react";
 import BaseModal from "@/components/generic/BaseModal";
-import FormInput from "@/components/generic/FormInput";
 import CustomSelect from "@/components/generic/CustomSelect";
 import Button from "@/components/generic/Button";
 import { useRoles } from "@/features/settings/queries";
-import { useInviteSubAdmin } from "../queries";
-import { showToast } from "@/lib/utils/toast";
 import { getApiErrorMessage } from "@/lib/utils/getApiErrorMessage";
-import { FiEye, FiEyeOff } from "react-icons/fi";
 
-interface InviteUserModalProps {
+interface EditAdminRoleModalProps {
+  adminName: string;
+  currentRoleId?: string;
+  currentRoleName?: string;
+  isSubmitting?: boolean;
   onClose: () => void;
+  onConfirm: (roleId: string) => void;
 }
 
 function formatModule(module: string) {
   return module.charAt(0).toUpperCase() + module.slice(1);
 }
 
-export default function InviteUserModal({ onClose }: InviteUserModalProps) {
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [title, setTitle] = useState("");
-  const [company, setCompany] = useState("");
-  const [roleName, setRoleName] = useState("");
-
-  const [showPassword, setShowPassword] = useState(false);
+export default function EditAdminRoleModal({
+  adminName,
+  currentRoleId,
+  currentRoleName,
+  isSubmitting,
+  onClose,
+  onConfirm,
+}: EditAdminRoleModalProps) {
+  const [roleId, setRoleId] = useState(currentRoleId ?? "");
 
   const {
     data: roles = [],
@@ -33,13 +34,19 @@ export default function InviteUserModal({ onClose }: InviteUserModalProps) {
     isError: rolesError,
     error: rolesErrorObj,
   } = useRoles();
-  const { mutateAsync: inviteSubAdmin, isPending } = useInviteSubAdmin();
 
   const roleOptions = useMemo(() => roles.map((r) => r.name), [roles]);
 
+  const initialRoleId = useMemo(() => {
+    if (currentRoleId) return currentRoleId;
+    return roles.find((r) => r.name === currentRoleName)?._id ?? "";
+  }, [currentRoleId, currentRoleName, roles]);
+
+  const effectiveRoleId = roleId || initialRoleId;
+
   const selectedRole = useMemo(
-    () => roles.find((r) => r.name === roleName) ?? null,
-    [roles, roleName],
+    () => roles.find((r) => r._id === effectiveRoleId) ?? null,
+    [roles, effectiveRoleId],
   );
 
   const permissionRows = useMemo(() => {
@@ -50,36 +57,16 @@ export default function InviteUserModal({ onClose }: InviteUserModalProps) {
     }));
   }, [selectedRole]);
 
-  const canSubmit =
-    fullName.trim().length > 0 &&
-    email.trim().length > 0 &&
-    password.trim().length > 0 &&
-    title.trim().length > 0 &&
-    Boolean(selectedRole);
+  const canSubmit = Boolean(selectedRole) && roleId !== currentRoleId;
 
   const handleSubmit = () => {
     if (!canSubmit || !selectedRole) return;
-
-    showToast.promise(
-      inviteSubAdmin({
-        name: fullName.trim(),
-        email: email.trim(),
-        password: password.trim(),
-        title: title.trim(),
-        company: company.trim(),
-        roleId: selectedRole._id,
-      }).then(() => onClose()),
-      {
-        loading: `Inviting ${fullName.trim()}...`,
-        success: `${fullName.trim()} has been invited.`,
-        error: "Couldn't invite user.",
-      },
-    );
+    onConfirm(selectedRole._id);
   };
 
   return (
     <BaseModal
-      title="Invite User"
+      title={`Change role for ${adminName}`}
       onClose={onClose}
       width="max-w-3xl"
       footer={
@@ -94,88 +81,37 @@ export default function InviteUserModal({ onClose }: InviteUserModalProps) {
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!canSubmit || isPending}
+            disabled={!canSubmit || isSubmitting}
             bgColor="bg-brand-blue hover:bg-[#3F5EE0]"
             textColor="text-white"
             borderColor="border-transparent"
           >
-            {isPending ? "Inviting..." : "Save & Validate"}
+            {isSubmitting ? "Saving..." : "Save Changes"}
           </Button>
         </>
       }
     >
-      {/* user information */}
       <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 mb-4">
         <p className="text-xs font-semibold text-brand-gray-light dark:text-gray-400 uppercase tracking-wide mb-3">
-          User Information
+          Role
         </p>
-
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <FormInput
-            label="Full Name"
-            required
-            placeholder="E.g Ogunleti Oscar"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-          />
-          <FormInput
-            label="Email"
-            required
-            type="email"
-            placeholder="name@mail.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="relative">
-            <FormInput
-              label="Temporary Password"
-              required
-              type={showPassword ? "text" : "password"}
-              placeholder="Set an initial password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="pr-10"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((s) => !s)}
-              className="absolute right-3 top-8.5 text-gray-400 hover:text-gray-600 cursor-pointer"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? (
-                <FiEyeOff className="w-4 h-4" />
-              ) : (
-                <FiEye className="w-4 h-4" />
-              )}
-            </button>
-          </div>
-          <FormInput
-            label="Title"
-            required
-            placeholder="e.g. Support Lead"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </div>
 
         <div className="grid grid-cols-2 gap-4">
           <CustomSelect
-            label="Role"
+            label="Assigned Role"
             required
-            value={roleName || (rolesLoading ? "Loading..." : "Select a role")}
+            value={
+              selectedRole?.name ??
+              (rolesLoading ? "Loading..." : "Select a role")
+            }
             options={roleOptions}
-            onChange={setRoleName}
-          />
-          <FormInput
-            label="Company (optional)"
-            placeholder="e.g. Zenith Traders"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
+            onChange={(name) => {
+              const match = roles.find((r) => r.name === name);
+              if (match) setRoleId(match._id);
+            }}
           />
         </div>
+
         {rolesError && (
           <p className="text-xs text-red-500 mt-1">
             {getApiErrorMessage(rolesErrorObj, "Couldn't load roles.")}
@@ -183,7 +119,6 @@ export default function InviteUserModal({ onClose }: InviteUserModalProps) {
         )}
       </div>
 
-      {/* module access & permissions */}
       <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
         <p className="text-xs font-semibold text-brand-gray-light dark:text-gray-400 uppercase tracking-wide mb-1">
           Module Access &amp; Permissions

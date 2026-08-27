@@ -1,3 +1,5 @@
+import type { ActivityLogActor, ActivityLogDetailActor } from "./types";
+
 export function formatEvent(event: string) {
   return event
     .replace(/\./g, " ")
@@ -26,6 +28,14 @@ export function formatTimestamp(iso: string) {
   });
 }
 
-export function formatActor(actor: string) {
-  return actor === "system" ? "System" : actor;
+export function formatActor(
+  actor: ActivityLogActor | ActivityLogDetailActor | "system" | null,
+) {
+  if (!actor || actor === "system") return "System";
+  return actor.name;
+}
+
+export function getActorId(actor: ActivityLogActor | "system" | null) {
+  if (!actor || actor === "system") return null;
+  return actor.id;
 }

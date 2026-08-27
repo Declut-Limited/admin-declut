@@ -27,19 +27,24 @@ export interface PermissionSet {
   delete: boolean
 }
 
+export interface AdminRole {
+  id: string;
+  name: string;
+  permissions: Record<string, PermissionSet>;
+}
+
 export interface AdminProfile {
-  id: string
-  email: string
-  name: string
-  role: string
-  company: string
-  permissions: Record<string, PermissionSet>
-  createdAt: string
+  id: string;
+  email: string;
+  name: string;
+  company: string;
+  role: AdminRole;
+  createdAt: string;
 }
 
 export interface MeResponse {
-  success: boolean
-  data: AdminProfile
+  success: boolean;
+  data: AdminProfile;
 }
 
 export interface ForgotPasswordPayload {
@@ -62,9 +67,9 @@ export interface VerifyResetTokenResponse {
 }
 
 export interface ResetPasswordPayload {
-  newPassword: string;
+  password: string;
+  passwordConfirm: string;
 }
-
 export interface ResetPasswordResponse {
   success: boolean;
   data: {
