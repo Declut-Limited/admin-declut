@@ -15,7 +15,6 @@ import { PiExportFill } from "react-icons/pi";
 import { FaCirclePlus } from "react-icons/fa6";
 import { createCategoryColumns } from "./columns";
 import AddCategoryModal from "./AddCategoryModal";
-import { PAGE_SIZE } from "@/lib/constants/pagination";
 import { showToast } from "@/lib/utils/toast";
 import EditCategoryModal from "./EditCategoryModal";
 import type { CategoryRow, UpdateCategoryPayload } from "../types";
@@ -28,10 +27,13 @@ import {
   useExportCategories,
 } from "../queries";
 import ConfirmModal from "@/components/generic/ConfirmModal";
+import { usePageSize } from "@/lib/hooks/usePageSize";
 
 const tabs = ["All", "Active", "Hidden"];
 
 export default function CategoriesPage() {
+  const PAGE_SIZE = usePageSize();
+
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });

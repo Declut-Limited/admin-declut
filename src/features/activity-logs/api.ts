@@ -35,3 +35,13 @@ export const useDeleteActivityLog = () => {
     },
   });
 };
+
+export const exportActivityLogs = async (
+  params: Omit<ActivityLogsListParams, "page" | "limit">,
+): Promise<Blob> => {
+  const { data } = await api.get("/admin/activity-log/export", {
+    params,
+    responseType: "blob",
+  });
+  return data;
+};

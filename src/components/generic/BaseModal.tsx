@@ -3,7 +3,9 @@ import { IoIosCloseCircle } from "react-icons/io";
 
 interface BaseModalProps {
   title: string;
+  subtitle?: string;
   titleColor?: string;
+  subtitleColor?: string;
   width?: string;
   height?: string;
   onClose: () => void;
@@ -13,7 +15,9 @@ interface BaseModalProps {
 
 export default function BaseModal({
   title,
+  subtitle,
   titleColor = "text-[#1D2939] dark:text-gray-100",
+  subtitleColor = "text-[#1D2939] dark:text-gray-100",
   width = "max-w-2xl",
   height = "max-h-[85vh]",
   onClose,
@@ -22,10 +26,16 @@ export default function BaseModal({
 }: BaseModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-modal-overlay">
-      <div className={`w-full ${width} ${height} bg-white dark:bg-gray-900 rounded-2xl shadow-xl flex flex-col animate-modal-content`}>
+      <div
+        className={`w-full ${width} ${height} bg-white dark:bg-gray-900 rounded-2xl shadow-xl flex flex-col animate-modal-content`}
+      >
         {/* header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
-          <h2 className={`text-base font-bold ${titleColor}`}>{title}</h2>
+          <div className="flex flex-col gap-2">
+            <h2 className={`text-base font-bold ${titleColor}`}>{title}</h2>
+            <p className={`text-xs ${subtitleColor}`}>{subtitle}</p>
+          </div>
+
           <button
             onClick={onClose}
             className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer"

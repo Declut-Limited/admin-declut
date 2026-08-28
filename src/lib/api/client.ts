@@ -43,6 +43,10 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       const refreshToken = localStorage.getItem("refresh_token");
+      if (!refreshToken) {
+        isRefreshing = false;
+        return Promise.reject(error);
+      }
 
       try {
         const { data } = await axios.post(

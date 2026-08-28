@@ -6,7 +6,7 @@ export interface RowAction {
   label: string;
   icon: React.ReactNode;
   onClick: () => void;
-  variant?: "default" | "danger" | "success";
+  variant?: "default" | "danger" | "success" | "brand";
   dividerAfter?: boolean;
 }
 
@@ -17,6 +17,7 @@ interface RowActionsMenuProps {
 
 const variantClass: Record<NonNullable<RowAction["variant"]>, string> = {
   default: "text-[#475467] dark:text-gray-200",
+  brand: "text-brand-blue",
   danger: "text-[#F04438]",
   success: "text-[#12B76A]",
 };

@@ -1,3 +1,5 @@
+import type { DashboardPreferences } from "../profile/types"
+
 export interface LoginPayload {
   email: string
   password: string
@@ -37,7 +39,14 @@ export interface AdminProfile {
   id: string;
   email: string;
   name: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
   company: string;
+  dashboardPreferences: DashboardPreferences;
+  passwordChangedAt: string | null;
+  lastLoginAt: string | null;
+  lastProfileUpdateAt: string | null;
   role: AdminRole;
   createdAt: string;
 }

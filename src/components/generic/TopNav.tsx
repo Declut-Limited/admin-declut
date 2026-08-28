@@ -2,15 +2,13 @@ import {
   TbLayoutSidebarLeftCollapse,
   TbLayoutSidebarRightCollapse,
 } from "react-icons/tb";
-import { FiSearch, FiBell } from "react-icons/fi";
+import { FiSearch } from "react-icons/fi";
 import ProfileDropdown from "./ProfileDropdown";
 import { useLogout, useMe } from "@/features/auth/queries";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  getSearchIndex,
-  type SearchableItem,
-} from "@/lib/search/searchIndex";
+import { getSearchIndex, type SearchableItem } from "@/lib/search/searchIndex";
+import NotificationBell from "./NotificationBell";
 
 interface TopNavProps {
   collapsed: boolean;
@@ -126,12 +124,7 @@ export default function TopNav({ onToggleCollapse, collapsed }: TopNavProps) {
           onLogout={() => logout()}
         />
 
-        <button
-          className="relative p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
-          aria-label="Notifications"
-        >
-          <FiBell className="w-5 h-5 text-[#454545] dark:text-gray-300" />
-        </button>
+        <NotificationBell />
       </div>
     </header>
   );

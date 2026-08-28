@@ -6,6 +6,8 @@ import {
   login,
   logout,
   resetPassword,
+  updateDashboardPreferences,
+  updateProfileGeneral,
   verifyResetToken,
 } from "./api";
 import type {
@@ -16,6 +18,10 @@ import type {
 } from "./types";
 import { useNavigate } from "react-router-dom";
 import { showToast } from "@/lib/utils/toast";
+import type {
+  DashboardPreferences,
+  UpdateProfileGeneralPayload,
+} from "../profile/types";
 
 export const useLogin = () => {
   const queryClient = useQueryClient();
@@ -42,17 +48,17 @@ export const useLogout = () => {
     onSuccess: () => {
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
-      queryClient.clear();
       showToast.success("Signed out", {
         description: "You've been logged out.",
       });
-      navigate("/sign-in");
+      navigate("/sign-in", { replace: true });
+      setTimeout(() => queryClient.clear(), 0);
     },
     onError: () => {
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
-      queryClient.clear();
-      navigate("/sign-in");
+      navigate("/sign-in", { replace: true });
+      setTimeout(() => queryClient.clear(), 0);
     },
   });
 };
@@ -62,7 +68,8 @@ export const useMe = () => {
     queryKey: ["auth", "me"],
     queryFn: getMe,
     select: (res) => res.data,
-    staleTime: 5 * 60 * 1000, //30 min
+    staleTime: 10 * 60 * 1000,
+    enabled: Boolean(localStorage.getItem("access_token")),
   });
 };
 
@@ -93,3 +100,26 @@ export const useChangePassword = () => {
     mutationFn: (payload: ChangePasswordPayload) => changePassword(payload),
   });
 };
+
+const useProfileMutation = <TVars>(
+  mutationFn: (vars: TVars) => Promise<unknown>,
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+    },
+  });
+};
+
+export const useUpdateProfileGeneral = () =>
+  useProfileMutation((payload: UpdateProfileGeneralPayload) =>
+    updateProfileGeneral(payload),
+  );
+
+export const useUpdateDashboardPreferences = () =>
+  useProfileMutation((payload: DashboardPreferences) =>
+    updateDashboardPreferences(payload),
+  );

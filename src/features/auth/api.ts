@@ -13,6 +13,7 @@ import type {
   ResetPasswordResponse,
   VerifyResetTokenResponse,
 } from "./types";
+import type { DashboardPreferences, UpdateProfileGeneralPayload } from "../profile/types";
 
 export const login = async (payload: LoginPayload): Promise<LoginResponse> => {
   const { data } = await api.post("/admin/auth/login", payload);
@@ -48,5 +49,22 @@ export const resetPassword = async (token: string, payload: ResetPasswordPayload
 
 export const changePassword = async (payload: ChangePasswordPayload): Promise<ChangePasswordResponse> => {
   const { data } = await api.patch("/admin/auth/change-password", payload);
+  return data;
+};
+
+export const updateProfileGeneral = async (
+  payload: UpdateProfileGeneralPayload,
+) => {
+  const { data } = await api.patch("/admin/auth/me/general", payload);
+  return data;
+};
+
+export const updateDashboardPreferences = async (
+  payload: DashboardPreferences,
+) => {
+  const { data } = await api.patch(
+    "/admin/auth/me/dashboard-preferences",
+    payload,
+  );
   return data;
 };

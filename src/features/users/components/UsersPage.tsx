@@ -24,12 +24,14 @@ import type { SuspendUserPayload, UserRow } from "../types";
 import { showToast } from "@/lib/utils/toast";
 import type { DateRange } from "@/components/generic/DateRangeFilter";
 import DateRangeFilter from "@/components/generic/DateRangeFilter";
-import { PAGE_SIZE } from "@/lib/constants/pagination";
 import EditAdminRoleModal from "./EditAdminRoleModal";
+import { usePageSize } from "@/lib/hooks/usePageSize";
 
 const tabs = ["All", "Active", "Suspended", "Pending"];
 
 export default function UsersPage() {
+  const PAGE_SIZE = usePageSize();
+
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");

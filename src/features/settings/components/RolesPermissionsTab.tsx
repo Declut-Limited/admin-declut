@@ -25,6 +25,8 @@ const MODULES = [
   "reports",
   "activity",
   "content",
+  // "referrals",
+  // "waitlist",
   "notifications",
   "settings",
   "roles",

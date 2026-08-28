@@ -15,7 +15,6 @@ import { PiExportFill } from "react-icons/pi";
 import { createReviewColumns } from "./columns";
 import ViewReviewModal from "./ViewReviewModal";
 import type { ReviewRow } from "../types";
-import { PAGE_SIZE } from "@/lib/constants/pagination";
 import { showToast } from "@/lib/utils/toast";
 import {
   useReviews,
@@ -24,10 +23,13 @@ import {
   useDeleteReview,
   useExportReviews,
 } from "../queries";
+import { usePageSize } from "@/lib/hooks/usePageSize";
 
 const tabs = ["All", "Visible", "Resolved", "Flagged"];
 
 export default function ReviewsPage() {
+  const PAGE_SIZE = usePageSize();
+
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });

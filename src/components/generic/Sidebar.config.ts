@@ -17,6 +17,7 @@ import notificationBingIcon from '@/assets/icons/notification-bing.svg'
 import textIcon from '@/assets/icons/text.svg'
 import setting2Icon from '@/assets/icons/setting-2.svg'
 import giftIcon from '@/assets/icons/gift.svg'
+import profileAdd from '@/assets/icons/profile-add.svg'
 // import setting4Icon from '@/assets/icons/setting-4.svg'
 
 export interface NavItem {
@@ -41,6 +42,9 @@ export type PermissionModule =
   | 'activity'
   | 'content'
   | 'notifications'
+  | 'promotion'
+  | 'referrals'
+  | 'waitlist'
   | 'settings'
   | 'roles'
 
@@ -90,6 +94,7 @@ export const navGroups: NavGroup[] = [
       { label: 'Notifications', path: '/notifications', icon: notificationBingIcon, module: 'notifications' },
       { label: 'Content', path: '/content', icon: textIcon, module: 'content' },
       { label: 'Referrals', path: '/referrals', icon: giftIcon },
+      { label: 'Waitlist', path: '/waitlist', icon: profileAdd },
     ],
   },
   {

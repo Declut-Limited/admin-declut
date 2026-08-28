@@ -715,3 +715,235 @@ body {
     @apply flex-1 px-3 py-2.5 text-sm text-brand-gray-dark dark:text-gray-100 bg-transparent focus:outline-none min-w-0;
   }
 }
+
+/* referral, waitlist, notification, settings classes */
+@layer components {
+  .referral-tabs {
+    @apply flex items-center gap-1 p-1 w-fit mb-5;
+  }
+
+  .referral-tab {
+    @apply px-4 py-1.5 rounded-md text-sm text-brand-gray-light hover:text-brand-gray-dark dark:hover:text-gray-200 cursor-pointer;
+  }
+
+  .referral-tab-active {
+    @apply text-brand-blue font-medium;
+  }
+
+  .referral-stats-grid {
+    @apply grid grid-cols-2 lg:grid-cols-5 gap-4;
+  }
+
+  .campaign-wizard {
+    @apply flex gap-6 min-h-110;
+  }
+  .campaign-wizard-steps {
+    @apply w-60 shrink-0 flex flex-col gap-3 border-r border-gray-100 dark:border-gray-800 pr-4;
+  }
+
+  .campaign-wizard-step {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left cursor-pointer;
+  }
+
+  .campaign-wizard-step-active {
+    @apply bg-[#EFF6FF] dark:bg-blue-950/40;
+  }
+
+  .campaign-wizard-step-badge {
+    @apply w-7 h-7 rounded-full flex items-center justify-center text-sm shrink-0 border border-gray-200 dark:border-gray-700 text-brand-gray-light;
+  }
+
+  .campaign-wizard-step-badge-current {
+    @apply bg-brand-blue border-transparent text-white font-medium;
+  }
+
+  .campaign-wizard-step-badge-done {
+    @apply bg-[#DBEAFE] dark:bg-blue-950 border-transparent text-brand-blue;
+  }
+
+  .campaign-wizard-content {
+    @apply flex-1 min-w-0 max-h-110 overflow-y-auto;
+  }
+
+  .campaign-wizard-panel {
+    @apply bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 flex flex-col gap-4;
+  }
+
+  .campaign-review-section-title {
+    @apply text-xs font-semibold text-brand-gray-light uppercase tracking-wide bg-gray-50 dark:bg-gray-800/50 px-4 py-2 rounded-t-lg;
+  }
+
+  .campaign-review-section-body {
+    @apply px-4 pb-2;
+  }
+
+  .campaign-review-row {
+    @apply flex items-start justify-between gap-8 py-2 text-sm;
+  }
+
+  .campaign-review-label {
+    @apply text-brand-gray-light shrink-0;
+  }
+
+  .campaign-review-value {
+    @apply text-brand-gray-dark dark:text-gray-100 text-right;
+  }
+
+  .participant-progress-track {
+    @apply w-16 h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden shrink-0;
+  }
+
+  .participant-progress-fill {
+    @apply block h-full rounded-full bg-brand-blue;
+  }
+
+  .participant-progress-track {
+    @apply w-16 h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden shrink-0;
+  }
+
+  .participant-progress-fill {
+    @apply block h-full rounded-full bg-brand-blue;
+  }
+
+  .record-empty-state {
+    @apply flex flex-col items-center justify-center gap-2 py-12 text-center;
+  }
+
+  .record-empty-title {
+    @apply text-sm font-semibold text-brand-gray-dark dark:text-gray-100;
+  }
+
+  .record-empty-body {
+    @apply text-xs text-brand-gray-light max-w-xs;
+  }
+
+  .internal-note {
+    @apply bg-[#EFF6FF] dark:bg-blue-950/30 rounded-lg p-3;
+  }
+
+  .note-composer {
+    @apply border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden;
+  }
+
+  .note-composer-input {
+    @apply w-full px-3 py-2.5 text-sm text-brand-gray-dark dark:text-gray-100 bg-white dark:bg-gray-800 placeholder:text-gray-400 focus:outline-none resize-none;
+  }
+
+  .note-composer-footer {
+    @apply flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-800;
+  }
+
+  .waitlist-stat-card {
+    @apply bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4;
+  }
+
+  .waitlist-stat-value {
+    @apply text-2xl font-bold text-[#1D2939] dark:text-gray-100;
+  }
+
+  .waitlist-stat-label {
+    @apply flex items-center gap-1.5 text-xs text-brand-gray-light mt-1;
+  }
+
+  .invite-recipient-list {
+    @apply max-h-64 overflow-y-auto border border-gray-100 dark:border-gray-800 rounded-lg p-4 m-4;
+  }
+
+  .notification-badge {
+    @apply absolute top-0.5 right-0.5 min-w-4 h-4 px-1 rounded-full bg-[#F04438] text-white text-[10px] font-semibold flex items-center justify-center;
+  }
+
+  .notification-offline-dot {
+    @apply absolute bottom-1 right-1 w-1.5 h-1.5 rounded-full bg-amber-500;
+  }
+
+  .notification-dropdown {
+    @apply absolute right-0 mt-2 w-80 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 z-50 overflow-hidden;
+  }
+
+  .notification-dropdown-header {
+    @apply flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800;
+  }
+
+  .notification-dropdown-body {
+    @apply max-h-96 overflow-y-auto;
+  }
+
+  .notification-empty {
+    @apply text-sm text-brand-gray-light text-center py-8 px-4;
+  }
+
+  .notification-row {
+    @apply w-full text-left px-4 py-3 border-b border-gray-50 dark:border-gray-800 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer;
+  }
+
+  .notification-row-unread {
+    @apply bg-[#EFF6FF] dark:bg-blue-950/20;
+  }
+
+  .notification-unread-dot {
+    @apply w-1.5 h-1.5 rounded-full bg-brand-blue mt-1.5 shrink-0;
+  }
+
+  .notification-row-title {
+    @apply text-sm font-medium text-brand-gray-dark dark:text-gray-100;
+  }
+
+  .notification-row-body {
+    @apply text-xs text-brand-gray-light mt-0.5;
+  }
+
+  .notification-row-time {
+    @apply text-xs text-brand-gray-light mt-1;
+  }
+
+  .notification-tabs {
+    @apply flex items-center gap-1 px-3 py-2 border-b border-gray-100 dark:border-gray-800;
+  }
+
+  .notification-tab {
+    @apply flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs text-brand-gray-light hover:text-brand-gray-dark dark:hover:text-gray-200 cursor-pointer;
+  }
+
+  .notification-tab-active {
+    @apply bg-[#EFF6FF] dark:bg-blue-950/40 text-brand-blue font-medium;
+  }
+
+  .notification-tab-count {
+    @apply text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800;
+  }
+
+  .notification-mark-read {
+    @apply flex items-center gap-1 text-xs text-brand-blue hover:underline cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .settings-suffix-input {
+    @apply flex items-center w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus-within:ring-2 focus-within:ring-brand-blue overflow-hidden;
+  }
+
+  .settings-suffix-input-field {
+    @apply flex-1 min-w-0 px-3 py-2.5 text-sm text-brand-gray-dark dark:text-gray-100 bg-transparent focus:outline-none;
+  }
+
+  .settings-suffix-input-addon {
+    @apply px-3 py-2.5 text-sm text-brand-gray-dark dark:text-gray-300 bg-gray-100 dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 shrink-0;
+  }
+
+  .settings-checkbox {
+    @apply appearance-none w-5 h-5 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shrink-0 cursor-pointer relative;
+  }
+
+  .settings-checkbox:checked {
+    @apply bg-brand-blue/15 border-brand-blue;
+  }
+
+  .settings-checkbox:checked::after {
+    content: "";
+    @apply absolute left-1/2 top-2 w-1.5 h-2.5 border-r-2 border-b-2 border-brand-blue;
+    transform: translate(-50%, -60%) rotate(45deg);
+  }
+
+  .settings-checkbox:focus-visible {
+    @apply outline-none ring-2 ring-brand-blue ring-offset-1;
+  }
+}

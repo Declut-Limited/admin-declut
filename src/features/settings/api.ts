@@ -3,6 +3,10 @@ import type {
   RolesListResponse,
   CreateRolePayload,
   UpdateRolePayload,
+  SettingsResponse,
+  GeneralSettings,
+  PaymentsSettings,
+  FeesCommissionSettings,
 } from "./types";
 
 export const getRoles = async (): Promise<RolesListResponse> => {
@@ -22,5 +26,30 @@ export const updateRole = async (roleId: string, payload: UpdateRolePayload) => 
 
 export const deleteRole = async (roleId: string) => {
   const { data } = await api.delete(`/admin/roles/${roleId}`);
+  return data;
+};
+
+export const getSettings = async (): Promise<SettingsResponse> => {
+  const { data } = await api.get("/admin/settings");
+  return data;
+};
+
+export const updateGeneralSettings = async (payload: GeneralSettings) => {
+  const { data } = await api.patch("/admin/settings/general", payload);
+  return data;
+};
+
+export const updatePaymentsSettings = async (payload: PaymentsSettings) => {
+  const { data } = await api.patch("/admin/settings/payments", payload);
+  return data;
+};
+
+export const updateFeesCommissionSettings = async (
+  payload: FeesCommissionSettings,
+) => {
+  const { data } = await api.patch(
+    "/admin/settings/fees-and-commission",
+    payload,
+  );
   return data;
 };

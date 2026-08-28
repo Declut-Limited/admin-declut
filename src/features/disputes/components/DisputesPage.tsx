@@ -14,7 +14,6 @@ import Button from "@/components/generic/Button";
 import { PiExportFill } from "react-icons/pi";
 // import { FiChevronDown } from "react-icons/fi";
 import { createDisputeColumns } from "./columns";
-import { PAGE_SIZE } from "@/lib/constants/pagination";
 import { showToast } from "@/lib/utils/toast";
 import {
   useDisputes,
@@ -22,10 +21,13 @@ import {
   useUpdateReportStatus,
 } from "../queries";
 import type { ReportStatus } from "../types";
+import { usePageSize } from "@/lib/hooks/usePageSize";
 
 const tabs = ["All", "New", "Investigating", "Resolved", "Dismissed"];
 
 export default function DisputesPage() {
+  const PAGE_SIZE = usePageSize();
+
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
@@ -34,8 +36,8 @@ export default function DisputesPage() {
 
   const navigate = useNavigate();
 
-const disputesQuery = useDisputes({ page: currentPage, limit: PAGE_SIZE });
-const { data } = disputesQuery;
+  const disputesQuery = useDisputes({ page: currentPage, limit: PAGE_SIZE });
+  const { data } = disputesQuery;
 
   const { mutateAsync: updateStatus } = useUpdateReportStatus();
   const { mutateAsync: exportDisputes } = useExportDisputes();
@@ -198,7 +200,7 @@ const { data } = disputesQuery;
       <DataTable
         data={visibleDisputes}
         columns={columns}
-       query={disputesQuery}
+        query={disputesQuery}
         emptyMessage="No disputes found."
       />
 

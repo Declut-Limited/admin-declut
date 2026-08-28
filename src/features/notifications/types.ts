@@ -1,15 +1,3 @@
-export interface NotificationRow {
-  id: string;
-  title: string;
-  trigger: string;
-  triggerLink?: string;
-  recipientName: string;
-  recipientAvatarUrl?: string;
-  channel: "PUSH" | "SMS" | "Email";
-  status: "Draft" | "Scheduled" | "Sent";
-  startDate: string;
-}
-
 export interface NotificationDetail {
   code: string;
   title: string;
@@ -51,4 +39,78 @@ export interface AutomationRule {
   channel: string;
   delay: string;
   enabled: boolean;
+}
+
+export type NotificationStatus =
+  | "draft"
+  | "scheduled"
+  | "sending"
+  | "sent"
+  | "failed";
+
+export type NotificationChannel = "push" | "sms" | "email" | "both";
+
+export interface NotificationRow {
+  _id: string;
+  title: string;
+  trigger: string;
+  recipientDescription: string;
+  channel: NotificationChannel;
+  status: NotificationStatus;
+  startDate: string;
+  content: string;
+  createdBy: string;
+  recipientCount: number;
+  sentCount: number;
+  failedCount: number;
+  createdAt: string;
+  updatedAt: string;
+  sentAt?: string;
+}
+
+export interface NotificationsListParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  search?: string;
+}
+
+export interface NotificationsListResponse {
+  success: boolean;
+  data: {
+    results: NotificationRow[];
+    total: number;
+    page: number;
+    limit: number;
+  };
+}
+
+export interface NotificationChannelResult {
+  status: "sent" | "failed" | "skipped";
+  error?: string;
+}
+
+export interface AdminNotification {
+  _id: string;
+  recipientType: string;
+  recipient: string;
+  type: string;
+  title: string;
+  body: string;
+  broadcast: string;
+  read: boolean;
+  createdAt: string;
+  channels: Record<string, NotificationChannelResult>;
+}
+
+export interface AdminNotificationsResponse {
+  success: boolean;
+  data: {
+    results: AdminNotification[];
+    total: number;
+    unreadCount: number;
+    page: number;
+    limit: number;
+    hasMore: boolean;
+  };
 }

@@ -13,7 +13,6 @@ import Pagination from "@/components/generic/Pagination";
 import Button from "@/components/generic/Button";
 import { PiExportFill } from "react-icons/pi";
 import { createListingColumns } from "./columns";
-import { PAGE_SIZE } from "@/lib/constants/pagination";
 import { showToast } from "@/lib/utils/toast";
 import EditListingModal from "./EditListingModal";
 import type { ListingRow, UpdateListingPayload } from "../types";
@@ -27,10 +26,13 @@ import {
   useRelistListing,
   useExportListings,
 } from "../queries";
+import { usePageSize } from "@/lib/hooks/usePageSize";
 
 const tabs = ["All", "Active", "Sold", "Deleted", "Flagged", "Archived"];
 
 export default function ListingsPage() {
+    const PAGE_SIZE = usePageSize();
+  
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");

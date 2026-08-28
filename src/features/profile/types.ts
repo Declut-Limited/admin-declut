@@ -1,3 +1,5 @@
+import type { AdminRole } from "../auth/types"
+
 // types.ts
 export interface ProfileGeneral {
   first_name: string
@@ -38,4 +40,36 @@ export interface ActiveSession {
   location: string
   timestamp: string
   is_current: boolean
+}
+
+export interface DashboardPreferences {
+  landingPage: string;
+  rowsPerPage: number;
+  dateFormat: string;
+  timeFormat: string;
+  timezone: string;
+  language: string;
+}
+
+export interface AdminProfile {
+  id: string;
+  email: string;
+  name: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  company: string;
+  dashboardPreferences: DashboardPreferences;
+  passwordChangedAt: string | null;
+  lastLoginAt: string | null;
+  lastProfileUpdateAt: string | null;
+  role: AdminRole;
+  createdAt: string;
+}
+
+export interface UpdateProfileGeneralPayload {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
 }

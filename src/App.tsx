@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route} from "react-router-dom";
 import DashboardPage from "@/features/dashboard/components/DashboardPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import SignInPage from "./features/auth/components/SignInPage";
@@ -32,11 +32,14 @@ import ProfilePage from "./features/profile/components/ProfilePage";
 import PublicOnlyRoute from "./lib/auth/PublicOnlyRoute";
 import ProtectedRoute from "./lib/auth/ProtectedRoute";
 import PermissionRoute, { DefaultRedirect } from "./lib/auth/PermissionRoute";
+import ReferralsPage from "./features/referrals/components/ReferralsPage";
+import ParticipantDetailPage from "./features/referrals/components/ParticipantDetailPage";
+import WaitlistPage from "./features/waitlist/components/WaitlistPage";
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/sign-in" replace />} />
+      <Route path="/" element={<DefaultRedirect />} />
 
       <Route element={<PublicOnlyRoute />}>
         <Route path="/sign-in" element={<SignInPage />} />
@@ -130,6 +133,13 @@ function App() {
             path="/promotions/:promotionId"
             element={<PromotionDetailPage />}
           />
+          {/* no permission key for referrals yet */}
+          <Route path="/referrals" element={<ReferralsPage />} />
+          <Route path="/referrals/participants/:participantId" element={<ParticipantDetailPage />} />
+
+          <Route path="/waitlist" element={<WaitlistPage />} />
+
+          
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>

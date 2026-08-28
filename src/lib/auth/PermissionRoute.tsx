@@ -11,16 +11,30 @@ const NoAccess = ({ message }: { message: string }) => (
 );
 
 export function DefaultRedirect() {
+  const token = localStorage.getItem("access_token");
   const { data: me, isLoading } = useMe();
+
+  if (!token) return <Navigate to="/sign-in" replace />;
   if (isLoading) return <PageLoader />;
 
-  const path = getLandingPath(me?.role?.permissions);
-  if (!path) return <NoAccess message="You don't have access to any sections. Contact your administrator." />;
+  const path = getLandingPath(
+    me?.role?.permissions,
+    me?.dashboardPreferences?.landingPage,
+  );
+
+  if (!path) {
+    return (
+      <NoAccess message="You don't have access to any sections. Contact your administrator." />
+    );
+  }
 
   return <Navigate to={path} replace />;
 }
-
-export default function PermissionRoute({ module }: { module: PermissionModule }) {
+export default function PermissionRoute({
+  module,
+}: {
+  module: PermissionModule;
+}) {
   const { data: me, isLoading } = useMe();
   const location = useLocation();
 
@@ -29,7 +43,10 @@ export default function PermissionRoute({ module }: { module: PermissionModule }
   const permissions = me?.role?.permissions;
   if (permissions?.[module]?.view) return <Outlet />;
 
-  const path = getLandingPath(permissions);
+  const path = getLandingPath(
+    me?.role?.permissions,
+    me?.dashboardPreferences?.landingPage,
+  );
   if (!path || path === location.pathname) {
     return <NoAccess message="You don't have permission to view this page." />;
   }

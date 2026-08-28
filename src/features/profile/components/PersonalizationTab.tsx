@@ -1,28 +1,111 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Button from "@/components/generic/Button";
 import CustomSelect from "@/components/generic/CustomSelect";
+import Skeleton from "@/components/generic/Skeleton";
 import { useState } from "react";
-import type { ProfilePersonalization } from "../types";
 import { BsCheckCircleFill } from "react-icons/bs";
 import { useTheme } from "@/lib/theme/useTheme";
+import { useMe, useUpdateDashboardPreferences } from "@/features/auth/queries";
+import type { AdminProfile } from "@/features/auth/types";
+import { showToast } from "@/lib/utils/toast";
+import { getApiErrorMessage } from "@/lib/utils/getApiErrorMessage";
+import type { DashboardPreferences } from "../types";
+
+const TIMEZONE_OPTIONS = [
+  { label: "West Africa Time (UTC+1)", value: "Africa/Lagos" },
+];
+
+const DEFAULT_PREFERENCES: DashboardPreferences = {
+  landingPage: "Dashboard",
+  rowsPerPage: 10,
+  dateFormat: "DD/MM/YYYY",
+  timeFormat: "12-Hour",
+  timezone: "Africa/Lagos",
+  language: "English",
+};
+
+const LANDING_PAGE_OPTIONS = [
+  { label: "Dashboard", value: "dashboard" },
+  { label: "Users", value: "users" },
+  { label: "Listings", value: "listings" },
+  { label: "Categories", value: "categories" },
+  { label: "Reviews", value: "reviews" },
+  { label: "Transactions", value: "transactions" },
+  { label: "Reports", value: "reports" },
+  { label: "Activity", value: "activity" },
+  { label: "Content", value: "content" },
+  { label: "Notifications", value: "notifications" },
+  { label: "Promotion", value: "promotion" },
+  { label: "Referrals", value: "referrals" },
+  { label: "Waitlist", value: "waitlist" },
+  { label: "Settings", value: "settings" },
+  { label: "Roles", value: "roles" },
+];
+
+const landingLabel = (value: string) =>
+  LANDING_PAGE_OPTIONS.find((o) => o.value === value.toLowerCase())?.label ??
+  LANDING_PAGE_OPTIONS[0].label;
+
+const landingValue = (label: string) =>
+  LANDING_PAGE_OPTIONS.find((o) => o.label === label)?.value ??
+  LANDING_PAGE_OPTIONS[0].value;
+
+const timezoneLabel = (value: string) =>
+  TIMEZONE_OPTIONS.find((o) => o.value === value)?.label ??
+  TIMEZONE_OPTIONS[0].label;
+
+const timezoneValue = (label: string) =>
+  TIMEZONE_OPTIONS.find((o) => o.label === label)?.value ??
+  TIMEZONE_OPTIONS[0].value;
 
 export function PersonalizationTab() {
+  const { data: me, isLoading, isError, error } = useMe();
+
+  if (isLoading) {
+    return (
+      <div className="settings-panel">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    );
+  }
+
+  if (isError || !me) {
+    return (
+      <div className="settings-panel">
+        <p className="text-sm text-brand-gray-dark dark:text-gray-300">
+          {getApiErrorMessage(error, "Couldn't load your preferences.")}
+        </p>
+      </div>
+    );
+  }
+
+  return <PersonalizationForm me={me} />;
+}
+
+function PersonalizationForm({ me }: { me: AdminProfile }) {
   const { theme, setTheme } = useTheme();
+  const { mutateAsync: updatePreferences, isPending } =
+    useUpdateDashboardPreferences();
 
-  const [formData, setFormData] = useState<ProfilePersonalization>({
-    appearance: "Light",
-    landing_page: "Dashboard",
-    default_rows_per_page: "10",
-    date_format: "DD/MM/YYYY",
-    time_format: "12-Hour",
-    timezone: "West Africa Time (UTC+1)",
-    language: "English",
-  });
+  const [formData, setFormData] = useState<DashboardPreferences>(
+    me.dashboardPreferences ?? DEFAULT_PREFERENCES,
+  );
 
-  const onChange = <K extends keyof ProfilePersonalization>(
+  const onChange = <K extends keyof DashboardPreferences>(
     field: K,
-    value: ProfilePersonalization[K],
+    value: DashboardPreferences[K],
   ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev: any) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = () => {
+    showToast.promise(updatePreferences(formData), {
+      loading: "Saving preferences...",
+      success: "Preferences updated.",
+      error: "Couldn't save preferences.",
+    });
   };
 
   return (
@@ -67,17 +150,17 @@ export function PersonalizationTab() {
         <div className="settings-field">
           <CustomSelect
             label="Landing Page"
-            value={formData.landing_page}
-            options={["Dashboard", "Users", "Listings", "Transactions"]}
-            onChange={(val) => onChange("landing_page", val)}
+            value={landingLabel(formData.landingPage)}
+            options={LANDING_PAGE_OPTIONS.map((o) => o.label)}
+            onChange={(val) => onChange("landingPage", landingValue(val))}
           />
         </div>
         <div className="settings-field">
           <CustomSelect
             label="Default Rows per Page"
-            value={formData.default_rows_per_page}
-            options={["10", "25", "50", "100"]}
-            onChange={(val) => onChange("default_rows_per_page", val)}
+            value={String(formData.rowsPerPage)}
+            options={["10", "20", "25", "50", "100"]}
+            onChange={(val) => onChange("rowsPerPage", Number(val))}
           />
         </div>
       </div>
@@ -86,17 +169,17 @@ export function PersonalizationTab() {
         <div className="settings-field">
           <CustomSelect
             label="Date Format"
-            value={formData.date_format}
+            value={formData.dateFormat}
             options={["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"]}
-            onChange={(val) => onChange("date_format", val)}
+            onChange={(val) => onChange("dateFormat", val)}
           />
         </div>
         <div className="settings-field">
           <CustomSelect
             label="Time Format"
-            value={formData.time_format}
+            value={formData.timeFormat}
             options={["12-Hour", "24-Hour"]}
-            onChange={(val) => onChange("time_format", val)}
+            onChange={(val) => onChange("timeFormat", val)}
           />
         </div>
       </div>
@@ -105,9 +188,9 @@ export function PersonalizationTab() {
         <div className="settings-field">
           <CustomSelect
             label="Timezone"
-            value={formData.timezone}
-            options={["West Africa Time (UTC+1)"]}
-            onChange={(val) => onChange("timezone", val)}
+            value={timezoneLabel(formData.timezone)}
+            options={TIMEZONE_OPTIONS.map((o) => o.label)}
+            onChange={(val) => onChange("timezone", timezoneValue(val))}
           />
         </div>
         <div className="settings-field">
@@ -122,7 +205,7 @@ export function PersonalizationTab() {
 
       <div className="flex gap-3">
         <Button
-          onClick={() => {}}
+          onClick={() => setFormData(DEFAULT_PREFERENCES)}
           bgColor="bg-white dark:bg-gray-800"
           textColor="text-brand-gray-dark dark:text-gray-200"
           borderColor="border-gray-200 dark:border-gray-700"
@@ -130,13 +213,14 @@ export function PersonalizationTab() {
           Reset to Default
         </Button>
         <Button
-          onClick={() => {}}
+          onClick={handleSave}
+          disabled={isPending}
           bgColor="bg-brand-blue hover:bg-[#3F5EE0]"
           textColor="text-white"
           borderColor="border-transparent"
         >
           <BsCheckCircleFill className="mr-1.5" />
-          Save Preferences
+          {isPending ? "Saving..." : "Save Preferences"}
         </Button>
       </div>
     </div>

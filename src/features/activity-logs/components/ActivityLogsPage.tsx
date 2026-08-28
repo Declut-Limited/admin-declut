@@ -6,27 +6,44 @@ import DataTable from "@/components/generic/DataTable";
 import Pagination from "@/components/generic/Pagination";
 import Button from "@/components/generic/Button";
 import { PiExportFill } from "react-icons/pi";
-import { FiChevronDown } from "react-icons/fi";
 import { createActivityLogColumns } from "./columns";
-import { PAGE_SIZE } from "@/lib/constants/pagination";
 import ConfirmModal from "@/components/generic/ConfirmModal";
-import { useActivityLogs, useDeleteActivityLog } from "../queries";
+import {
+  useActivityLogs,
+  useDeleteActivityLog,
+  useExportActivityLogs,
+} from "../queries";
 import { formatActor } from "../utils";
 import { showToast } from "@/lib/utils/toast";
 import type { ActivityLogRow } from "../types";
+import { usePageSize } from "@/lib/hooks/usePageSize";
 
 export default function ActivityLogsPage() {
+  const PAGE_SIZE = usePageSize();
+
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
   const navigate = useNavigate();
 
-const activityLogsQuery = useActivityLogs({ page: currentPage, limit: PAGE_SIZE });
-const { data } = activityLogsQuery;
+  const activityLogsQuery = useActivityLogs({
+    page: currentPage,
+    limit: PAGE_SIZE,
+  });
+  const { data } = activityLogsQuery;
 
   const [deletingLog, setDeletingLog] = useState<ActivityLogRow | null>(null);
   const { mutateAsync: removeLog, isPending: isDeleting } =
     useDeleteActivityLog();
+  const { mutateAsync: exportActivityLogs } = useExportActivityLogs();
+
+  const handleExport = () => {
+    showToast.promise(exportActivityLogs({}), {
+      loading: "Preparing export...",
+      success: "Export downloaded.",
+      error: "Export failed.",
+    });
+  };
 
   const logs = useMemo(() => data?.results ?? [], [data?.results]);
 
@@ -80,12 +97,7 @@ const { data } = activityLogsQuery;
         actions={
           <Button
             leftIcon={<PiExportFill className="w-4 h-4 text-[#98A2B3]" />}
-            rightIcon={
-              <FiChevronDown className="w-4 h-4 text-brand-gray-dark" />
-            }
-            onClick={() => {
-              /* TODO: no activity-log export endpoint yet */
-            }}
+            onClick={handleExport}
           >
             Export
           </Button>
@@ -100,7 +112,12 @@ const { data } = activityLogsQuery;
         searchPlaceholder="Search activity logs..."
       />
 
-      <DataTable data={visibleLogs} columns={columns} query={activityLogsQuery} emptyMessage="No activity logs found." />
+      <DataTable
+        data={visibleLogs}
+        columns={columns}
+        query={activityLogsQuery}
+        emptyMessage="No activity logs found."
+      />
 
       <Pagination
         currentPage={currentPage}

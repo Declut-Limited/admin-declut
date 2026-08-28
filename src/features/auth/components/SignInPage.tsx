@@ -27,7 +27,7 @@ export default function SignInPage() {
           showToast.success("Welcome back!", {
             description: "You've signed in successfully.",
           });
-          navigate("/dashboard");
+          navigate("/");
         },
         onError: (error) => {
           showToast.error("Sign in failed", {

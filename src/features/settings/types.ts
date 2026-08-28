@@ -1,26 +1,52 @@
 export interface GeneralSettings {
-  company_name: string
-  support_email: string
-  default_currency: string
-  timezone: string
+  companyName: string;
+  supportEmail: string;
+  defaultCurrency: string;
+  timezone: string;
+}
+
+export interface InspectionWindow {
+  inspectionPeriod: number;
+  allowExtension: boolean;
+  maxExtensionPeriod: number;
 }
 
 export interface PaymentsSettings {
-  card_payments: boolean
-  bank_transfer: boolean
-  wallet_balance: boolean
-  escrow_release_window: string
+  cardPaymentsEnabled: boolean;
+  bankTransferEnabled: boolean;
+  inspectionWindow: InspectionWindow;
+  maxCodeAttempts: number;
 }
 
 export interface FeesCommissionSettings {
-  default_commission_rate: string;
-  buyer_service_fee:  string;
-  escrow_release_fee:  string;
-  minimum_payout_threshold:  string;
-  default_currency: string
-  timezone: string
+  commissionPercentage: number;
+  buyerServiceFeePercentage: number;
+  escrowReleaseFee: number;
+  minimumPayoutThreshold: number;
 }
 
+export interface Settings {
+  _id: string;
+  companyName: string;
+  supportEmail: string;
+  defaultCurrency: string;
+  timezone: string;
+  cardPaymentsEnabled: boolean;
+  bankTransferEnabled: boolean;
+  maxCodeAttempts: number;
+  inspectionWindow: InspectionWindow;
+  commissionPercentage: number;
+  buyerServiceFeePercentage: number;
+  escrowReleaseFee: number;
+  minimumPayoutThreshold: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SettingsResponse {
+  success: boolean;
+  data: Settings;
+}
 export interface RoleCommissionOverride {
   role: string
   users_count: number

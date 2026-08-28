@@ -1,50 +1,49 @@
 import Button from "@/components/generic/Button";
 import FormInput from "@/components/generic/FormInput";
 import { useState, useMemo } from "react";
-import { FiEye, FiEyeOff, FiMonitor } from "react-icons/fi";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import { BsCheckCircleFill } from "react-icons/bs";
-import type { ActiveSession } from "../types";
+// import type { ActiveSession } from "../types";
 import { useChangePassword } from "@/features/auth/queries";
 import { showToast } from "@/lib/utils/toast";
-import { getApiErrorMessage } from "@/lib/utils/getApiErrorMessage";
 
-const mockSessions: ActiveSession[] = [
-  {
-    id: "1",
-    device: "2024 MacBook Pro 14-inch",
-    location: "Melbourne, Australia",
-    timestamp: "22 Jan at 10:40am",
-    is_current: true,
-  },
-  {
-    id: "2",
-    device: "2024 MacBook Pro 14-inch",
-    location: "Melbourne, Australia",
-    timestamp: "22 Jan at 10:40am",
-    is_current: false,
-  },
-  {
-    id: "3",
-    device: "2024 MacBook Pro 14-inch",
-    location: "Melbourne, Australia",
-    timestamp: "22 Jan at 10:40am",
-    is_current: false,
-  },
-  {
-    id: "4",
-    device: "2024 MacBook Pro 14-inch",
-    location: "Melbourne, Australia",
-    timestamp: "22 Jan at 10:40am",
-    is_current: false,
-  },
-  {
-    id: "5",
-    device: "2024 MacBook Pro 14-inch",
-    location: "Melbourne, Australia",
-    timestamp: "22 Jan at 10:40am",
-    is_current: false,
-  },
-];
+// const mockSessions: ActiveSession[] = [
+//   {
+//     id: "1",
+//     device: "2024 MacBook Pro 14-inch",
+//     location: "Melbourne, Australia",
+//     timestamp: "22 Jan at 10:40am",
+//     is_current: true,
+//   },
+//   {
+//     id: "2",
+//     device: "2024 MacBook Pro 14-inch",
+//     location: "Melbourne, Australia",
+//     timestamp: "22 Jan at 10:40am",
+//     is_current: false,
+//   },
+//   {
+//     id: "3",
+//     device: "2024 MacBook Pro 14-inch",
+//     location: "Melbourne, Australia",
+//     timestamp: "22 Jan at 10:40am",
+//     is_current: false,
+//   },
+//   {
+//     id: "4",
+//     device: "2024 MacBook Pro 14-inch",
+//     location: "Melbourne, Australia",
+//     timestamp: "22 Jan at 10:40am",
+//     is_current: false,
+//   },
+//   {
+//     id: "5",
+//     device: "2024 MacBook Pro 14-inch",
+//     location: "Melbourne, Australia",
+//     timestamp: "22 Jan at 10:40am",
+//     is_current: false,
+//   },
+// ];
 
 function getPasswordChecks(password: string) {
   return {
@@ -81,27 +80,21 @@ export function SecurityLoginTab() {
     confirmPassword.length > 0 && newPassword === confirmPassword;
   const allChecksPassed = Object.values(checks).every(Boolean);
 
-  const { mutate: changePassword, isPending } = useChangePassword();
+  const { mutateAsync: changePassword, isPending } = useChangePassword();
 
   const handleUpdatePassword = () => {
     if (!allChecksPassed || !passwordsMatch || !currentPassword) return;
 
-    changePassword(
-      { currentPassword, newPassword },
+    showToast.promise(
+      changePassword({ currentPassword, newPassword }).then(() => {
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      }),
       {
-        onSuccess: () => {
-          showToast.success("Password updated", {
-            description: "Your password has been changed successfully.",
-          });
-          setCurrentPassword("");
-          setNewPassword("");
-          setConfirmPassword("");
-        },
-        onError: (error) => {
-          showToast.error("Couldn't update password", {
-            description: getApiErrorMessage(error),
-          });
-        },
+        loading: "Updating password...",
+        success: "Your password has been changed.",
+        error: "Couldn't update password.",
       },
     );
   };
@@ -275,7 +268,7 @@ export function SecurityLoginTab() {
           </div>
         </div>
 
-        <div className="active-sessions-panel">
+        {/* <div className="active-sessions-panel">
           <p className="active-sessions-title">Active Sessions</p>
           <p className="active-sessions-hint">
             Review the devices currently signed in to your Declut Admin account.
@@ -308,7 +301,7 @@ export function SecurityLoginTab() {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

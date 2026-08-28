@@ -1,4 +1,5 @@
 // lib/constants/pagination.ts
-// TODO: replace with the user's "Default Rows per Page" preference
-// (Profile > Personalization) once that endpoint exists.
-export const PAGE_SIZE = 20;
+export const DEFAULT_PAGE_SIZE = 20;
+
+// keep for non-hook contexts; prefer usePageSize() in components
+export const PAGE_SIZE = DEFAULT_PAGE_SIZE;
