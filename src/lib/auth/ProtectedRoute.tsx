@@ -7,7 +7,7 @@ export default function ProtectedRoute() {
   const { isLoading, isError } = useMe();
 
   if (!token) return <Navigate to="/sign-in" replace />;
-  if (isLoading) return <PageLoader />;
+  if (isLoading) return <PageLoader fullScreen />;
   if (isError) return <Navigate to="/sign-in" replace />;
 
   return <Outlet />;

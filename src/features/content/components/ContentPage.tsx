@@ -6,53 +6,135 @@ import TableToolbar from "@/components/generic/TableToolbar";
 import DataTable from "@/components/generic/DataTable";
 import Pagination from "@/components/generic/Pagination";
 import Button from "@/components/generic/Button";
+import ConfirmModal from "@/components/generic/ConfirmModal";
 import { PiExportFill } from "react-icons/pi";
-import { FiChevronDown } from "react-icons/fi";
+// import { FiChevronDown } from "react-icons/fi";
 import { FaCirclePlus } from "react-icons/fa6";
 import { createContentColumns } from "./columns";
 import NewContentModal from "./NewContentModal";
-import type { ContentRow } from "../types";
+import {
+  useContentList,
+  useCreateContent,
+  useDeleteContent,
+  useExportContent,
+  useUpdateContent,
+} from "../queries";
+import { usePageSize } from "@/lib/hooks/usePageSize";
+import { showToast } from "@/lib/utils/toast";
+import type { ContentRow, CreateContentPayload } from "../types";
 
 const tabs = ["All", "Published", "Draft"];
-
-const contentItems: ContentRow[] = [
-  { id: "1", title: "Trust & Safety Guide", type: "FAQ", placement: "Help Center", status: "Draft", updated: "May 13, 2026", authorName: "Femi Balogun" },
-  { id: "2", title: "Seller FAQ", type: "Page", placement: "Checkout — Confirmation", status: "Published", updated: "May 30, 2026", authorName: "Ifeoma Abiola" },
-  { id: "3", title: "Refund Policy", type: "Page", placement: "Seller Dashboard", status: "Draft", updated: "Jul 16, 2026", authorName: "Zainab Adekunle" },
-  { id: "4", title: "Terms of Service", type: "Banner", placement: "Standalone Page (custom URL)", status: "Published", updated: "May 30, 2026", authorName: "Chidi Nwosu" },
-  { id: "5", title: "About Us Page", type: "Page", placement: "Category Page", status: "Published", updated: "Jun 22, 2026", authorName: "Tunde Ogunleye" },
-  { id: "6", title: "Terms of Service", type: "Banner", placement: "Seller Dashboard", status: "Draft", updated: "May 28, 2026", authorName: "Kunle Nnamdi" },
-  { id: "7", title: "Homepage Banner", type: "Banner", placement: "Seller Dashboard", status: "Published", updated: "May 13, 2026", authorName: "Tosin Yusuf" },
-  { id: "8", title: "About Us Page", type: "Banner", placement: "Seller Dashboard", status: "Draft", updated: "Jul 3, 2026", authorName: "Yewande Okonkwo" },
-];
 
 export default function ContentPage() {
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [newContentModalOpen, setNewContentModalOpen] = useState(false);
+  const [removingContent, setRemovingContent] = useState<ContentRow | null>(
+    null,
+  );
 
   const navigate = useNavigate();
+  const PAGE_SIZE = usePageSize();
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+  };
+
+  const contentQuery = useContentList({
+    page: currentPage,
+    limit: PAGE_SIZE,
+    status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
+  });
+
+  const { data } = contentQuery;
+
+  const { mutateAsync: createContent, isPending: isCreating } =
+    useCreateContent();
+  const { mutateAsync: removeContent, isPending: isDeleting } =
+    useDeleteContent();
+  const [editingContent, setEditingContent] = useState<ContentRow | null>(null);
+  const { mutateAsync: updateContent, isPending: isUpdating } =
+    useUpdateContent();
+  const { mutateAsync: exportContent } = useExportContent();
+
+  const handleExport = () => {
+    showToast.promise(
+      exportContent({
+        status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
+      }),
+      {
+        loading: "Preparing export...",
+        success: "Export downloaded.",
+        error: "Export failed.",
+      },
+    );
+  };
+
+  const contentItems = useMemo(() => data?.results ?? [], [data?.results]);
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const columns = useMemo(
     () =>
       createContentColumns({
-        onViewDetails: (content) => navigate(`/content/${content.id}`),
-        onRemove: (content) => console.log("remove", content.id), // TODO: wire remove flow / confirm modal
+        onViewDetails: (content) => navigate(`/content/${content.slug}`),
+        onEdit: (content) => setEditingContent(content),
+        onTogglePublish: (content) => {
+          const publishing = content.status !== "published";
+          showToast.promise(
+            updateContent({
+              contentId: content._id,
+              payload: { status: publishing ? "published" : "draft" },
+            }),
+            {
+              loading: publishing ? "Publishing..." : "Unpublishing...",
+              success: `${content.title} is now ${publishing ? "published" : "a draft"}.`,
+              error: "Couldn't update content.",
+            },
+          );
+        },
+        onRemove: (content) => setRemovingContent(content),
       }),
-    [],
+    [navigate, updateContent],
   );
 
-  const filteredContent = contentItems.filter((item) => {
-    const matchesTab = activeTab === "All" || item.status === activeTab;
-    const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase());
-    return matchesTab && matchesSearch;
-  });
+  const visibleContent = useMemo(() => {
+    const q = search.toLowerCase();
+    if (!q) return contentItems;
+    return contentItems.filter(
+      (item) =>
+        item.title.toLowerCase().includes(q) ||
+        item.slug.toLowerCase().includes(q) ||
+        item.whereToAppear.toLowerCase().includes(q),
+    );
+  }, [contentItems, search]);
 
-  const handleCreateContent = (data: Record<string, string>) => {
-    // TODO: wire to contentApi.create once endpoint is confirmed
-    console.log("creating content", data);
-    setNewContentModalOpen(false);
+  const handleCreateContent = (payload: CreateContentPayload) => {
+    showToast.promise(
+      createContent(payload).then(() => setNewContentModalOpen(false)),
+      {
+        loading: `Creating ${payload.title}...`,
+        success: `${payload.title} has been created.`,
+        error: "Couldn't create content.",
+      },
+    );
+  };
+
+  const handleEditContent = (payload: CreateContentPayload) => {
+    if (!editingContent) return;
+
+    showToast.promise(
+      updateContent({ contentId: editingContent._id, payload }).then(() =>
+        setEditingContent(null),
+      ),
+      {
+        loading: `Updating ${editingContent.title}...`,
+        success: `${editingContent.title} has been updated.`,
+        error: "Couldn't update content.",
+      },
+    );
   };
 
   return (
@@ -64,10 +146,7 @@ export default function ContentPage() {
           <>
             <Button
               leftIcon={<PiExportFill className="w-4 h-4 text-[#98A2B3]" />}
-              rightIcon={<FiChevronDown className="w-4 h-4 text-[#475467]" />}
-              onClick={() => {
-                /* export logic */
-              }}
+              onClick={handleExport}
             >
               Export
             </Button>
@@ -84,24 +163,66 @@ export default function ContentPage() {
         }
       />
 
-      <TabFilter tabs={tabs} active={activeTab} onChange={setActiveTab} />
+      <TabFilter tabs={tabs} active={activeTab} onChange={handleTabChange} />
 
-      <div className="overflow-hidden">
-        <TableToolbar
-          label="Content"
-          count={filteredContent.length}
-          searchValue={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search activity logs..."
-        />
+      <TableToolbar
+        label="Content"
+        count={search ? visibleContent.length : total}
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search content..."
+      />
 
-        <DataTable data={filteredContent} columns={columns} />
+      <DataTable
+        data={visibleContent}
+        columns={columns}
+        query={contentQuery}
+        emptyMessage="No content found."
+      />
 
-        <Pagination currentPage={currentPage} totalPages={10} onPageChange={setCurrentPage} />
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       {newContentModalOpen && (
-        <NewContentModal onClose={() => setNewContentModalOpen(false)} onSubmit={handleCreateContent} />
+        <NewContentModal
+          isSubmitting={isCreating}
+          onClose={() => setNewContentModalOpen(false)}
+          onSubmit={handleCreateContent}
+        />
+      )}
+
+      {removingContent && (
+        <ConfirmModal
+          title="Remove content"
+          message={`Remove ${removingContent.title}? This can't be undone.`}
+          confirmLabel="Remove"
+          isSubmitting={isDeleting}
+          onClose={() => setRemovingContent(null)}
+          onConfirm={() => {
+            showToast.promise(
+              removeContent(removingContent._id).then(() =>
+                setRemovingContent(null),
+              ),
+              {
+                loading: `Removing ${removingContent.title}...`,
+                success: `${removingContent.title} has been removed.`,
+                error: "Couldn't remove content.",
+              },
+            );
+          }}
+        />
+      )}
+
+      {editingContent && (
+        <NewContentModal
+          content={editingContent}
+          isSubmitting={isUpdating}
+          onClose={() => setEditingContent(null)}
+          onSubmit={handleEditContent}
+        />
       )}
     </div>
   );

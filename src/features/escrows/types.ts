@@ -1,18 +1,42 @@
-export interface EscrowRow {
+export type EscrowStatus = "held" | "frozen" | "released" | "refunded";
+
+export interface EscrowParty {
   id: string;
-  escrowId: string;
-  transactionId: string;
-  buyerName: string;
-  buyerEmail: string;
-  buyerAvatarUrl?: string;
-  sellerName: string;
-  sellerEmail: string;
-  sellerAvatarUrl?: string;
-  product: string;
-  amountHeld: string;
-  platformFee: string;
-  sellerReceivable: string;
-  status: "Held" | "Frozen" | "Refunded" | "Released";
+  name: string;
+  email: string;
+  status: string;
+  rolePlayed: string;
+  slug: string;
+}
+
+export interface EscrowRow {
+  slug: string;
+  transaction: { _id: string; reference: string } | null;
+  buyer: EscrowParty | null;
+  seller: EscrowParty | null;
+  listing: { id: string; title: string } | null;
+  amountPaid: number;
+  amountHeld: number;
+  platformFee: number | null;
+  sellerPayoutAmount: number | null;
+  status: EscrowStatus;
+  createdAt: string;
+}
+
+export interface EscrowsListParams {
+  page?: number;
+  limit?: number;
+}
+
+export interface EscrowsListResponse {
+  success: boolean;
+  data: {
+    results: EscrowRow[];
+    total: number;
+    page: number;
+    limit: number;
+    hasMore: boolean;
+  };
 }
 
 export interface EscrowTimelineEvent {
@@ -42,7 +66,7 @@ export interface EscrowActivityEntry {
 
 export interface EscrowDetail {
   code: string;
-  status: EscrowRow["status"];
+    status: "Held" | "Frozen" | "Refunded" | "Released";
   transactionId: string;
   createdDate: string;
 

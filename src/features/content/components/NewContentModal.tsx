@@ -4,30 +4,78 @@ import FormInput from "@/components/generic/FormInput";
 import CustomSelect from "@/components/generic/CustomSelect";
 import RichTextEditor from "@/components/generic/RichTextEditor";
 import Button from "@/components/generic/Button";
+import type {
+  CreateContentPayload,
+  ContentType,
+  ContentStatus,
+  ContentRow,
+} from "../types";
 
 interface NewContentModalProps {
+  content?: ContentRow;
+  isSubmitting?: boolean;
   onClose: () => void;
-  onSubmit: (data: Record<string, string>) => void;
+  onSubmit: (payload: CreateContentPayload) => void;
 }
 
-const contentTypeOptions = ["FAQ", "Page", "Banner"];
-const placementOptions = ["Home Page - Top Banner", "Help Center", "Checkout — Confirmation", "Seller Dashboard", "Category Page", "Standalone Page (custom URL)"];
-const statusOptions = ["Draft", "Published"];
+const CONTENT_TYPES: { label: string; value: ContentType }[] = [
+  { label: "FAQ", value: "faq" },
+  { label: "Page", value: "page" },
+  { label: "Banner", value: "banner" },
+];
 
-export default function NewContentModal({ onClose, onSubmit }: NewContentModalProps) {
-  const [title, setTitle] = useState("");
-  const [contentType, setContentType] = useState(contentTypeOptions[0]);
-  const [placement, setPlacement] = useState(placementOptions[0]);
-  const [status, setStatus] = useState(statusOptions[0]);
-  const [contentBody, setContentBody] = useState("");
+const STATUSES: { label: string; value: ContentStatus }[] = [
+  { label: "Draft", value: "draft" },
+  { label: "Published", value: "published" },
+];
+
+const placementOptions = [
+  "Home Page - Top Banner",
+  "Home Page - Bottom Banner",
+  "Help Center",
+  "Checkout — Confirmation",
+  "Seller Dashboard",
+  "Category Page",
+  "Footer",
+  "Standalone Page (custom URL)",
+];
+
+export default function NewContentModal({
+  content,
+  isSubmitting,
+  onClose,
+  onSubmit,
+}: NewContentModalProps) {
+  const isEdit = Boolean(content);
+
+  const [title, setTitle] = useState(content?.title ?? "");
+  const [contentType, setContentType] = useState<ContentType>(
+    content?.contentType ?? "faq",
+  );
+  const [placement, setPlacement] = useState(
+    content?.whereToAppear ?? placementOptions[0],
+  );
+  const [status, setStatus] = useState<ContentStatus>(
+    content?.status ?? "draft",
+  );
+  const [contentBody, setContentBody] = useState(content?.contentBody ?? "");
+
+  const canSubmit = title.trim().length > 0 && contentBody.trim().length > 0;
 
   const handleSubmit = () => {
-    onSubmit({ title, contentType, placement, status, contentBody });
+    if (!canSubmit) return;
+    onSubmit({
+      title: title.trim(),
+      contentType,
+      whereToAppear: placement,
+      status,
+      contentBody: contentBody,
+    });
   };
 
   return (
     <BaseModal
-      title="New Content"
+      title={isEdit ? "Edit Content" : "New Content"}
       onClose={onClose}
       width="max-w-2xl"
       footer={
@@ -42,11 +90,18 @@ export default function NewContentModal({ onClose, onSubmit }: NewContentModalPr
           </Button>
           <Button
             onClick={handleSubmit}
+            disabled={!canSubmit || isSubmitting}
             bgColor="bg-brand-blue hover:bg-[#3F5EE0]"
             textColor="text-white"
             borderColor="border-transparent"
           >
-            Create Content
+            {isSubmitting
+              ? isEdit
+                ? "Saving..."
+                : "Creating..."
+              : isEdit
+                ? "Save Changes"
+                : "Create Content"}
           </Button>
         </>
       }
@@ -67,9 +122,15 @@ export default function NewContentModal({ onClose, onSubmit }: NewContentModalPr
         <CustomSelect
           label="Content Type"
           required
-          value={contentType}
-          options={contentTypeOptions}
-          onChange={setContentType}
+          value={
+            CONTENT_TYPES.find((t) => t.value === contentType)?.label ?? "FAQ"
+          }
+          options={CONTENT_TYPES.map((t) => t.label)}
+          onChange={(label) =>
+            setContentType(
+              CONTENT_TYPES.find((t) => t.label === label)?.value ?? "faq",
+            )
+          }
         />
 
         <div className="grid grid-cols-2 gap-4">
@@ -80,7 +141,16 @@ export default function NewContentModal({ onClose, onSubmit }: NewContentModalPr
             options={placementOptions}
             onChange={setPlacement}
           />
-          <CustomSelect label="Status" value={status} options={statusOptions} onChange={setStatus} />
+          <CustomSelect
+            label="Status"
+            value={STATUSES.find((s) => s.value === status)?.label ?? "Draft"}
+            options={STATUSES.map((s) => s.label)}
+            onChange={(label) =>
+              setStatus(
+                STATUSES.find((s) => s.label === label)?.value ?? "draft",
+              )
+            }
+          />
         </div>
 
         <RichTextEditor

@@ -11,7 +11,7 @@ import lockIcon from '@/assets/icons/lock.svg'
 // import moneysIcon from '@/assets/icons/moneys.svg'
 import documentTextIcon from '@/assets/icons/document-text.svg'
 import layerIcon from '@/assets/icons/layer.svg'
-import ticketDiscountIcon from '@/assets/icons/ticket-discount.svg'
+// import ticketDiscountIcon from '@/assets/icons/ticket-discount.svg'
 import notificationBingIcon from '@/assets/icons/notification-bing.svg'
 // import chartIcon from '@/assets/icons/chart-2.svg'
 import textIcon from '@/assets/icons/text.svg'
@@ -90,7 +90,7 @@ export const navGroups: NavGroup[] = [
     label: 'Growth',
     items: [
       // TODO: no `promotions` or `referrals` permission key in the API
-      { label: 'Promotions', path: '/promotions', icon: ticketDiscountIcon },
+      // { label: 'Promotions', path: '/promotions', icon: ticketDiscountIcon },
       { label: 'Notifications', path: '/notifications', icon: notificationBingIcon, module: 'notifications' },
       { label: 'Content', path: '/content', icon: textIcon, module: 'content' },
       { label: 'Referrals', path: '/referrals', icon: giftIcon },

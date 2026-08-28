@@ -1,107 +1,154 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ColumnDef } from "@tanstack/react-table";
-import { FiEye } from "react-icons/fi";
-import { HiOutlineReceiptRefund, HiOutlineUser } from "react-icons/hi2";
-import RowActionsMenu, {
-  type RowAction,
-} from "@/components/generic/RowActionsMenu";
+// import { FiEye } from "react-icons/fi";
+// import { HiOutlineReceiptRefund, HiOutlineUser } from "react-icons/hi2";
+// import RowActionsMenu, {
+//   type RowAction,
+// } from "@/components/generic/RowActionsMenu";
+// import { TbReceipt } from "react-icons/tb";
+// import { BiPackage } from "react-icons/bi";
+// import { IoMailOutline } from "react-icons/io5";
 import type { TransactionRow } from "../types";
 import PartyCell from "./PartyCell";
-import { TbReceipt } from "react-icons/tb";
-import { BiPackage } from "react-icons/bi";
-import { IoMailOutline } from "react-icons/io5";
 
-interface TransactionColumnCallbacks {
-  onViewDetails: (txn: TransactionRow) => void;
-  onDownloadReceipt: (txn: TransactionRow) => void;
-  onViewItem: (txn: TransactionRow) => void;
-  onViewBuyerProfile: (txn: TransactionRow) => void;
-  onViewSellerProfile: (txn: TransactionRow) => void;
-  onContactBuyer: (txn: TransactionRow) => void;
-  onContactSeller: (txn: TransactionRow) => void;
-  onRefund: (txn: TransactionRow) => void;
-}
+// TODO: re-enable once the transaction action endpoints exist
+// interface TransactionColumnCallbacks {
+//   onViewDetails: (txn: TransactionRow) => void;
+//   onDownloadReceipt: (txn: TransactionRow) => void;
+//   onViewItem: (txn: TransactionRow) => void;
+//   onViewBuyerProfile: (txn: TransactionRow) => void;
+//   onViewSellerProfile: (txn: TransactionRow) => void;
+//   onContactBuyer: (txn: TransactionRow) => void;
+//   onContactSeller: (txn: TransactionRow) => void;
+//   onRefund: (txn: TransactionRow) => void;
+// }
 
-const escrowClass: Record<TransactionRow["escrow"], string> = {
-  Held: "text-brand-blue bg-blue-50 dark:text-blue-400 dark:bg-blue-950",
-  Released: "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
-  Refunded: "text-red-500 bg-red-50 dark:text-red-400 dark:bg-red-950",
+const escrowClass: Record<string, string> = {
+  held: "text-brand-blue bg-blue-50 dark:text-blue-400 dark:bg-blue-950",
+  released: "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
+  refunded: "text-red-500 bg-red-50 dark:text-red-400 dark:bg-red-950",
 };
 
-const inspectionClass: Record<TransactionRow["inspection"], string> = {
-  Awaiting: "text-[#B54708] bg-[#FFFAEB] dark:text-amber-400 dark:bg-amber-950",
-  Completed:
+const inspectionClass: Record<string, string> = {
+  awaiting: "text-[#B54708] bg-[#FFFAEB] dark:text-amber-400 dark:bg-amber-950",
+  completed:
     "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
-  Failed: "text-red-500 bg-red-50 dark:text-red-400 dark:bg-red-950",
+  failed: "text-red-500 bg-red-50 dark:text-red-400 dark:bg-red-950",
 };
 
-const statusPillClass: Record<TransactionRow["status"], string> = {
-  Active: "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
-  Completed: "text-brand-blue bg-blue-50 dark:text-blue-400 dark:bg-blue-950",
-  Refunded: "text-red-500 bg-red-50 dark:text-red-400 dark:bg-red-950",
-  Disputed: "text-red-500 bg-red-50 dark:text-red-400 dark:bg-red-950",
+const statusPillClass: Record<string, string> = {
+  pending_payment:
+    "text-[#B54708] bg-[#FFFAEB] dark:text-amber-400 dark:bg-amber-950",
+  escrow_active:
+    "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
+  awaiting_inspection:
+    "text-[#B54708] bg-[#FFFAEB] dark:text-amber-400 dark:bg-amber-950",
+  completed: "text-brand-blue bg-blue-50 dark:text-blue-400 dark:bg-blue-950",
+  refunded: "text-red-500 bg-red-50 dark:text-red-400 dark:bg-red-950",
+  disputed: "text-red-500 bg-red-50 dark:text-red-400 dark:bg-red-950",
+  stalled: "text-[#B54708] bg-[#FFFAEB] dark:text-amber-400 dark:bg-amber-950",
+  cancelled:
+    "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800",
 };
 
-function getCountdownHours(countdown: string): number {
-  const match = countdown.match(/(\d+)h/);
-  return match ? parseInt(match[1], 10) : 0;
+const statusFallback =
+  "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800";
+
+const currency = new Intl.NumberFormat("en-NG", {
+  style: "currency",
+  currency: "NGN",
+  maximumFractionDigits: 0,
+});
+
+function formatLabel(value: string) {
+  return value
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
 
-export function createTransactionColumns(
-  callbacks: TransactionColumnCallbacks,
-): ColumnDef<TransactionRow, any>[] {
-  function getRowActions(row: TransactionRow): RowAction[] {
-    const base: RowAction[] = [
-      {
-        label: "View Details",
-        icon: <FiEye className="w-4 h-4" />,
-        onClick: () => callbacks.onViewDetails(row),
-      },
-      {
-        label: "Download Receipt",
-        icon: <TbReceipt className="w-4 h-4" />,
-        onClick: () => callbacks.onDownloadReceipt(row),
-      },
-      {
-        label: "View Item",
-        icon: <BiPackage className="w-4 h-4" />,
-        onClick: () => callbacks.onViewItem(row),
-      },
-      {
-        label: "View Buyer Profile",
-        icon: <HiOutlineUser className="w-4 h-4" />,
-        onClick: () => callbacks.onViewBuyerProfile(row),
-        dividerAfter: true
-      },
-      {
-        label: "View Seller Profile",
-        icon: <HiOutlineUser className="w-4 h-4" />,
-        onClick: () => callbacks.onViewSellerProfile(row),
-      },
-      {
-        label: "Contact Buyer",
-        icon: <IoMailOutline className="w-4 h-4" />,
-        onClick: () => callbacks.onContactBuyer(row),
-        dividerAfter: true
-      },
-      {
-        label: "Contact Seller",
-        icon: <IoMailOutline className="w-4 h-4" />,
-        onClick: () => callbacks.onContactSeller(row),
-      },
-    ];
+function formatDate(iso: string) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
-    if (row.status !== "Refunded" && row.status !== "Completed") {
-      base.push({
-        label: "Refund",
-        icon: <HiOutlineReceiptRefund className="w-4 h-4" />,
-        variant: "danger",
-        onClick: () => callbacks.onRefund(row),
-      });
-    }
+function formatCountdown(deadline: string | null) {
+  if (!deadline) return null;
+  const target = new Date(deadline).getTime();
+  if (Number.isNaN(target)) return null;
 
-    return base;
+  const diffMs = target - Date.now();
+  if (diffMs <= 0) return { label: "Expired", hours: 0 };
+
+  const hours = Math.floor(diffMs / 3_600_000);
+  const minutes = Math.floor((diffMs % 3_600_000) / 60_000);
+
+  if (hours >= 24) {
+    const days = Math.floor(hours / 24);
+    return { label: `${days}d ${hours % 24}h`, hours };
   }
+  return { label: `${hours}h ${minutes}m`, hours };
+}
+
+export function createTransactionColumns(): ColumnDef<TransactionRow, any>[] {
+  // TODO: re-enable with the action endpoints
+  // function getRowActions(row: TransactionRow): RowAction[] {
+  //   const base: RowAction[] = [
+  //     {
+  //       label: "View Details",
+  //       icon: <FiEye className="w-4 h-4" />,
+  //       onClick: () => callbacks.onViewDetails(row),
+  //     },
+  //     {
+  //       label: "Download Receipt",
+  //       icon: <TbReceipt className="w-4 h-4" />,
+  //       onClick: () => callbacks.onDownloadReceipt(row),
+  //     },
+  //     {
+  //       label: "View Item",
+  //       icon: <BiPackage className="w-4 h-4" />,
+  //       onClick: () => callbacks.onViewItem(row),
+  //     },
+  //     {
+  //       label: "View Buyer Profile",
+  //       icon: <HiOutlineUser className="w-4 h-4" />,
+  //       onClick: () => callbacks.onViewBuyerProfile(row),
+  //       dividerAfter: true,
+  //     },
+  //     {
+  //       label: "View Seller Profile",
+  //       icon: <HiOutlineUser className="w-4 h-4" />,
+  //       onClick: () => callbacks.onViewSellerProfile(row),
+  //     },
+  //     {
+  //       label: "Contact Buyer",
+  //       icon: <IoMailOutline className="w-4 h-4" />,
+  //       onClick: () => callbacks.onContactBuyer(row),
+  //       dividerAfter: true,
+  //     },
+  //     {
+  //       label: "Contact Seller",
+  //       icon: <IoMailOutline className="w-4 h-4" />,
+  //       onClick: () => callbacks.onContactSeller(row),
+  //     },
+  //   ];
+  //
+  //   if (row.status !== "refunded" && row.status !== "completed") {
+  //     base.push({
+  //       label: "Refund",
+  //       icon: <HiOutlineReceiptRefund className="w-4 h-4" />,
+  //       variant: "danger",
+  //       onClick: () => callbacks.onRefund(row),
+  //     });
+  //   }
+  //
+  //   return base;
+  // }
 
   return [
     {
@@ -112,122 +159,138 @@ export function createTransactionColumns(
       cell: () => <input type="checkbox" className="rounded border-gray-300" />,
     },
     {
-      accessorKey: "transactionCode",
+      accessorKey: "reference",
       header: "Transaction",
       cell: ({ row }) => (
-        <a
-          href="#"
-          className="text-brand-blue hover:underline-wavy font-medium"
-        >
-          {row.original.transactionCode}
-        </a>
+        <span className="text-brand-blue font-medium whitespace-nowrap">
+          {row.original.reference}
+        </span>
       ),
     },
     {
-      accessorKey: "buyerName",
+      accessorKey: "buyer",
       header: "Buyer",
-      cell: ({ row }) => (
-        <PartyCell
-          name={row.original.buyerName}
-          email={row.original.buyerEmail}
-          avatarUrl={row.original.buyerAvatarUrl}
-        />
-      ),
+      cell: ({ row }) =>
+        row.original.buyer ? (
+          <PartyCell
+            name={row.original.buyer.name}
+            email={row.original.buyer.email}
+          />
+        ) : (
+          <span className="text-brand-gray-light">—</span>
+        ),
     },
     {
-      accessorKey: "sellerName",
+      accessorKey: "seller",
       header: "Seller",
-      cell: ({ row }) => (
-        <PartyCell
-          name={row.original.sellerName}
-          email={row.original.sellerEmail}
-          avatarUrl={row.original.sellerAvatarUrl}
-        />
-      ),
+      cell: ({ row }) =>
+        row.original.seller ? (
+          <PartyCell
+            name={row.original.seller.name}
+            email={row.original.seller.email}
+          />
+        ) : (
+          <span className="text-brand-gray-light">—</span>
+        ),
     },
     {
       accessorKey: "amount",
       header: "Amount",
       cell: ({ row }) => (
-        <span className="whitespace-nowrap">{row.original.amount}</span>
+        <span className="whitespace-nowrap">
+          {currency.format(row.original.amount)}
+        </span>
       ),
     },
     {
-      accessorKey: "product",
+      accessorKey: "listing",
       header: "Product",
       cell: ({ row }) => (
-        <span className="whitespace-nowrap">{row.original.product}</span>
+        <span
+          title={row.original.listing?.title}
+          className="whitespace-nowrap max-w-48 truncate block"
+        >
+          {row.original.listing?.title ?? "—"}
+        </span>
       ),
     },
     {
       accessorKey: "escrow",
       header: "Escrow",
+      cell: ({ row }) =>
+        row.original.escrow ? (
+          <span
+            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+              escrowClass[row.original.escrow.status] ?? statusFallback
+            }`}
+          >
+            {formatLabel(row.original.escrow.status)}
+          </span>
+        ) : (
+          <span className="text-brand-gray-light">—</span>
+        ),
+    },
+    {
+      accessorKey: "inspectionStatus",
+      header: "Inspection",
       cell: ({ row }) => (
         <span
-          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${escrowClass[row.original.escrow]}`}
+          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+            inspectionClass[row.original.inspectionStatus] ?? statusFallback
+          }`}
         >
-          {row.original.escrow}
+          {formatLabel(row.original.inspectionStatus)}
         </span>
       ),
     },
     {
-      accessorKey: "inspection",
-      header: "Inspection",
-      cell: ({ row }) =>
-        row.original.inspection === "Failed" ||
-        row.original.escrow === "Refunded" ? (
-          <span className="text-brand-gray-light">-</span>
-        ) : (
-          <span
-            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${inspectionClass[row.original.inspection]}`}
-          >
-            {row.original.inspection}
-          </span>
-        ),
-    },
-    {
-      accessorKey: "countdown",
+      accessorKey: "inspectionDeadlineAt",
       header: "Countdown",
-      cell: ({ row }) =>
-        row.original.countdown === "-" ? (
-          <span className="text-brand-gray-light">-</span>
-        ) : (
+      cell: ({ row }) => {
+        const countdown = formatCountdown(row.original.inspectionDeadlineAt);
+        if (!countdown) return <span className="text-brand-gray-light">-</span>;
+        return (
           <span
             className={
-              getCountdownHours(row.original.countdown) < 5
+              countdown.hours < 5
                 ? "text-[#F04438] dark:text-red-400"
                 : "text-[#F79009] dark:text-amber-400"
             }
           >
-            {row.original.countdown}
+            {countdown.label}
           </span>
-        ),
+        );
+      },
     },
     {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => (
         <span
-          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusPillClass[row.original.status]}`}
+          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
+            statusPillClass[row.original.status] ?? statusFallback
+          }`}
         >
-          {row.original.status}
+          {formatLabel(row.original.status)}
         </span>
       ),
     },
-
     {
-      accessorKey: "created",
+      accessorKey: "createdAt",
       header: "Created",
       cell: ({ row }) => (
-        <span className="whitespace-nowrap">{row.original.created}</span>
+        <span className="whitespace-nowrap">
+          {formatDate(row.original.createdAt)}
+        </span>
       ),
     },
-    {
-      id: "actions",
-      header: "Action",
-      cell: ({ row }) => (
-        <RowActionsMenu actions={getRowActions(row.original)} />
-      ),
-    },
+    // TODO: re-enable with the action endpoints
+    // {
+    //   id: "actions",
+    //   header: "Action",
+    //   cell: ({ row }) => (
+    //     <RowActionsMenu actions={getRowActions(row.original)} />
+    //   ),
+    // },
   ];
 }

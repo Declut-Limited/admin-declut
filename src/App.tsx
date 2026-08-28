@@ -110,7 +110,7 @@ function App() {
 
           <Route element={<PermissionRoute module="content" />}>
             <Route path="/content" element={<ContentPage />} />
-            <Route path="/content/:contentId" element={<ContentDetailPage />} />
+           <Route path="/content/:contentSlug" element={<ContentDetailPage />} />
           </Route>
 
           <Route element={<PermissionRoute module="transactions" />}>

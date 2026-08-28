@@ -15,7 +15,7 @@ export function DefaultRedirect() {
   const { data: me, isLoading } = useMe();
 
   if (!token) return <Navigate to="/sign-in" replace />;
-  if (isLoading) return <PageLoader />;
+  if (isLoading) return <PageLoader fullScreen />;
 
   const path = getLandingPath(
     me?.role?.permissions,
@@ -38,8 +38,8 @@ export default function PermissionRoute({
   const { data: me, isLoading } = useMe();
   const location = useLocation();
 
-  if (isLoading) return <PageLoader />;
-
+  if (isLoading) return <PageLoader fullScreen />;
+  
   const permissions = me?.role?.permissions;
   if (permissions?.[module]?.view) return <Outlet />;
 

@@ -1,21 +1,67 @@
-export interface TransactionRow {
+export type TransactionStatus =
+  | "pending_payment"
+  | "escrow_active"
+  | "awaiting_inspection"
+  | "completed"
+  | "refunded"
+  | "disputed"
+  | "stalled"
+  | "cancelled";
+
+export type EscrowStatus = "held" | "released" | "refunded";
+export type InspectionStatus = "awaiting" | "completed" | "failed";
+
+export interface TransactionParty {
   id: string;
-  transactionCode: string;
-  buyerName: string;
-  buyerEmail: string;
-  buyerAvatarUrl?: string;
-  sellerName: string;
-  sellerEmail: string;
-  sellerAvatarUrl?: string;
-  amount: string;
-  product: string;
-  escrow: "Held" | "Released" | "Refunded";
-  inspection: "Awaiting" | "Completed" | "Failed";
-  countdown: string;
-  status: "Active" | "Completed" | "Refunded" | "Disputed";
-  created: string;
+  name: string;
+  email: string;
+  status: string;
+  rolePlayed: string;
+  slug: string;
 }
 
+export interface TransactionRow {
+  _id: string;
+  listing: { _id: string; title: string } | null;
+  buyer: TransactionParty | null;
+  seller: TransactionParty | null;
+  amount: number;
+  commissionPercentage: number;
+  commissionAmount: number;
+  sellerPayoutAmount: number;
+  status: TransactionStatus;
+  paystackReference: string;
+  reference: string;
+  escrow: { _id: string; status: EscrowStatus } | null;
+  inspectionStatus: InspectionStatus;
+  inspectionDeadlineAt: string | null;
+  failedCodeAttempts: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TransactionsListParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  tab?: string;
+}
+
+export interface TransactionsListResponse {
+  success: boolean;
+  data: {
+    results: TransactionRow[];
+    total: number;
+    page: number;
+    limit: number;
+    hasMore: boolean;
+  };
+}
+
+export interface TransactionDetailResponse {
+  success: boolean;
+  data: TransactionRow;
+}
 export interface TransactionTimelineEvent {
   id: string;
   label: string;
@@ -52,7 +98,7 @@ export interface InternalNote {
 
 export interface TransactionDetail {
   code: string;
-  status: TransactionRow["status"];
+  status: "Active" | "Completed" | "Refunded" | "Disputed";
   createdDate: string;
   transactionAmount: string;
   escrowAmount: string;
@@ -77,8 +123,22 @@ export interface TransactionDetail {
     defectSummary?: string;
   };
   parties: {
-    buyer: { name: string; id: string; email: string; avatarUrl?: string; status: "Active" | "Suspended"; role: "Buyer" };
-    seller: { name: string; id: string; email: string; avatarUrl?: string; status: "Active" | "Suspended"; role: "Seller" };
+    buyer: {
+      name: string;
+      id: string;
+      email: string;
+      avatarUrl?: string;
+      status: "Active" | "Suspended";
+      role: "Buyer";
+    };
+    seller: {
+      name: string;
+      id: string;
+      email: string;
+      avatarUrl?: string;
+      status: "Active" | "Suspended";
+      role: "Seller";
+    };
   };
   payment: {
     reference: string;
