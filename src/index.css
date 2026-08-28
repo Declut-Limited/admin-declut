@@ -947,3 +947,104 @@ body {
     @apply outline-none ring-2 ring-brand-blue ring-offset-1;
   }
 }
+
+@layer components {
+  .range-picker {
+    @apply absolute right-0 mt-2 flex bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 z-50 overflow-hidden;
+  }
+  .range-picker-presets {
+    @apply w-36 shrink-0 flex flex-col gap-0.5 p-2 border-r border-gray-100 dark:border-gray-800;
+  }
+
+  .range-picker-preset {
+    @apply flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-left text-brand-gray-light hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer whitespace-nowrap;
+  }
+
+  .range-picker-body {
+    @apply p-3 w-85;
+  }
+
+  .range-picker-inputs {
+    @apply flex items-center gap-2 mb-3;
+  }
+
+  .range-picker-input {
+    @apply flex-1 px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-xs text-brand-gray-dark dark:text-gray-100 text-center;
+  }
+  .range-picker-input-active {
+    @apply border-brand-blue ring-2 ring-brand-blue/20;
+  }
+
+  .range-picker-arrow {
+    @apply text-brand-gray-light shrink-0;
+  }
+
+  .range-picker-month-bar {
+    @apply flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 rounded-lg px-1.5 py-1.5 mb-2;
+  }
+
+  .range-picker-nav {
+    @apply w-7 h-7 rounded-full bg-white dark:bg-gray-900 shadow-sm flex items-center justify-center text-brand-gray-dark dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer;
+  }
+  .range-picker-month-label {
+    @apply text-xs font-semibold text-[#1D2939] dark:text-gray-100;
+  }
+
+  .range-picker-weekdays {
+    @apply grid grid-cols-7 text-center text-[10px] text-brand-gray-light mb-0.5;
+  }
+
+  .range-picker-cell {
+    @apply flex items-center justify-center py-0.5;
+  }
+
+  .range-picker-grid {
+    @apply grid grid-cols-7;
+  }
+
+  .range-picker-cell-in-range {
+    @apply bg-[#EFF6FF] dark:bg-blue-950/30;
+  }
+
+  .range-picker-cell-start {
+    @apply bg-[#EFF6FF] dark:bg-blue-950/30 rounded-l-full;
+  }
+
+  .range-picker-cell-end {
+    @apply bg-[#EFF6FF] dark:bg-blue-950/30 rounded-r-full;
+  }
+
+  .range-picker-day {
+    @apply w-9 h-9 rounded-full flex items-center justify-center text-sm text-brand-gray-dark dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer;
+  }
+
+  .range-picker-day-outside {
+    @apply text-gray-300 dark:text-gray-600;
+  }
+
+  .range-picker-day-selected {
+    @apply bg-brand-blue text-white font-medium hover:bg-brand-blue;
+  }
+
+  .range-picker-day-today {
+    @apply bg-gray-100 dark:bg-gray-800;
+  }
+  .range-picker-day {
+    @apply w-8 h-8 rounded-full flex items-center justify-center text-xs text-brand-gray-dark dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer;
+  }
+  .range-picker-footer {
+    @apply flex items-center justify-end gap-2 mt-3;
+  }
+
+  .range-picker-reset {
+    @apply mr-auto px-3 py-1.5 text-xs text-red-500 hover:underline cursor-pointer;
+  }
+
+  .range-picker-cancel {
+    @apply px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs text-brand-gray-dark dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer;
+  }
+
+  .range-picker-apply {
+    @apply px-4 py-1.5 rounded-lg bg-[#0F172A] text-white text-xs font-medium hover:bg-[#1E293B] cursor-pointer;
+  }
+}

@@ -2,24 +2,25 @@ import { useParams, useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiBellOff } from "react-icons/fi";
 import Button from "@/components/generic/Button";
 import avatarPlaceholder from "@/assets/avatar.svg";
-import type { NotificationDetail } from "../types";
+import type { NotificationDetail, NotificationStatus } from "../types";
 import edit from "@/assets/icons/edit-2.svg";
 import settings from "@/assets/icons/setting-5.svg";
 import NotFoundState from "@/components/generic/NotFoundState";
 
-const statusPillClass: Record<NotificationDetail["status"], string> = {
-  Draft: "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800",
-  Scheduled:
+const statusPillClass: Record<NotificationStatus, string> = {
+  sent: "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
+  sending: "text-brand-blue bg-blue-50 dark:text-blue-400 dark:bg-blue-950",
+  scheduled:
     "text-[#B54708] bg-[#FFFAEB] dark:text-amber-400 dark:bg-amber-950",
-  Sent: "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
+  failed: "text-[#B42318] bg-[#FEF3F2] dark:text-red-400 dark:bg-red-950",
+  draft: "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800",
 };
-
 // placeholder
 const mockNotifications: Record<string, NotificationDetail> = {
   "3": {
     code: "NTF-003",
     title: "Account Reactivated",
-    status: "Sent",
+    status: "sent",
     kind: "Automated",
     triggeredBy: "Account Reactivated",
     channel: "Push",
