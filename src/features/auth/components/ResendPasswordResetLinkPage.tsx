@@ -65,7 +65,7 @@ export default function ResendPasswordResetLinkPage() {
             <span className="w-16 h-16 rounded-full bg-[#EFF6FF] flex items-center justify-center mb-4">
               <IoMdMail size={28} color="#2563EB" />
             </span>
-            <h2 className="text-[40px] font-bold text-[#1F1F1F] dark:text-gray-100">
+            <h2 className="text-[40px] text-[#1F1F1F] dark:text-gray-100 font-dm-serif">
               Check Your Email
             </h2>
             <p className="text-sm text-brand-gray-light dark:text-gray-400 mt-1">

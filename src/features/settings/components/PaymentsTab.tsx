@@ -180,27 +180,29 @@ function PaymentsForm({ settings }: { settings: Settings }) {
         </span>
       </label>
 
-      <div className="settings-field">
-        <label className="block text-xs text-[#1D2939] dark:text-gray-300 mb-1.5 font-medium">
-          Maximum Extension Period
-        </label>
-        <div className="settings-suffix-input">
-          <input
-            type="number"
-            value={formData.inspectionWindow.maxExtensionPeriod}
-            onChange={(e) =>
-              setInspection("maxExtensionPeriod", Number(e.target.value) || 0)
-            }
-            disabled={!formData.inspectionWindow.allowExtension}
-            className="settings-suffix-input-field disabled:opacity-50"
-          />
-          <span className="settings-suffix-input-addon">Days</span>
+      {formData.inspectionWindow.allowExtension && (
+        <div className="settings-field">
+          <label className="block text-xs text-[#1D2939] dark:text-gray-300 mb-1.5 font-medium">
+            Maximum Extension Period
+          </label>
+          <div className="settings-suffix-input">
+            <input
+              type="number"
+              value={formData.inspectionWindow.maxExtensionPeriod}
+              onChange={(e) =>
+                setInspection("maxExtensionPeriod", Number(e.target.value) || 0)
+              }
+              disabled={!formData.inspectionWindow.allowExtension}
+              className="settings-suffix-input-field disabled:opacity-50"
+            />
+            <span className="settings-suffix-input-addon">Days</span>
+          </div>
+          <p className="settings-field-hint">
+            Set the maximum additional time a buyer can receive after the
+            original inspection period expires.
+          </p>
         </div>
-        <p className="settings-field-hint">
-          Set the maximum additional time a buyer can receive after the original
-          inspection period expires.
-        </p>
-      </div>
+      )}
 
       {/* TODO: no escrowReleaseWindow field on the payments endpoint
       <div className="settings-field">

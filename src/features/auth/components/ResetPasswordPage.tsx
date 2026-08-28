@@ -110,7 +110,7 @@ export default function ResetPasswordPage() {
                 className="w-12 h-12 object-contain"
               />
             </span>
-            <h2 className="text-[40px] font-bold text-[#1F1F1F] dark:text-gray-100">
+            <h2 className="text-[40px] text-[#1F1F1F] dark:text-gray-100 font-dm-serif">
               Set A New Password
             </h2>
             <p className="text-sm text-brand-gray-light dark:text-gray-400 mt-1">

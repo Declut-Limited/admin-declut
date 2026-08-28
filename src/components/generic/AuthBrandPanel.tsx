@@ -72,8 +72,8 @@ export default function AuthBrandPanel({
         </div>
 
         <div>
-          <h1 className="text-2xl font-bold leading-snug">{heading}</h1>
-          <p className="text-sm text-gray-400 mt-2 max-w-xs">{subtext}</p>
+          <h1 className="text-3xl font-dm-serif leading-snug">{heading}</h1>
+          <p className="text-md text-gray-400 mt-2 max-w-xs">{subtext}</p>
         </div>
 
         <div className="auth-badge w-fit" style={{background: "rgba(255, 255, 255, 0.04)"}}>

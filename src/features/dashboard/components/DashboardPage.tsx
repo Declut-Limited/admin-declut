@@ -322,6 +322,22 @@ export default function DashboardPage() {
     [transactionBreakdown],
   );
 
+  const quickActions = useMemo(() => {
+    const permissions = me?.role?.permissions;
+    return [
+      { label: "Manage Users", path: "/users", module: "users" },
+      { label: "Review Listings", path: "/listings", module: "listings" },
+      { label: "Open Disputes", path: "/disputes", module: "reports" },
+      {
+        label: "View Transactions",
+        path: "/transactions",
+        module: "transactions",
+      },
+      // no permission key for waitlist yet
+      { label: "Waitlist Invites", path: "/waitlist", module: undefined },
+    ].filter((action) => !action.module || permissions?.[action.module]?.view);
+  }, [me]);
+
   const totalTransactions = transactionBreakdown?.total ?? 0;
 
   const ref = useRef<HTMLDivElement>(null);
@@ -348,7 +364,7 @@ export default function DashboardPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const userName = me?.name ?? "";
+  const userName = me?.name?.split(" ")[0] ?? "";
 
   return (
     <React.Fragment>
@@ -386,15 +402,18 @@ export default function DashboardPage() {
 
           {quickActionsOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 py-1 z-50">
-              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
-                Add User
-              </button>
-              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
-                New Listing
-              </button>
-              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
-                Export Report
-              </button>
+              {quickActions.map((action) => (
+                <button
+                  key={action.path}
+                  onClick={() => {
+                    navigate(action.path);
+                    setQuickActionsOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                >
+                  {action.label}
+                </button>
+              ))}
             </div>
           )}
         </div>

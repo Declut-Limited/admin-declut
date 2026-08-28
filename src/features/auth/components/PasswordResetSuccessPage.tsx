@@ -15,7 +15,7 @@ export default function PasswordResetSuccessPage() {
             </span>
           </span>
 
-          <h2 className="text-[40px] font-bold text-[#1F1F1F] dark:text-gray-100">
+          <h2 className="text-[40px] text-[#1F1F1F] dark:text-gray-100 font-dm-serif">
             Password Reset Successfully
           </h2>
           <p className="text-sm text-brand-gray-light dark:text-gray-400 mt-1">
