@@ -6,7 +6,7 @@ import TableToolbar from "@/components/generic/TableToolbar";
 import DateRangeFilter, {
   type DateRange,
 } from "@/components/generic/DateRangeFilter";
-import FiltersButton from "@/components/generic/FiltersButton";
+// import FiltersButton from "@/components/generic/FiltersButton";
 import DataTable from "@/components/generic/DataTable";
 import Pagination from "@/components/generic/Pagination";
 // import Button from "@/components/generic/Button";
@@ -31,10 +31,17 @@ export default function TransactionsPage() {
     setCurrentPage(1);
   };
 
+  const handleDateRangeChange = (range: DateRange) => {
+    setDateRange(range);
+    setCurrentPage(1);
+  };
+
   const transactionsQuery = useTransactions({
     page: currentPage,
     limit: PAGE_SIZE,
     tab: activeTab === "All" ? undefined : activeTab.toLowerCase(),
+    startDate: dateRange.from || undefined,
+    endDate: dateRange.to || undefined,
   });
 
   const { data } = transactionsQuery;
@@ -47,38 +54,16 @@ export default function TransactionsPage() {
 
   // no search or date params on the endpoint — filtering the current page
   const visibleTransactions = useMemo(() => {
-    return transactions.filter((txn) => {
-      const q = search.toLowerCase();
-      const matchesSearch =
-        !q ||
+    const q = search.toLowerCase();
+    if (!q) return transactions;
+    return transactions.filter(
+      (txn) =>
         txn.reference.toLowerCase().includes(q) ||
         (txn.buyer?.name.toLowerCase().includes(q) ?? false) ||
         (txn.seller?.name.toLowerCase().includes(q) ?? false) ||
-        (txn.listing?.title.toLowerCase().includes(q) ?? false);
-
-      let matchesDate = true;
-      if (dateRange.from || dateRange.to) {
-        const created = new Date(txn.createdAt).getTime();
-        if (Number.isNaN(created)) matchesDate = false;
-        else {
-          if (
-            dateRange.from &&
-            created < new Date(dateRange.from).setHours(0, 0, 0, 0)
-          )
-            matchesDate = false;
-          if (
-            dateRange.to &&
-            created > new Date(dateRange.to).setHours(23, 59, 59, 999)
-          )
-            matchesDate = false;
-        }
-      }
-
-      return matchesSearch && matchesDate;
-    });
-  }, [transactions, search, dateRange]);
-
-  const isFiltering = Boolean(search || dateRange.from || dateRange.to);
+        (txn.listing?.title.toLowerCase().includes(q) ?? false),
+    );
+  }, [transactions, search]);
 
   return (
     <div>
@@ -103,19 +88,12 @@ export default function TransactionsPage() {
 
       <TableToolbar
         label="Transactions"
-        count={isFiltering ? visibleTransactions.length : total}
+        count={search ? visibleTransactions.length : total}
         searchValue={search}
         onSearchChange={setSearch}
         searchPlaceholder="Search by transaction ID, buyer, seller..."
         filterSlot={
-          <>
-            <DateRangeFilter value={dateRange} onChange={setDateRange} />
-            <FiltersButton>
-              <p className="text-xs text-brand-gray-light">
-                No filters configured yet.
-              </p>
-            </FiltersButton>
-          </>
+          <DateRangeFilter value={dateRange} onChange={handleDateRangeChange} />
         }
       />
 

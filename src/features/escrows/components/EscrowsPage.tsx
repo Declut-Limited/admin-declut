@@ -6,7 +6,6 @@ import TableToolbar from "@/components/generic/TableToolbar";
 import DateRangeFilter, {
   type DateRange,
 } from "@/components/generic/DateRangeFilter";
-import FiltersButton from "@/components/generic/FiltersButton";
 import DataTable from "@/components/generic/DataTable";
 import Pagination from "@/components/generic/Pagination";
 // import Button from "@/components/generic/Button";
@@ -31,9 +30,16 @@ export default function EscrowPage() {
     setCurrentPage(1);
   };
 
+  const handleDateRangeChange = (range: DateRange) => {
+    setDateRange(range);
+    setCurrentPage(1);
+  };
+
   const escrowsQuery = useEscrows({
     page: currentPage,
     limit: PAGE_SIZE,
+    startDate: dateRange.from || undefined,
+    endDate: dateRange.to || undefined,
   });
 
   const { data } = escrowsQuery;
@@ -57,30 +63,11 @@ export default function EscrowPage() {
         (escrow.buyer?.name.toLowerCase().includes(q) ?? false) ||
         (escrow.seller?.name.toLowerCase().includes(q) ?? false);
 
-      let matchesDate = true;
-      if (dateRange.from || dateRange.to) {
-        const created = new Date(escrow.createdAt).getTime();
-        if (Number.isNaN(created)) matchesDate = false;
-        else {
-          if (
-            dateRange.from &&
-            created < new Date(dateRange.from).setHours(0, 0, 0, 0)
-          )
-            matchesDate = false;
-          if (
-            dateRange.to &&
-            created > new Date(dateRange.to).setHours(23, 59, 59, 999)
-          )
-            matchesDate = false;
-        }
-      }
-
-      return matchesTab && matchesSearch && matchesDate;
+      return matchesTab && matchesSearch;
     });
-  }, [escrows, activeTab, search, dateRange]);
+  }, [escrows, activeTab, search]);
 
-  const isFiltering =
-    activeTab !== "All" || Boolean(search || dateRange.from || dateRange.to);
+  const isFiltering = activeTab !== "All" || Boolean(search);
 
   return (
     <div>
@@ -102,7 +89,6 @@ export default function EscrowPage() {
       />
 
       <TabFilter tabs={tabs} active={activeTab} onChange={handleTabChange} />
-
       <TableToolbar
         label="Escrow"
         count={isFiltering ? visibleEscrows.length : total}
@@ -110,14 +96,7 @@ export default function EscrowPage() {
         onSearchChange={setSearch}
         searchPlaceholder="Search by escrow ID, transaction ID, buyer, seller..."
         filterSlot={
-          <>
-            <DateRangeFilter value={dateRange} onChange={setDateRange} />
-            <FiltersButton>
-              <p className="text-xs text-brand-gray-light">
-                No filters configured yet.
-              </p>
-            </FiltersButton>
-          </>
+          <DateRangeFilter value={dateRange} onChange={handleDateRangeChange} />
         }
       />
 

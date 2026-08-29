@@ -17,11 +17,28 @@ import { formatActor } from "../utils";
 import { showToast } from "@/lib/utils/toast";
 import type { ActivityLogRow } from "../types";
 import { usePageSize } from "@/lib/hooks/usePageSize";
+import DateRangeFilter, {
+  type DateRange,
+} from "@/components/generic/DateRangeFilter";
+import FiltersButton from "@/components/generic/FiltersButton";
+import CustomSelect from "@/components/generic/CustomSelect";
+
+const ENTITY_TYPES = [
+  { label: "All Types", value: "" },
+  { label: "Transaction", value: "transaction" },
+  { label: "Listing", value: "listing" },
+  { label: "Review", value: "review" },
+  { label: "Report", value: "report" },
+  { label: "Content", value: "content" },
+  { label: "Campaign", value: "campaign" },
+];
 
 export default function ActivityLogsPage() {
   const PAGE_SIZE = usePageSize();
 
   const [search, setSearch] = useState("");
+  const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
+  const [entityType, setEntityType] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
   const navigate = useNavigate();
@@ -29,7 +46,11 @@ export default function ActivityLogsPage() {
   const activityLogsQuery = useActivityLogs({
     page: currentPage,
     limit: PAGE_SIZE,
+    entityType: entityType || undefined,
+    startDate: dateRange.from || undefined,
+    endDate: dateRange.to || undefined,
   });
+
   const { data } = activityLogsQuery;
 
   const [deletingLog, setDeletingLog] = useState<ActivityLogRow | null>(null);
@@ -38,11 +59,18 @@ export default function ActivityLogsPage() {
   const { mutateAsync: exportActivityLogs } = useExportActivityLogs();
 
   const handleExport = () => {
-    showToast.promise(exportActivityLogs({}), {
-      loading: "Preparing export...",
-      success: "Export downloaded.",
-      error: "Export failed.",
-    });
+    showToast.promise(
+      exportActivityLogs({
+        entityType: entityType || undefined,
+        startDate: dateRange.from || undefined,
+        endDate: dateRange.to || undefined,
+      }),
+      {
+        loading: "Preparing export...",
+        success: "Export downloaded.",
+        error: "Export failed.",
+      },
+    );
   };
 
   const logs = useMemo(() => data?.results ?? [], [data?.results]);
@@ -52,6 +80,16 @@ export default function ActivityLogsPage() {
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
+    setCurrentPage(1);
+  };
+
+  const handleDateRangeChange = (range: DateRange) => {
+    setDateRange(range);
+    setCurrentPage(1);
+  };
+
+  const handleEntityTypeChange = (label: string) => {
+    setEntityType(ENTITY_TYPES.find((t) => t.label === label)?.value ?? "");
     setCurrentPage(1);
   };
 
@@ -110,6 +148,25 @@ export default function ActivityLogsPage() {
         searchValue={search}
         onSearchChange={handleSearchChange}
         searchPlaceholder="Search activity logs..."
+        filterSlot={
+          <>
+            <DateRangeFilter
+              value={dateRange}
+              onChange={handleDateRangeChange}
+            />
+            <FiltersButton activeCount={entityType ? 1 : 0}>
+              <CustomSelect
+                label="Entity Type"
+                value={
+                  ENTITY_TYPES.find((t) => t.value === entityType)?.label ??
+                  "All Types"
+                }
+                options={ENTITY_TYPES.map((t) => t.label)}
+                onChange={handleEntityTypeChange}
+              />
+            </FiltersButton>
+          </>
+        }
       />
 
       <DataTable

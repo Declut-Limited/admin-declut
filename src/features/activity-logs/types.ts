@@ -1,6 +1,9 @@
 export interface ActivityLogsListParams {
   page?: number;
   limit?: number;
+  entityType?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface ActivityLogsListResponse {

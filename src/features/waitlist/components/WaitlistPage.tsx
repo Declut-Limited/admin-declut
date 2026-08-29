@@ -33,6 +33,13 @@ import walletAdd from "@/assets/icons/wallet-add.svg";
 import wallet from "@/assets/icons/wallet.svg";
 import { usePageSize } from "@/lib/hooks/usePageSize";
 
+const INVITE_STATUS_OPTIONS = [
+  { label: "All Invite Statuses", value: "" },
+  { label: "Not Sent", value: "not_sent" },
+  { label: "Sent", value: "sent" },
+  { label: "Delivered", value: "delivered" },
+];
+
 const DEFAULT_INVITE_MESSAGE =
   "You're one of the first people we're inviting to try Declut — tap below to claim your spot.";
 
@@ -45,6 +52,14 @@ export default function WaitlistPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [interestFilter, setInterestFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [inviteStatusFilter, setInviteStatusFilter] = useState("");
+
+  const handleInviteStatusChange = (label: string) => {
+    setInviteStatusFilter(
+      INVITE_STATUS_OPTIONS.find((o) => o.label === label)?.value ?? "",
+    );
+    setCurrentPage(1);
+  };
 
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [removingUser, setRemovingUser] = useState<WaitlistUser | null>(null);
@@ -64,7 +79,10 @@ export default function WaitlistPage() {
     limit: PAGE_SIZE,
     status: statusFilter ? statusFilter.toLowerCase() : undefined,
     interest: interestFilter ? interestFilter.toLowerCase() : undefined,
+    inviteStatus: inviteStatusFilter || undefined,
     search: debouncedSearch || undefined,
+    startDate: dateRange.from || undefined,
+    endDate: dateRange.to || undefined,
   });
 
   const { data } = waitlistQuery;
@@ -81,7 +99,10 @@ export default function WaitlistPage() {
       exportWaitlist({
         status: statusFilter ? statusFilter.toLowerCase() : undefined,
         interest: interestFilter ? interestFilter.toLowerCase() : undefined,
+        inviteStatus: inviteStatusFilter || undefined,
         search: debouncedSearch || undefined,
+        startDate: dateRange.from || undefined,
+        endDate: dateRange.to || undefined,
       }),
       {
         loading: "Preparing export...",
@@ -90,7 +111,6 @@ export default function WaitlistPage() {
       },
     );
   };
-
   const users = useMemo(() => data?.results ?? [], [data?.results]);
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -158,27 +178,11 @@ export default function WaitlistPage() {
     [inviteUser],
   );
 
-  const visibleUsers = useMemo(() => {
-    if (!dateRange.from && !dateRange.to) return users;
 
-    return users.filter((user) => {
-      const joined = new Date(user.createdAt).getTime();
-      if (Number.isNaN(joined)) return false;
-      if (
-        dateRange.from &&
-        joined < new Date(dateRange.from).setHours(0, 0, 0, 0)
-      )
-        return false;
-      if (
-        dateRange.to &&
-        joined > new Date(dateRange.to).setHours(23, 59, 59, 999)
-      )
-        return false;
-      return true;
-    });
-  }, [users, dateRange]);
-
-  const activeFilterCount = (statusFilter ? 1 : 0) + (interestFilter ? 1 : 0);
+  const activeFilterCount =
+    (statusFilter ? 1 : 0) +
+    (interestFilter ? 1 : 0) +
+    (inviteStatusFilter ? 1 : 0);
 
   const handleInvite = (payload: BulkInvitePayload) => {
     showToast.promise(
@@ -256,13 +260,7 @@ export default function WaitlistPage() {
                 <CustomSelect
                   label="Status"
                   value={statusFilter || "All Statuses"}
-                  options={[
-                    "All Statuses",
-                    "Waiting",
-                    "Invited",
-                    "Joined",
-                    "Unsubscribed",
-                  ]}
+                  options={["All Statuses", "Waiting", "Invited", "Joined"]}
                   onChange={(val) => {
                     setStatusFilter(val === "All Statuses" ? "" : val);
                     setCurrentPage(1);
@@ -277,6 +275,16 @@ export default function WaitlistPage() {
                     setCurrentPage(1);
                   }}
                 />
+                <CustomSelect
+                  label="Invite Status"
+                  value={
+                    INVITE_STATUS_OPTIONS.find(
+                      (o) => o.value === inviteStatusFilter,
+                    )?.label ?? "All Invite Statuses"
+                  }
+                  options={INVITE_STATUS_OPTIONS.map((o) => o.label)}
+                  onChange={handleInviteStatusChange}
+                />
               </div>
             </FiltersButton>
           </>
@@ -284,7 +292,7 @@ export default function WaitlistPage() {
       />
 
       <DataTable
-        data={visibleUsers}
+        data={users}
         columns={columns}
         query={waitlistQuery}
         emptyMessage="No waitlist users found."

@@ -3,11 +3,11 @@ export type UserStatus = "active" | "pending" | "suspended" | "banned";
 export interface UserRow {
   type: "user" | "admin";
   id: string;
-   slug?: string; 
+  slug?: string; 
   name: string;
   email: string;
   role: string;
-   roleId?: string;
+  roleId?: string;
   listingsCount: number;
   status: UserStatus;
   joinedAt: string;
@@ -17,7 +17,10 @@ export interface UsersListParams {
   page?: number;
   limit?: number;
   status?: string;
+  type?: "all" | "user" | "admin";
   search?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface UsersListResponse {

@@ -22,8 +22,20 @@ import {
 import { usePageSize } from "@/lib/hooks/usePageSize";
 import { showToast } from "@/lib/utils/toast";
 import type { ContentRow, CreateContentPayload } from "../types";
+import DateRangeFilter, {
+  type DateRange,
+} from "@/components/generic/DateRangeFilter";
+import FiltersButton from "@/components/generic/FiltersButton";
+import CustomSelect from "@/components/generic/CustomSelect";
 
 const tabs = ["All", "Published", "Draft"];
+
+const CONTENT_TYPE_OPTIONS = [
+  { label: "All Types", value: "" },
+  { label: "FAQ", value: "faq" },
+  { label: "Page", value: "page" },
+  { label: "Banner", value: "banner" },
+];
 
 export default function ContentPage() {
   const [activeTab, setActiveTab] = useState("All");
@@ -33,6 +45,20 @@ export default function ContentPage() {
   const [removingContent, setRemovingContent] = useState<ContentRow | null>(
     null,
   );
+  const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
+  const [contentType, setContentType] = useState("");
+
+  const handleDateRangeChange = (range: DateRange) => {
+    setDateRange(range);
+    setCurrentPage(1);
+  };
+
+  const handleContentTypeChange = (label: string) => {
+    setContentType(
+      CONTENT_TYPE_OPTIONS.find((t) => t.label === label)?.value ?? "",
+    );
+    setCurrentPage(1);
+  };
 
   const navigate = useNavigate();
   const PAGE_SIZE = usePageSize();
@@ -46,6 +72,9 @@ export default function ContentPage() {
     page: currentPage,
     limit: PAGE_SIZE,
     status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
+    contentType: contentType || undefined,
+    startDate: dateRange.from || undefined,
+    endDate: dateRange.to || undefined,
   });
 
   const { data } = contentQuery;
@@ -63,6 +92,9 @@ export default function ContentPage() {
     showToast.promise(
       exportContent({
         status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
+        contentType: contentType || undefined,
+        startDate: dateRange.from || undefined,
+        endDate: dateRange.to || undefined,
       }),
       {
         loading: "Preparing export...",
@@ -171,6 +203,25 @@ export default function ContentPage() {
         searchValue={search}
         onSearchChange={setSearch}
         searchPlaceholder="Search content..."
+        filterSlot={
+          <>
+            <DateRangeFilter
+              value={dateRange}
+              onChange={handleDateRangeChange}
+            />
+            <FiltersButton activeCount={contentType ? 1 : 0}>
+              <CustomSelect
+                label="Content Type"
+                value={
+                  CONTENT_TYPE_OPTIONS.find((t) => t.value === contentType)
+                    ?.label ?? "All Types"
+                }
+                options={CONTENT_TYPE_OPTIONS.map((t) => t.label)}
+                onChange={handleContentTypeChange}
+              />
+            </FiltersButton>
+          </>
+        }
       />
 
       <DataTable

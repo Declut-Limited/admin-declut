@@ -5,8 +5,8 @@ import TableToolbar from "@/components/generic/TableToolbar";
 import DateRangeFilter, {
   type DateRange,
 } from "@/components/generic/DateRangeFilter";
-import FiltersButton from "@/components/generic/FiltersButton";
-import CustomSelect from "@/components/generic/CustomSelect";
+// import FiltersButton from "@/components/generic/FiltersButton";
+// import CustomSelect from "@/components/generic/CustomSelect";
 import DataTable from "@/components/generic/DataTable";
 import Pagination from "@/components/generic/Pagination";
 import Button from "@/components/generic/Button";
@@ -34,10 +34,16 @@ export default function ReviewsPage() {
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
   const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("");
   const [viewingReview, setViewingReview] = useState<ReviewRow | null>(null);
 
-  const reviewsQuery = useReviews({ page: currentPage, limit: PAGE_SIZE });
+  const reviewsQuery = useReviews({
+    page: currentPage,
+    limit: PAGE_SIZE,
+    status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
+    startDate: dateRange.from || undefined,
+    endDate: dateRange.to || undefined,
+  });
+
   const { data } = reviewsQuery;
 
   const { mutateAsync: resolveReview, isPending: isResolving } =
@@ -81,11 +87,6 @@ export default function ReviewsPage() {
     setCurrentPage(1);
   };
 
-  const handleStatusFilterChange = (val: string) => {
-    setStatusFilter(val === "All Statuses" ? "" : val);
-    setCurrentPage(1);
-  };
-
   const handleDateRangeChange = (range: DateRange) => {
     setDateRange(range);
     setCurrentPage(1);
@@ -121,47 +122,15 @@ export default function ReviewsPage() {
   );
 
   const visibleReviews = useMemo(() => {
-    return reviews.filter((review) => {
-      const matchesTab =
-        activeTab === "All" || review.status === activeTab.toLowerCase();
-
-      const query = search.toLowerCase();
-      const matchesSearch =
-        !query ||
+    const query = search.toLowerCase();
+    if (!query) return reviews;
+    return reviews.filter(
+      (review) =>
         (review.reviewer?.name.toLowerCase().includes(query) ?? false) ||
         (review.listing?.title.toLowerCase().includes(query) ?? false) ||
-        review.comment.toLowerCase().includes(query);
-
-      const matchesStatus =
-        !statusFilter || review.status === statusFilter.toLowerCase();
-
-      let matchesDate = true;
-      if (dateRange.from || dateRange.to) {
-        const created = new Date(review.createdAt).getTime();
-        if (Number.isNaN(created)) matchesDate = false;
-        else {
-          if (
-            dateRange.from &&
-            created < new Date(dateRange.from).setHours(0, 0, 0, 0)
-          )
-            matchesDate = false;
-          if (
-            dateRange.to &&
-            created > new Date(dateRange.to).setHours(23, 59, 59, 999)
-          )
-            matchesDate = false;
-        }
-      }
-
-      return matchesTab && matchesSearch && matchesStatus && matchesDate;
-    });
-  }, [reviews, activeTab, search, statusFilter, dateRange]);
-
-  const isFiltering =
-    activeTab !== "All" ||
-    Boolean(search) ||
-    Boolean(statusFilter) ||
-    Boolean(dateRange.from || dateRange.to);
+        review.comment.toLowerCase().includes(query),
+    );
+  }, [reviews, search]);
 
   const handleResolveFromModal = () => {
     if (!viewingReview) return;
@@ -198,25 +167,12 @@ export default function ReviewsPage() {
 
       <TableToolbar
         label="Reviews"
-        count={isFiltering ? visibleReviews.length : total}
+        count={search ? visibleReviews.length : total}
         searchValue={search}
         onSearchChange={handleSearchChange}
         searchPlaceholder="Search reviews..."
         filterSlot={
-          <>
-            <DateRangeFilter
-              value={dateRange}
-              onChange={handleDateRangeChange}
-            />
-            <FiltersButton activeCount={statusFilter ? 1 : 0}>
-              <CustomSelect
-                label="Status"
-                value={statusFilter || "All Statuses"}
-                options={["All Statuses", "Visible", "Flagged", "Hidden"]}
-                onChange={handleStatusFilterChange}
-              />
-            </FiltersButton>
-          </>
+          <DateRangeFilter value={dateRange} onChange={handleDateRangeChange} />
         }
       />
 

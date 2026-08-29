@@ -44,22 +44,31 @@ export default function CategoriesPage() {
   const [editingCategory, setEditingCategory] = useState<CategoryRow | null>(
     null,
   );
+  const [deletingCategory, setDeletingCategory] = useState<CategoryRow | null>(
+    null,
+  );
 
-  const categoriesQuery = useCategories();
-  const { data: categories = [] } = categoriesQuery;
+  const categoriesQuery = useCategories({
+    page: currentPage,
+    limit: PAGE_SIZE,
+    startDate: dateRange.from || undefined,
+    endDate: dateRange.to || undefined,
+  });
+
+  const { data } = categoriesQuery;
 
   const { mutateAsync: createCategory, isPending: isCreating } =
     useCreateCategory();
   const { mutateAsync: updateCategory, isPending: isUpdating } =
     useUpdateCategory();
-  const [deletingCategory, setDeletingCategory] = useState<CategoryRow | null>(
-    null,
-  );
-
   const { mutateAsync: removeCategory, isPending: isDeleting } =
     useDeleteCategory();
   const { mutateAsync: toggleStatus } = useToggleCategoryStatus();
   const { mutateAsync: exportCategories } = useExportCategories();
+
+  const categories = useMemo(() => data?.results ?? [], [data?.results]);
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -80,6 +89,7 @@ export default function CategoriesPage() {
     setDateRange(range);
     setCurrentPage(1);
   };
+
   const columns = useMemo(
     () =>
       createCategoryColumns({
@@ -112,6 +122,7 @@ export default function CategoriesPage() {
     );
   };
 
+  // no status or search params on the endpoint — filtering the current page
   const filteredCategories = useMemo(() => {
     return categories.filter((category) => {
       const matchesTab =
@@ -124,37 +135,11 @@ export default function CategoriesPage() {
       const matchesStatus =
         !statusFilter || category.status === statusFilter.toLowerCase();
 
-      let matchesDate = true;
-      if (dateRange.from || dateRange.to) {
-        const created = new Date(category.createdAt).getTime();
-        if (Number.isNaN(created)) matchesDate = false;
-        else {
-          if (
-            dateRange.from &&
-            created < new Date(dateRange.from).setHours(0, 0, 0, 0)
-          )
-            matchesDate = false;
-          if (
-            dateRange.to &&
-            created > new Date(dateRange.to).setHours(23, 59, 59, 999)
-          )
-            matchesDate = false;
-        }
-      }
-
-      return matchesTab && matchesSearch && matchesStatus && matchesDate;
+      return matchesTab && matchesSearch && matchesStatus;
     });
-  }, [categories, activeTab, search, statusFilter, dateRange]);
+  }, [categories, activeTab, search, statusFilter]);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredCategories.length / PAGE_SIZE),
-  );
-
-  const paginatedCategories = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredCategories.slice(start, start + PAGE_SIZE);
-  }, [filteredCategories, currentPage]);
+  const isFiltering = activeTab !== "All" || Boolean(search || statusFilter);
 
   const handleAddCategory = (data: { title: string }) => {
     showToast.promise(
@@ -168,11 +153,17 @@ export default function CategoriesPage() {
   };
 
   const handleExport = () => {
-    showToast.promise(exportCategories(), {
-      loading: "Preparing export...",
-      success: "Export downloaded.",
-      error: "Export failed.",
-    });
+    showToast.promise(
+      exportCategories({
+        startDate: dateRange.from || undefined,
+        endDate: dateRange.to || undefined,
+      }),
+      {
+        loading: "Preparing export...",
+        success: "Export downloaded.",
+        error: "Export failed.",
+      },
+    );
   };
 
   const handleConfirmDelete = () => {
@@ -221,7 +212,7 @@ export default function CategoriesPage() {
       <div>
         <TableToolbar
           label="Categories"
-          count={filteredCategories.length}
+          count={isFiltering ? filteredCategories.length : total}
           searchValue={search}
           onSearchChange={handleSearchChange}
           searchPlaceholder="Search categories..."
@@ -244,7 +235,7 @@ export default function CategoriesPage() {
         />
 
         <DataTable
-          data={paginatedCategories}
+          data={filteredCategories}
           columns={columns}
           query={categoriesQuery}
           emptyMessage="No categories found."

@@ -26,8 +26,9 @@ export interface EscrowRow {
 export interface EscrowsListParams {
   page?: number;
   limit?: number;
+  startDate?: string;
+  endDate?: string;
 }
-
 export interface EscrowsListResponse {
   success: boolean;
   data: {

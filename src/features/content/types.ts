@@ -31,6 +31,8 @@ export interface ContentListParams {
   limit?: number;
   status?: string;
   contentType?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface ContentListResponse {

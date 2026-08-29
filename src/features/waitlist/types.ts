@@ -54,6 +54,8 @@ export interface WaitlistListParams {
   interest?: string;
   inviteStatus?: string;
   search?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface WaitlistListResponse {

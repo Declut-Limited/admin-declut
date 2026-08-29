@@ -7,13 +7,30 @@ import {
   updateCategory,
   deleteCategory,
 } from "./api";
-import type { CreateCategoryPayload, UpdateCategoryPayload } from "./types";
+import type { CategoriesListParams, CreateCategoryPayload, UpdateCategoryPayload } from "./types";
 
-export const useCategories = () => {
+export const useCategories = (params: CategoriesListParams) => {
   return useQuery({
-    queryKey: ["categories"],
-    queryFn: getCategories,
+    queryKey: ["categories", params],
+    queryFn: () => getCategories(params),
     select: (res) => res.data,
+  });
+};
+
+export const useExportCategories = () => {
+  return useMutation({
+    mutationFn: (params: Omit<CategoriesListParams, "page" | "limit">) =>
+      exportCategories(params),
+    onSuccess: (blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `categories-${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    },
   });
 };
 
@@ -35,22 +52,6 @@ export const useToggleCategoryStatus = () => {
     mutationFn: (categoryId: string) => toggleCategoryStatus(categoryId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-    },
-  });
-};
-
-export const useExportCategories = () => {
-  return useMutation({
-    mutationFn: () => exportCategories(),
-    onSuccess: (blob) => {
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `categories-${new Date().toISOString().split("T")[0]}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
     },
   });
 };

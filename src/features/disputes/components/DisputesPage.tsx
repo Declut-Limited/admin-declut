@@ -6,8 +6,8 @@ import TableToolbar from "@/components/generic/TableToolbar";
 import DateRangeFilter, {
   type DateRange,
 } from "@/components/generic/DateRangeFilter";
-import FiltersButton from "@/components/generic/FiltersButton";
-import CustomSelect from "@/components/generic/CustomSelect";
+// import FiltersButton from "@/components/generic/FiltersButton";
+// import CustomSelect from "@/components/generic/CustomSelect";
 import DataTable from "@/components/generic/DataTable";
 import Pagination from "@/components/generic/Pagination";
 import Button from "@/components/generic/Button";
@@ -32,23 +32,36 @@ export default function DisputesPage() {
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
   const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("");
 
+  const disputesQuery = useDisputes({
+    page: currentPage,
+    limit: PAGE_SIZE,
+    status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
+    startDate: dateRange.from || undefined,
+    endDate: dateRange.to || undefined,
+  });
   const navigate = useNavigate();
 
-  const disputesQuery = useDisputes({ page: currentPage, limit: PAGE_SIZE });
   const { data } = disputesQuery;
 
   const { mutateAsync: updateStatus } = useUpdateReportStatus();
   const { mutateAsync: exportDisputes } = useExportDisputes();
 
   const handleExport = () => {
-    showToast.promise(exportDisputes({}), {
-      loading: "Preparing export...",
-      success: "Export downloaded.",
-      error: "Export failed.",
-    });
+    showToast.promise(
+      exportDisputes({
+        status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
+        startDate: dateRange.from || undefined,
+        endDate: dateRange.to || undefined,
+      }),
+      {
+        loading: "Preparing export...",
+        success: "Export downloaded.",
+        error: "Export failed.",
+      },
+    );
   };
+
   const disputes = useMemo(() => data?.results ?? [], [data?.results]);
 
   const total = data?.total ?? 0;
@@ -61,11 +74,6 @@ export default function DisputesPage() {
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    setCurrentPage(1);
-  };
-
-  const handleStatusFilterChange = (val: string) => {
-    setStatusFilter(val === "All Statuses" ? "" : val);
     setCurrentPage(1);
   };
 
@@ -103,51 +111,18 @@ export default function DisputesPage() {
         changeStatus(dispute._id, dispute.slug, "resolved", "Resolving"),
     });
   }, [navigate, updateStatus]);
-
   const visibleDisputes = useMemo(() => {
-    return disputes.filter((dispute) => {
-      const matchesTab =
-        activeTab === "All" || dispute.status === activeTab.toLowerCase();
-
-      const query = search.toLowerCase();
-      const matchesSearch =
-        !query ||
+    const query = search.toLowerCase();
+    if (!query) return disputes;
+    return disputes.filter(
+      (dispute) =>
         dispute.slug.toLowerCase().includes(query) ||
         dispute.title.toLowerCase().includes(query) ||
         dispute.reason.toLowerCase().includes(query) ||
         (dispute.user?.name.toLowerCase().includes(query) ?? false) ||
-        (dispute.listing?.title.toLowerCase().includes(query) ?? false);
-
-      const matchesStatus =
-        !statusFilter || dispute.status === statusFilter.toLowerCase();
-
-      let matchesDate = true;
-      if (dateRange.from || dateRange.to) {
-        const created = new Date(dispute.createdAt).getTime();
-        if (Number.isNaN(created)) matchesDate = false;
-        else {
-          if (
-            dateRange.from &&
-            created < new Date(dateRange.from).setHours(0, 0, 0, 0)
-          )
-            matchesDate = false;
-          if (
-            dateRange.to &&
-            created > new Date(dateRange.to).setHours(23, 59, 59, 999)
-          )
-            matchesDate = false;
-        }
-      }
-
-      return matchesTab && matchesSearch && matchesStatus && matchesDate;
-    });
-  }, [disputes, activeTab, search, statusFilter, dateRange]);
-
-  const isFiltering =
-    activeTab !== "All" ||
-    Boolean(search) ||
-    Boolean(statusFilter) ||
-    Boolean(dateRange.from || dateRange.to);
+        (dispute.listing?.title.toLowerCase().includes(query) ?? false),
+    );
+  }, [disputes, search]);
 
   return (
     <div>
@@ -169,31 +144,12 @@ export default function DisputesPage() {
 
       <TableToolbar
         label="Disputes"
-        count={isFiltering ? visibleDisputes.length : total}
+        count={search ? visibleDisputes.length : total}
         searchValue={search}
         onSearchChange={handleSearchChange}
         searchPlaceholder="Search disputes..."
         filterSlot={
-          <>
-            <DateRangeFilter
-              value={dateRange}
-              onChange={handleDateRangeChange}
-            />
-            <FiltersButton activeCount={statusFilter ? 1 : 0}>
-              <CustomSelect
-                label="Status"
-                value={statusFilter || "All Statuses"}
-                options={[
-                  "All Statuses",
-                  "New",
-                  "Investigating",
-                  "Dismissed",
-                  "Resolved",
-                ]}
-                onChange={handleStatusFilterChange}
-              />
-            </FiltersButton>
-          </>
+          <DateRangeFilter value={dateRange} onChange={handleDateRangeChange} />
         }
       />
 

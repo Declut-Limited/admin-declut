@@ -30,6 +30,9 @@ export interface DisputeRow {
 export interface DisputesListParams {
   page?: number;
   limit?: number;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface DisputesListResponse {

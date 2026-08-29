@@ -1,4 +1,4 @@
-export type ReviewStatus = "visible" | "flagged" | "hidden";
+export type ReviewStatus = "visible" | "flagged" | "resolved";
 
 export interface ReviewListing {
   id: string;
@@ -33,6 +33,9 @@ export interface ReviewRow {
 export interface ReviewsListParams {
   page?: number;
   limit?: number;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface ReviewsListResponse {

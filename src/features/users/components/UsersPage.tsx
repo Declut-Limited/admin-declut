@@ -37,7 +37,7 @@ export default function UsersPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
-  const [role, setRole] = useState("");
+  const [accountType, setAccountType] = useState("");
 
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [suspendingUser, setSuspendingUser] = useState<UserRow | null>(null);
@@ -59,15 +59,28 @@ export default function UsersPage() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    setDateRange({ from: "", to: "" });
-    setRole("");
+  };
+
+  const handleDateRangeChange = (range: DateRange) => {
+    setDateRange(range);
+    setCurrentPage(1);
+  };
+
+  const handleTypeChange = (val: string) => {
+    setAccountType(val === "All Types" ? "" : val);
+    setCurrentPage(1);
   };
 
   const usersQuery = useUsers({
     page: currentPage,
     limit: PAGE_SIZE,
     status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
+    type: accountType
+      ? (accountType.toLowerCase() as "user" | "admin")
+      : undefined,
     search: debouncedSearch || undefined,
+    startDate: dateRange.from || undefined,
+    endDate: dateRange.to || undefined,
   });
 
   const { data } = usersQuery;
@@ -123,37 +136,16 @@ export default function UsersPage() {
     );
   };
 
-  const visibleUsers = useMemo(() => {
-    return users.filter((user) => {
-      if (role && user.role !== role) return false;
-
-      if (dateRange.from || dateRange.to) {
-        const joined = new Date(user.joinedAt).getTime();
-        if (Number.isNaN(joined)) return false;
-        if (
-          dateRange.from &&
-          joined < new Date(dateRange.from).setHours(0, 0, 0, 0)
-        )
-          return false;
-        if (
-          dateRange.to &&
-          joined > new Date(dateRange.to).setHours(23, 59, 59, 999)
-        )
-          return false;
-      }
-
-      return true;
-    });
-  }, [users, role, dateRange]);
-
-  const activeFilterCount =
-    (role ? 1 : 0) + (dateRange.from || dateRange.to ? 1 : 0);
-
   const handleExport = () => {
     showToast.promise(
       exportUsers({
         status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
+        type: accountType
+          ? (accountType.toLowerCase() as "user" | "admin")
+          : undefined,
         search: debouncedSearch || undefined,
+        startDate: dateRange.from || undefined,
+        endDate: dateRange.to || undefined,
       }),
       {
         loading: "Preparing export...",
@@ -212,19 +204,22 @@ export default function UsersPage() {
       <div>
         <TableToolbar
           label="Users"
-          count={activeFilterCount > 0 ? visibleUsers.length : total}
+          count={total}
           searchValue={search}
           onSearchChange={setSearch}
           searchPlaceholder="Search users..."
           filterSlot={
             <>
-              <DateRangeFilter value={dateRange} onChange={setDateRange} />
-              <FiltersButton activeCount={role ? 1 : 0}>
+              <DateRangeFilter
+                value={dateRange}
+                onChange={handleDateRangeChange}
+              />
+              <FiltersButton activeCount={accountType ? 1 : 0}>
                 <CustomSelect
-                  label="Role"
-                  value={role || "All Roles"}
-                  options={["All Roles", "Admin", "User"]}
-                  onChange={(val) => setRole(val === "All Roles" ? "" : val)}
+                  label="Account Type"
+                  value={accountType || "All Types"}
+                  options={["All Types", "User", "Admin"]}
+                  onChange={handleTypeChange}
                 />
               </FiltersButton>
             </>
@@ -232,7 +227,7 @@ export default function UsersPage() {
         />
 
         <DataTable
-          data={visibleUsers}
+          data={users}
           columns={columns}
           query={usersQuery}
           emptyMessage="No users found."

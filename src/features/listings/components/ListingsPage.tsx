@@ -31,8 +31,8 @@ import { usePageSize } from "@/lib/hooks/usePageSize";
 const tabs = ["All", "Active", "Sold", "Deleted", "Flagged", "Archived"];
 
 export default function ListingsPage() {
-    const PAGE_SIZE = usePageSize();
-  
+  const PAGE_SIZE = usePageSize();
+
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -57,8 +57,12 @@ export default function ListingsPage() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    setDateRange({ from: "", to: "" });
     setCategory("");
+  };
+
+  const handleDateRangeChange = (range: DateRange) => {
+    setDateRange(range);
+    setCurrentPage(1);
   };
 
   const listingsQuery = useListings({
@@ -66,6 +70,8 @@ export default function ListingsPage() {
     limit: PAGE_SIZE,
     status: activeTab === "All" ? "all" : activeTab.toLowerCase(),
     search: debouncedSearch || undefined,
+    startDate: dateRange.from || undefined,
+    endDate: dateRange.to || undefined,
   });
 
   const { data } = listingsQuery;
@@ -136,27 +142,9 @@ export default function ListingsPage() {
   );
 
   const visibleListings = useMemo(() => {
-    return listings.filter((listing) => {
-      if (category && listing.category?.title !== category) return false;
-
-      if (dateRange.from || dateRange.to) {
-        const created = new Date(listing.createdAt).getTime();
-        if (Number.isNaN(created)) return false;
-        if (
-          dateRange.from &&
-          created < new Date(dateRange.from).setHours(0, 0, 0, 0)
-        )
-          return false;
-        if (
-          dateRange.to &&
-          created > new Date(dateRange.to).setHours(23, 59, 59, 999)
-        )
-          return false;
-      }
-
-      return true;
-    });
-  }, [listings, category, dateRange]);
+    if (!category) return listings;
+    return listings.filter((listing) => listing.category?.title === category);
+  }, [listings, category]);
 
   const categoryOptions = useMemo(() => {
     const titles = new Set(
@@ -165,8 +153,7 @@ export default function ListingsPage() {
     return ["All Categories", ...Array.from(titles).sort()];
   }, [listings]);
 
-  const activeFilterCount =
-    (category ? 1 : 0) + (dateRange.from || dateRange.to ? 1 : 0);
+  const activeFilterCount = category ? 1 : 0;
 
   const handleConfirmEdit = (payload: UpdateListingPayload) => {
     if (!editingListing) return;
@@ -188,6 +175,8 @@ export default function ListingsPage() {
       exportListings({
         status: activeTab === "All" ? "all" : activeTab.toLowerCase(),
         search: debouncedSearch || undefined,
+        startDate: dateRange.from || undefined,
+        endDate: dateRange.to || undefined,
       }),
       {
         loading: "Preparing export...",
@@ -217,14 +206,17 @@ export default function ListingsPage() {
       <div>
         <TableToolbar
           label="Listings"
-          count={activeFilterCount > 0 ? visibleListings.length : total}
+          count={category ? visibleListings.length : total}
           searchValue={search}
           onSearchChange={setSearch}
           searchPlaceholder="Search listings..."
           filterSlot={
             <>
-              <DateRangeFilter value={dateRange} onChange={setDateRange} />
-              <FiltersButton activeCount={category ? 1 : 0}>
+              <DateRangeFilter
+                value={dateRange}
+                onChange={handleDateRangeChange}
+              />
+              <FiltersButton activeCount={activeFilterCount}>
                 <CustomSelect
                   label="Category"
                   value={category || "All Categories"}

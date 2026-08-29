@@ -45,6 +45,8 @@ export interface TransactionsListParams {
   limit?: number;
   status?: string;
   tab?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface TransactionsListResponse {

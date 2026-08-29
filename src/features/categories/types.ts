@@ -9,9 +9,22 @@ export interface CategoryRow {
   createdAt: string;
 }
 
+export interface CategoriesListParams {
+  page?: number;
+  limit?: number;
+  startDate?: string;
+  endDate?: string;
+}
+
 export interface CategoriesListResponse {
   success: boolean;
-  data: CategoryRow[];
+  data: {
+    results: CategoryRow[];
+    total: number;
+    page: number;
+    limit: number;
+    hasMore: boolean;
+  };
 }
 
 export interface CreateCategoryPayload {
