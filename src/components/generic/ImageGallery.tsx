@@ -15,7 +15,21 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
   return (
     <div>
       <div className="w-full h-64 rounded-xl overflow-hidden bg-gray-900">
-        <img src={activeImage.url} alt="" className="w-full h-full object-cover" />
+        {activeImage.isVideo ? (
+          <video
+            key={activeImage.id}
+            src={activeImage.url}
+            poster={activeImage.posterUrl}
+            controls
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <img
+            src={activeImage.url}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+        )}
       </div>
 
       {images.length > 1 && (
@@ -25,10 +39,16 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
               key={image.id}
               onClick={() => setActiveIndex(index)}
               className={`w-9 h-9 rounded-full overflow-hidden border-2 shrink-0 relative ${
-                index === activeIndex ? "border-brand-blue" : "border-transparent"
+                index === activeIndex
+                  ? "border-brand-blue"
+                  : "border-transparent"
               }`}
             >
-              <img src={image.url} alt="" className="w-full h-full object-cover" />
+              <img
+                src={image.isVideo ? image.posterUrl : image.url}
+                alt=""
+                className="w-full h-full object-cover"
+              />
               {image.isVideo && (
                 <span className="absolute inset-0 flex items-center justify-center bg-black/30">
                   <FiPlay className="w-3 h-3 text-white" />

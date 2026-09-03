@@ -8,9 +8,11 @@ import RowActionsMenu, {
 import type { ListingRow } from "../types";
 import { CgDanger } from "react-icons/cg";
 import { RiDeleteBin6Line } from "react-icons/ri";
+import ListingThumbnail from "./ListingThumbnail";
 
 interface ListingColumnCallbacks {
   onViewDetails: (listing: ListingRow) => void;
+  onViewSeller: (listing: ListingRow) => void;
   onEdit: (listing: ListingRow) => void;
   onDelist: (listing: ListingRow) => void;
   onRelist: (listing: ListingRow) => void;
@@ -54,12 +56,6 @@ function formatDate(iso: string) {
     day: "numeric",
     year: "numeric",
   });
-}
-
-function getInitials(name: string) {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 export function createListingColumns(
@@ -133,16 +129,15 @@ export function createListingColumns(
       header: "Listing",
       cell: ({ row }) => (
         <div className="flex items-center gap-2.5">
-          <span className="w-8 h-8 rounded-full bg-[#BFDBFE] dark:bg-indigo-950 flex items-center justify-center text-xs font-semibold text-brand-blue dark:text-indigo-400 shrink-0">
-            {getInitials(row.original.title)}
-          </span>
+          <ListingThumbnail
+            url={row.original.mainImageUrl}
+            title={row.original.title}
+          />
           <div>
             <p className="font-medium text-brand-gray-dark dark:text-gray-100">
               {row.original.title}
             </p>
-            <p className="text-xs text-brand-gray-light">
-              {row.original.slug ?? "—"}
-            </p>
+            <p className="text-xs text-brand-gray-light">{row.original.slug}</p>
           </div>
         </div>
       ),
@@ -157,9 +152,13 @@ export function createListingColumns(
       header: "Seller",
       cell: ({ row }) =>
         row.original.seller ? (
-          <a href="#" className="text-brand-blue underline-wavy">
+          <button
+            type="button"
+            onClick={() => callbacks.onViewSeller(row.original)}
+            className="text-brand-blue underline-wavy cursor-pointer"
+          >
             {row.original.seller.name}
-          </a>
+          </button>
         ) : (
           <span className="text-brand-gray-light">—</span>
         ),

@@ -15,26 +15,72 @@ export interface ListingCategory {
   title: string;
   slug: string;
 }
+
+export interface ListingMedia {
+  publicId: string;
+  url: string;
+  secureUrl: string;
+  sortOrder: number;
+  isPrimary: boolean;
+  createdAt: string;
+}
+
+export interface ListingRowSeller {
+  _id: string;
+  name: string;
+}
+
+export interface ListingRowCategory {
+  _id: string;
+  title: string;
+}
+
 export interface ListingRow {
   _id: string;
-  seller: ListingSeller | null;
+  seller: ListingRowSeller | null;
   title: string;
   description: string;
-  category: ListingCategory | null;
-  condition: string;
+  category: ListingRowCategory | null;
   price: number;
-  images: string[];
-  location: { type: string; coordinates: [number, number] };
+  images: ListingMedia[];
+  mainImageUrl: string | null;
+  video: ListingMedia | null;
   locationLabel: string;
+  address: string;
+  state: string;
+  area: string;
+  hasDefect: boolean;
+  defectDescription: string | null;
   status: string;
-  slug?: string; // older records have no slug
-  views: number;
-  saves: number;
-  priceHistory: { price: number; changedAt: string }[];
+  slug: string;
   specs?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
+
+export interface ListingDetailData {
+  id: string;
+  slug: string;
+  images: ListingMedia[];
+  video: ListingMedia | null;
+  mainImageUrl: string | null;
+  title: string;
+  status: string;
+  category: ListingCategory | null;
+  createdAt: string;
+  views: number;
+  saves: number;
+  price: number;
+  address: string;
+  location: { type: string; coordinates: [number, number] };
+  locationLabel: string;
+  description: string;
+  specs: Record<string, unknown> | null;
+  priceHistory: { price: number; changedAt: string }[];
+  recentActivity: ListingActivityEvent[];
+  seller: ListingDetailSeller | null;
+}
+
 
 export interface ListingsListParams {
   page?: number;
@@ -58,6 +104,7 @@ export interface ListingsListResponse {
 export interface ListingImage {
   id: string;
   url: string;
+  posterUrl?: string;
   isVideo?: boolean;
 }
 
@@ -108,30 +155,6 @@ export interface ListingDetailSeller {
   totalListings: number;
   rating: string;
   createdAt: string;
-}
-
-export interface ListingDetailData {
-  id: string;
-  slug: string;
-  images: { url: string }[];
-  title: string;
-  status: string;
-  category: ListingCategory | null;
-  createdAt: string;
-  views: number;
-  saves: number;
-  price: number;
-  address: string;
-  description: string;
-  specs: Record<string, unknown> | null;
-  priceHistory: { price: number; changedAt: string }[];
-  recentActivity: ListingActivityEvent[];
-  seller: ListingDetailSeller | null;
-
-  // TODO: present on the list endpoint, not the detail one
-  locationLabel?: string;
-  location?: { type: string; coordinates: [number, number] };
-  condition?: string;
 }
 
 export interface UpdateListingPayload {

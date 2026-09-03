@@ -5,7 +5,6 @@ import ImageGallery from "@/components/generic/ImageGallery";
 import ListingLocationMap from "@/components/generic/ListingLocationMap";
 import { FaArrowLeftLong } from "react-icons/fa6";
 import { IoMail } from "react-icons/io5";
-import listingHeader from "@/assets/listing-header.jpg";
 import NotFoundState from "@/components/generic/NotFoundState";
 import { FiEdit3, FiFlag, FiPackage } from "react-icons/fi";
 import PageLoader from "@/components/generic/PageLoader";
@@ -25,6 +24,7 @@ import type { EmailSellerPayload, UpdateListingPayload } from "../types";
 import EmailSellerModal from "./EmailSellerModal";
 import EditListingModal from "./EditListingModal";
 import { getInitials } from "@/lib/utils/getInitials";
+import ListingThumbnail from "./ListingThumbnail";
 
 const NOT_IN_API_YET = "—";
 
@@ -134,10 +134,22 @@ export default function ListingDetailPage() {
   const lat = coordinates?.[1];
   const lng = coordinates?.[0];
 
-  const galleryImages = listing.images.map((image, index) => ({
-    id: String(index),
-    url: image.url,
-  }));
+  const galleryImages = [
+    ...listing.images.map((image) => ({
+      id: image.publicId,
+      url: image.secureUrl,
+    })),
+    ...(listing.video
+      ? [
+          {
+            id: listing.video.publicId,
+            url: listing.video.secureUrl,
+            posterUrl: listing.video.secureUrl.replace(/\.[^.]+$/, ".jpg"),
+            isVideo: true,
+          },
+        ]
+      : []),
+  ];
 
   const handleRemoveListing = () => {
     showToast.promise(
@@ -199,13 +211,11 @@ export default function ListingDetailPage() {
 
       <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 mb-6">
         <div className="flex items-center gap-3">
-          <span className="w-10 h-10 rounded-lg shrink-0">
-            <img
-              src={listing.images[0]?.url ?? listingHeader}
-              alt="header-image"
-              className="w-10 h-10 rounded-lg shrink-0"
-            />
-          </span>
+          <ListingThumbnail
+            url={listing.mainImageUrl}
+            title={listing.title}
+            size="md"
+          />
 
           <div>
             <div className="flex items-center gap-2">
@@ -285,8 +295,8 @@ export default function ListingDetailPage() {
             {currency.format(listing.price)}
           </span>
           <span className="text-sm text-brand-gray-light">
-            {(specs.condition ?? listing.condition)
-              ? formatStatus(String(specs.condition ?? listing.condition))
+            {specs.condition
+              ? formatStatus(String(specs.condition))
               : NOT_IN_API_YET}
           </span>
         </div>

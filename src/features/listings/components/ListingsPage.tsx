@@ -94,6 +94,12 @@ export default function ListingsPage() {
     () =>
       createListingColumns({
         onViewDetails: (listing) => navigate(`/listings/${listing.slug}`),
+        onViewSeller: (listing) => {
+          if (!listing.seller) return;
+          navigate(`/users/${listing.seller._id}`, {
+            state: { name: listing.seller.name },
+          });
+        },
         onEdit: (listing) => setEditingListing(listing),
         onFlag: (listing) => {
           showToast.promise(flagListing(listing._id), {

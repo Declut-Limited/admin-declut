@@ -375,7 +375,7 @@ export default function DashboardPage() {
       >
         {/* text */}
         <div className="flex flex-col gap-1 text-white">
-          <span className="font-bold text-2xl flex gap-1 tracking-wide">
+          <span className="heading-font text-2xl flex gap-1 tracking-wide">
             <p className="text-[#DDDFFF]">{getGreeting()},</p>{" "}
             {isLoading ? (
               <Skeleton className="h-6 w-24 bg-white/20" />
