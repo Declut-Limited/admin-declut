@@ -10,7 +10,7 @@ import type {
 } from "./types";
 
 export const getRoles = async (): Promise<RolesListResponse> => {
-  const { data } = await api.get("/admin/roles");
+  const { data } = await api.get("/admin/roles", { params: { limit: 100 } });
   return data;
 };
 

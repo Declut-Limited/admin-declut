@@ -89,7 +89,13 @@ export interface Role {
 
 export interface RolesListResponse {
   success: boolean;
-  data: Role[];
+  data: {
+    results: Role[];
+    total: number;
+    page: number;
+    limit: number;
+    hasMore: boolean;
+  };
 }
 
 export interface CreateRolePayload {

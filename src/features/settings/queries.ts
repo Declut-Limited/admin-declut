@@ -6,7 +6,7 @@ export const useRoles = () => {
   return useQuery({
     queryKey: ["roles"],
     queryFn: getRoles,
-    select: (res) => res.data,
+    select: (res) => res.data.results,
   });
 };
 
