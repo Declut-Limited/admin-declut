@@ -18,6 +18,7 @@ export default function ListingThumbnail({
   size = "sm",
 }: ListingThumbnailProps) {
   const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   if (!url || failed) {
     return (
@@ -30,11 +31,20 @@ export default function ListingThumbnail({
   }
 
   return (
-    <img
-      src={url}
-      alt=""
-      onError={() => setFailed(true)}
-      className={`${sizeClass[size]} rounded-lg object-cover shrink-0`}
-    />
+    <span
+      className={`${sizeClass[size]} rounded-lg shrink-0 block overflow-hidden bg-gray-200 dark:bg-gray-700 ${
+        loaded ? "" : "animate-pulse"
+      }`}
+    >
+      <img
+        src={url}
+        alt=""
+        onLoad={() => setLoaded(true)}
+        onError={() => setFailed(true)}
+        className={`w-full h-full object-cover transition-opacity duration-200 ${
+          loaded ? "opacity-100" : "opacity-0"
+        }`}
+      />
+    </span>
   );
 }

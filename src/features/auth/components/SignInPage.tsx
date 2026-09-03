@@ -124,10 +124,11 @@ export default function SignInPage() {
           </button>
 
           <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-4">
-            Access is by invitation only. Need an account?{" "}
+            Access is by invitation only.
+             {/* Need an account?{" "}
             <a href="#" className="text-brand-blue underline cursor-pointer">
               Contact your administrator.
-            </a>
+            </a> */}
           </p>
         </form>
       </div>
