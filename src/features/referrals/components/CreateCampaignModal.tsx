@@ -55,7 +55,7 @@ const PAYMENT_SCHEDULES = [
   "Manual Batch",
   "Immediately after approval",
 ];
-const COUNT_OPTIONS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
+const COUNT_OPTIONS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
 const currency = new Intl.NumberFormat("en-NG", {
   style: "currency",
@@ -122,14 +122,14 @@ export default function CreateCampaignModal({
   const includesSale = actions.includes("Complete Sale");
   const includesPurchase = actions.includes("Complete Purchase");
 
-  const toggleValidationRule = (rule: string) => {
-    set(
-      "validationRules",
-      form.validationRules.includes(rule)
-        ? form.validationRules.filter((r) => r !== rule)
-        : [...form.validationRules, rule],
-    );
-  };
+  // const toggleValidationRule = (rule: string) => {
+  //   set(
+  //     "validationRules",
+  //     form.validationRules.includes(rule)
+  //       ? form.validationRules.filter((r) => r !== rule)
+  //       : [...form.validationRules, rule],
+  //   );
+  // };
 
   const handlePublish = () => {
     // TODO: wire to referralsApi.createCampaign
@@ -479,7 +479,7 @@ export default function CreateCampaignModal({
               </div>
             )}
 
-            {step === 6 && (
+            {/* {step === 6 && (
               <div className="campaign-wizard-panel">
                 {VALIDATION_RULES.map((rule) => (
                   <label
@@ -496,7 +496,7 @@ export default function CreateCampaignModal({
                   </label>
                 ))}
               </div>
-            )}
+            )} */}
 
             {step === 7 && (
               <div className="campaign-wizard-panel">

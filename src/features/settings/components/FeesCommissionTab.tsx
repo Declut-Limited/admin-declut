@@ -97,7 +97,7 @@ function FeesCommissionForm({ settings }: { settings: Settings }) {
         </div>
       </div>
 
-      <div className="settings-field-row">
+      {/* <div className="settings-field-row">
         <div className="settings-field">
           <FormInput
             label="Escrow Release Fee (₦)"
@@ -114,7 +114,7 @@ function FeesCommissionForm({ settings }: { settings: Settings }) {
             onChange={(e) => onChange("minimumPayoutThreshold", e.target.value)}
           />
         </div>
-      </div>
+      </div> */}
 
       <div className="w-2/3">
         <Button

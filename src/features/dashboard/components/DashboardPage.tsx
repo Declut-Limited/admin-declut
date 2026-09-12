@@ -796,6 +796,12 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
+            ) : categoryDistribution.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-1 py-42">
+                <p className="text-sm font-medium text-brand-gray-dark dark:text-gray-300">
+                  No category activity yet
+                </p>
+              </div>
             ) : (
               <div className="mt-4 divide-y divide-gray-100 dark:divide-gray-800">
                 {categoryDistribution.map((cat) => (

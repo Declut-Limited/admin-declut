@@ -19,8 +19,6 @@ import PartyCell from "./PartyCell";
 //   onContactBuyer: (escrow: EscrowRow) => void;
 //   onContactSeller: (escrow: EscrowRow) => void;
 //   onRefund: (escrow: EscrowRow) => void;
-//   onDownloadReceipt: (escrow: EscrowRow) => void;
-//   onViewItem: (escrow: EscrowRow) => void;
 // }
 
 const statusPillClass: Record<string, string> = {
@@ -55,16 +53,6 @@ export function createEscrowColumns(): ColumnDef<EscrowRow, any>[] {
   //       label: "View Transaction",
   //       icon: <FiEye className="w-4 h-4" />,
   //       onClick: () => callbacks.onViewTransaction(row),
-  //     },
-  //     {
-  //       label: "Download Receipt",
-  //       icon: <TbReceipt className="w-4 h-4" />,
-  //       onClick: () => callbacks.onDownloadReceipt(row),
-  //     },
-  //     {
-  //       label: "View Item",
-  //       icon: <BiPackage className="w-4 h-4" />,
-  //       onClick: () => callbacks.onViewItem(row),
   //     },
   //     {
   //       label: "View Buyer Profile",
