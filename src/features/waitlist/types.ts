@@ -29,6 +29,7 @@ export interface WaitlistUser {
   status: WaitlistStatus;
   inviteStatus: InviteStatus;
   createdAt: string;
+  location?: string;
   // TODO: not returned by the API yet
   lastContacted?: string | null;
 }

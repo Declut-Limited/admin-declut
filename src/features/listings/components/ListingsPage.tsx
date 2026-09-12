@@ -28,7 +28,7 @@ import {
 } from "../queries";
 import { usePageSize } from "@/lib/hooks/usePageSize";
 
-const tabs = ["All", "Active", "Sold", "Deleted", "Flagged", "Archived"];
+const tabs = ["All", "Active", "Sold", "Deleted", "Reported"];
 
 export default function ListingsPage() {
   const PAGE_SIZE = usePageSize();

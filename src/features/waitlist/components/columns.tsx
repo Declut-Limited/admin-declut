@@ -93,6 +93,11 @@ export function createWaitlistColumns(
       cell: ({ row }) => formatDate(row.original.createdAt),
     },
     {
+      accessorKey: "location",
+      header: "Location",
+      cell: ({ row }) => row.original.location ?? "—",
+    },
+    {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => (

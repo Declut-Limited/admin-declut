@@ -27,6 +27,7 @@ const statusPillClass: Record<string, string> = {
   pending_review:
     "text-[#B54708] bg-[#FFFAEB] dark:text-amber-400 dark:bg-amber-950",
   flagged: "text-[#B42318] bg-[#FEF3F2] dark:text-red-400 dark:bg-red-950",
+  reported: "text-[#B42318] bg-[#FEF3F2] dark:text-red-400 dark:bg-red-950",
   delisted:
     "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800",
   deleted: "text-[#B42318] bg-[#FEF3F2] dark:text-red-400 dark:bg-red-950",
