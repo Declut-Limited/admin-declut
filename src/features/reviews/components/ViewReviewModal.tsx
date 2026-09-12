@@ -54,7 +54,11 @@ export default function ViewReviewModal({
       footer={
         <>
           <Button
-            onClick={() => navigate(`/transactions/${review.transaction}`)}
+            onClick={() =>
+              review.transaction &&
+              navigate(`/transactions/${review.transaction}`)
+            }
+            disabled={!review.transaction}
             bgColor="bg-white dark:bg-gray-900"
             textColor="text-brand-gray-dark dark:text-gray-200"
             borderColor="border-gray-200 dark:border-gray-700"
@@ -131,33 +135,34 @@ export default function ViewReviewModal({
             </button>
             <p className="text-xs text-brand-gray-light">
               {reviewer?.slug ?? "—"} · {reviewer?.email ?? "—"} ·{" "}
-              {formatStatus(review.role)}
+              {review.role ? formatStatus(review.role) : "—"}
             </p>
           </div>
         </div>
 
         <StarRating rating={review.rating} />
         <p className="text-sm text-brand-gray-dark dark:text-gray-300 mt-1.5">
-          {review.comment}
+          {review.comment ?? "—"}
         </p>
       </div>
 
-      <div className="flex items-center gap-3">
-        <img
-          src={listing?.mainImage || avatarPlaceholder}
-          alt={listing?.title ?? ""}
-          className="w-12 h-12 rounded-lg object-cover shrink-0"
-        />
-        <div>
-          <p className="text-sm font-semibold text-brand-gray-dark dark:text-gray-100">
-            {listing?.title ?? "—"}
-          </p>
-          <p className="text-xs text-brand-gray-light">
-            {listing?.slug ?? "—"} · Submitted{" "}
-            {listing ? formatDate(listing.createdAt) : "—"}
-          </p>
+      {listing && (
+        <div className="flex items-center gap-3">
+          <img
+            src={listing.mainImage || avatarPlaceholder}
+            alt={listing.title}
+            className="w-12 h-12 rounded-lg object-cover shrink-0"
+          />
+          <div>
+            <p className="text-sm font-semibold text-brand-gray-dark dark:text-gray-100">
+              {listing.title}
+            </p>
+            <p className="text-xs text-brand-gray-light">
+              {listing.slug} · Submitted {formatDate(listing.createdAt)}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
     </BaseModal>
   );
 }

@@ -119,7 +119,7 @@ export default function DisputesPage() {
         dispute.slug.toLowerCase().includes(query) ||
         dispute.title.toLowerCase().includes(query) ||
         dispute.reason.toLowerCase().includes(query) ||
-        (dispute.user?.name.toLowerCase().includes(query) ?? false) ||
+        (dispute.reporter?.name.toLowerCase().includes(query) ?? false) ||
         (dispute.listing?.title.toLowerCase().includes(query) ?? false),
     );
   }, [disputes, search]);

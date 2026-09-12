@@ -134,7 +134,7 @@ export function createReviewColumns(
           title={row.original.comment}
           className="text-brand-gray-dark dark:text-gray-300 max-w-xs truncate"
         >
-          {row.original.comment}
+          {row.original.comment ?? "—"}
         </p>
       ),
     },

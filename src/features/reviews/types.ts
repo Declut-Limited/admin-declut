@@ -13,19 +13,18 @@ export interface ReviewReviewer {
   name: string;
   email: string;
   slug: string;
-  role: string;
   status: string;
 }
 
 export interface ReviewRow {
   _id: string;
-  transaction: string;
+  transaction?: string;
   listing: ReviewListing | null;
   reviewer: ReviewReviewer | null;
   reviewee: string;
-  role: string;
+  role?: string;
   rating: number;
-  comment: string;
+  comment?: string;
   status: ReviewStatus;
   createdAt: string;
 }

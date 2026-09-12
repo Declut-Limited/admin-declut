@@ -128,7 +128,7 @@ export default function ReviewsPage() {
       (review) =>
         (review.reviewer?.name.toLowerCase().includes(query) ?? false) ||
         (review.listing?.title.toLowerCase().includes(query) ?? false) ||
-        review.comment.toLowerCase().includes(query),
+        (review.comment?.toLowerCase().includes(query) ?? false),
     );
   }, [reviews, search]);
 

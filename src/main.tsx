@@ -6,6 +6,7 @@ import "./index.css";
 import { ThemeProvider } from "./lib/theme/ThemeProvider";
 import "leaflet/dist/leaflet.css";
 import { Toaster } from "sonner";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
@@ -13,7 +14,9 @@ createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <ThemeProvider>
-        <App />
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
         <Toaster
           position="top-right"
           closeButton

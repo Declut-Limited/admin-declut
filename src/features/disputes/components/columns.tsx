@@ -118,12 +118,12 @@ export function createDisputeColumns(
         ),
     },
     {
-      accessorKey: "user",
+      accessorKey: "reporter",
       header: "Reporter",
       cell: ({ row }) =>
-        row.original.user ? (
+        row.original.reporter ? (
           <span className="text-brand-blue underline-wavy">
-            {row.original.user.name}
+            {row.original.reporter.name}
           </span>
         ) : (
           <span className="text-brand-gray-light">—</span>

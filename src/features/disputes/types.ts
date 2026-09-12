@@ -7,20 +7,13 @@ export interface ReportListing {
   mainImage: string;
 }
 
-export interface ReportUser {
-  _id: string;
-  email: string;
-  name: string;
-  slug: string;
-}
-
 export interface DisputeRow {
   _id: string;
   slug: string;
   title: string;
   reason: string;
   listing?: ReportListing | null;
-  user?: ReportUser | null;
+  reporter?: ReportReporter | null;
   createdBy: string;
   status: ReportStatus;
   createdAt: string;
