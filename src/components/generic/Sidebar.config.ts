@@ -18,6 +18,7 @@ import textIcon from '@/assets/icons/text.svg'
 import setting2Icon from '@/assets/icons/setting-2.svg'
 import giftIcon from '@/assets/icons/gift.svg'
 import profileAdd from '@/assets/icons/profile-add.svg'
+import messageQuestionIcon from '@/assets/icons/message-question.svg'
 // import setting4Icon from '@/assets/icons/setting-4.svg'
 
 export interface NavItem {
@@ -95,6 +96,8 @@ export const navGroups: NavGroup[] = [
       { label: 'Content', path: '/content', icon: textIcon, module: 'content' },
       { label: 'Referrals', path: '/referrals', icon: giftIcon },
       { label: 'Waitlist', path: '/waitlist', icon: profileAdd },
+      // TODO: no `feedback` permission key in the API yet
+      { label: 'Feedback', path: '/feedback', icon: messageQuestionIcon },
     ],
   },
   {

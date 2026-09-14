@@ -4,8 +4,9 @@ import { GeneralTab } from "./GeneralTab"
 import PaymentsTab from "./PaymentsTab"
 import FeesCommissionTab from "./FeesCommissionTab"
 import { RolesPermissionsTab } from "./RolesPermissionsTab"
+import IssueResolutionSlaTab from "./IssueResolutionSlaTab"
 
-const TABS = ['General', 'Payments', 'Fees & Commission', 'Roles & Permissions'] as const
+const TABS = ['General', 'Payments', 'Fees & Commission', 'Roles & Permissions', 'Issue Resolution SLA'] as const
 type SettingsTab = typeof TABS[number]
 
 export default function SettingsPage() {
@@ -37,6 +38,7 @@ export default function SettingsPage() {
           {activeTab === 'Payments' && <PaymentsTab />}
           {activeTab === 'Fees & Commission' && <FeesCommissionTab />}
           {activeTab === 'Roles & Permissions' && <RolesPermissionsTab />}
+          {activeTab === 'Issue Resolution SLA' && <IssueResolutionSlaTab />}
         </div>
       </div>
     </div>

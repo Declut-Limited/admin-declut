@@ -27,7 +27,7 @@ import DateRangeFilter from "@/components/generic/DateRangeFilter";
 import EditAdminRoleModal from "./EditAdminRoleModal";
 import { usePageSize } from "@/lib/hooks/usePageSize";
 
-const tabs = ["All", "Active", "Suspended", "Pending"];
+const tabs = ["All", "Active", "Suspended", "Pending", "Banned", "Deactivated"];
 
 export default function UsersPage() {
   const PAGE_SIZE = usePageSize();
@@ -115,6 +115,15 @@ export default function UsersPage() {
             return;
           }
           setEditingAdmin(user);
+        },
+        onBan: () => {
+          // if (user.type !== "admin") {
+          //   showToast.info("Not editable", {
+          //     description: "Only admin accounts have an assignable role.",
+          //   });
+          //   return;
+          // }
+          // setEditingAdmin(user);
         },
         onViewDetails: (user) => navigate(`/users/${user.id}`),
       }),

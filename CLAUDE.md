@@ -24,7 +24,14 @@ Code lives under `src/features/<domain>/`, each with the same shape:
 - `hooks.ts` — other feature-local hooks
 - `components/` — `<Domain>Page.tsx` (list view), `<Domain>DetailPage.tsx`, `columns.tsx` (TanStack Table `ColumnDef` factories, usually `createXColumns(callbacks)`), and modals
 
-**Most features are still UI scaffolding, not wired to the backend.** In most domains (`users`, `listings`, `categories`, `reviews`, `dashboard`, etc.) `api.ts`/`queries.ts`/`hooks.ts` are empty placeholder files, and the `Page` component instead holds a hardcoded mock data array with inline `console.log`/`TODO` stubs for mutations. `auth` is the domain currently being wired to the real API — use it as the reference pattern (`api.ts` calling axios → `queries.ts` wrapping it in `useMutation`/`useQuery` → component consuming the hook) when connecting another feature for real.
+**Most features are now wired to the real backend.** `auth`, `users`, `listings`, `categories`, `reviews`, `dashboard`, `disputes`, `activity-logs`, `content`, `settings`, and `waitlist` all follow the full real pattern end to end: `api.ts` calling axios via `@/lib/api/client` → `queries.ts` wrapping it in `useQuery`/`useMutation` → both the list `Page` and `DetailPage` consuming those hooks. Use any of these as the reference pattern when wiring up what's left.
+
+A few domains are only **partially wired** — the list page is real but a detail/sub-page still holds mock data with a `TODO`:
+- `transactions` — `TransactionsPage` uses `useTransactions`; `TransactionDetailPage.tsx` still has a hardcoded `mockTransactions` map even though `useTransaction` already exists in `queries.ts` — wire the detail page to it rather than adding a new hook.
+- `escrows` — `EscrowsPage` uses `useEscrows`; `EscrowDetailPage.tsx` uses a hardcoded `mockEscrows` map, and `api.ts` only has `getEscrows` (no detail or freeze/release action endpoints exist yet — those need to be added, not just wired).
+- `notifications` — `NotificationsPage` is wired (`useNotifications` plus a live socket in `hooks.ts`); `NotificationDetailPage.tsx` uses `mockNotifications`, and `AutomationRulesPage.tsx` holds local mock `rules` state with a `// TODO: wire to notificationsApi.updateAutomationRule` stub.
+
+`promotions` and `referrals` remain **pure UI scaffolding** — `api.ts`/`queries.ts` are empty placeholder files, and every page/tab holds hardcoded mock arrays with `console.log`/`TODO` stubs for mutations (referrals' `types.ts` is already fleshed out, so start there when wiring it up).
 
 Shared UI lives in `src/components/generic/` (e.g. `DataTable`, `PageHeader`, `TabFilter`, `TableToolbar`, `Pagination`, `FiltersButton`, `CustomSelect`, `RowActionsMenu`, `BaseModal`, form inputs). New list/detail pages should compose from these rather than rebuilding table/filter/pagination chrome. `src/components/layout/DashboardLayout.tsx` (`Sidebar` + `TopNav` + `<Outlet/>`) wraps all authenticated routes.
 

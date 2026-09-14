@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getRoles, createRole, updateRole, deleteRole, updateGeneralSettings, updatePaymentsSettings, updateFeesCommissionSettings, getSettings } from "./api";
-import type { CreateRolePayload, FeesCommissionSettings, GeneralSettings, PaymentsSettings, UpdateRolePayload } from "./types";
+import { getRoles, createRole, updateRole, deleteRole, updateGeneralSettings, updatePaymentsSettings, updateFeesCommissionSettings, updateIssueResolutionSlaSettings, getSettings } from "./api";
+import type { CreateRolePayload, FeesCommissionSettings, GeneralSettings, IssueResolutionSlaSettings, PaymentsSettings, UpdateRolePayload } from "./types";
 
 export const useRoles = () => {
   return useQuery({
@@ -71,4 +71,9 @@ export const useUpdatePaymentsSettings = () =>
 export const useUpdateFeesCommissionSettings = () =>
   useSettingsMutation((payload: FeesCommissionSettings) =>
     updateFeesCommissionSettings(payload),
+  );
+
+export const useUpdateIssueResolutionSlaSettings = () =>
+  useSettingsMutation((payload: IssueResolutionSlaSettings) =>
+    updateIssueResolutionSlaSettings(payload),
   );

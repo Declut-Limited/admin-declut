@@ -7,6 +7,7 @@ import type {
   GeneralSettings,
   PaymentsSettings,
   FeesCommissionSettings,
+  IssueResolutionSlaSettings,
 } from "./types";
 
 export const getRoles = async (): Promise<RolesListResponse> => {
@@ -49,6 +50,16 @@ export const updateFeesCommissionSettings = async (
 ) => {
   const { data } = await api.patch(
     "/admin/settings/fees-and-commission",
+    payload,
+  );
+  return data;
+};
+
+export const updateIssueResolutionSlaSettings = async (
+  payload: IssueResolutionSlaSettings,
+) => {
+  const { data } = await api.patch(
+    "/admin/settings/issue-resolution-sla",
     payload,
   );
   return data;

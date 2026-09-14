@@ -780,11 +780,11 @@ body {
 /* referral, waitlist, notification, settings classes */
 @layer components {
   .referral-tabs {
-    @apply flex items-center gap-1 p-1 w-fit mb-5;
+    @apply flex gap-8 mb-5;
   }
 
   .referral-tab {
-    @apply px-4 py-1.5 rounded-md text-sm text-brand-gray-light hover:text-brand-gray-dark dark:hover:text-gray-200 cursor-pointer;
+    @apply py-1.5 rounded-md text-sm text-brand-gray-light hover:text-brand-gray-dark dark:hover:text-gray-200 cursor-pointer;
   }
 
   .referral-tab-active {
@@ -1006,6 +1006,38 @@ body {
 
   .settings-checkbox:focus-visible {
     @apply outline-none ring-2 ring-brand-blue ring-offset-1;
+  }
+
+  .settings-static-field {
+    @apply w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-sm text-brand-gray-dark dark:text-gray-300;
+  }
+
+  .settings-notice-box {
+    @apply border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-sm text-brand-gray-light bg-white dark:bg-gray-800;
+  }
+
+  .settings-divider-dashed {
+    @apply border-t border-dashed border-gray-200 dark:border-gray-700;
+  }
+
+  .sla-summary-box {
+    @apply border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col gap-4 bg-white dark:bg-gray-800;
+  }
+
+  .sla-summary-grid {
+    @apply grid grid-cols-3 gap-4;
+  }
+
+  .sla-summary-label {
+    @apply text-[10px] font-semibold uppercase tracking-wide text-brand-gray-light;
+  }
+
+  .sla-summary-value {
+    @apply text-sm font-semibold text-brand-gray-dark dark:text-gray-100 mt-1;
+  }
+
+  .sla-flow-chip {
+    @apply inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap;
   }
 }
 

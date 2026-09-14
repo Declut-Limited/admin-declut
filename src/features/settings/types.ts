@@ -25,6 +25,15 @@ export interface FeesCommissionSettings {
   minimumPayoutThreshold: number;
 }
 
+export interface IssueResolutionSlaSettings {
+  sellerResponseSlaEnabled: boolean;
+  sellerResponseTimeHours: number;
+  autoEscalateOnExpiry: boolean;
+  escalateTo: string;
+  sendReminderBeforeDeadline: boolean;
+  reminderTimeHours: number;
+}
+
 export interface Settings {
   _id: string;
   companyName: string;
@@ -39,6 +48,12 @@ export interface Settings {
   buyerServiceFeePercentage: number;
   escrowReleaseFee: number;
   minimumPayoutThreshold: number;
+  sellerResponseSlaEnabled: boolean;
+  sellerResponseTimeHours: number;
+  autoEscalateOnExpiry: boolean;
+  escalateTo: string;
+  sendReminderBeforeDeadline: boolean;
+  reminderTimeHours: number;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ColumnDef } from "@tanstack/react-table";
-import { FiEye, FiAlertCircle, FiEdit3 } from "react-icons/fi";
+import { FiEye, FiAlertCircle, FiEdit3, FiMinusCircle } from "react-icons/fi";
 import RowActionsMenu, {
   type RowAction,
 } from "@/components/generic/RowActionsMenu";
@@ -10,6 +10,7 @@ import type { UserRow } from "../types";
 interface UserColumnCallbacks {
   onSuspend: (user: UserRow) => void;
   onEdit: (user: UserRow) => void;
+  onBan: (user: UserRow) => void;
   onReactivate: (user: UserRow) => void;
   onViewDetails: (user: UserRow) => void;
 }
@@ -19,6 +20,7 @@ const statusPillClass: Record<string, string> = {
   pending: "bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400",
   suspended: "bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400",
   banned: "bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400",
+  deactivated: "bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400",
 };
 
 const statusFallbackClass =
@@ -62,12 +64,19 @@ export function createUserColumns(
     ];
 
     if (row.status === "active") {
-      base.push({
-        label: "Suspend",
-        icon: <FiAlertCircle className="w-4 h-4" />,
-        variant: "danger",
-        onClick: () => callbacks.onSuspend(row),
-      });
+      base.push(
+        {
+          label: "Ban",
+          icon: <FiMinusCircle className="w-4 h-4" />,
+          onClick: () => callbacks.onBan(row),
+        },
+        {
+          label: "Suspend",
+          icon: <FiAlertCircle className="w-4 h-4" />,
+          variant: "danger",
+          onClick: () => callbacks.onSuspend(row),
+        }
+      );
     } else {
       base.push({
         label: "Reactivate",

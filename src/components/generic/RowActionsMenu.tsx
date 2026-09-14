@@ -13,6 +13,7 @@ export interface RowAction {
 interface RowActionsMenuProps {
   actions: RowAction[];
   triggerClassName?: string;
+  menuWidth?: number;
 }
 
 const variantClass: Record<NonNullable<RowAction["variant"]>, string> = {
@@ -22,11 +23,12 @@ const variantClass: Record<NonNullable<RowAction["variant"]>, string> = {
   success: "text-[#12B76A]",
 };
 
-const MENU_WIDTH = 160; // w-40
+const DEFAULT_MENU_WIDTH = 160; // w-40
 
 export default function RowActionsMenu({
   actions,
   triggerClassName,
+  menuWidth = DEFAULT_MENU_WIDTH,
 }: RowActionsMenuProps) {
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
@@ -43,9 +45,9 @@ export default function RowActionsMenu({
 
     setPosition({
       top: openUpward ? rect.top - menuHeight - 4 : rect.bottom + 4,
-      left: rect.right - MENU_WIDTH,
+      left: rect.right - menuWidth,
     });
-  }, [open, actions.length]);
+  }, [open, actions.length, menuWidth]);
 
   useEffect(() => {
     if (!open) return;
@@ -97,7 +99,7 @@ export default function RowActionsMenu({
               position: "fixed",
               top: position.top,
               left: position.left,
-              width: MENU_WIDTH,
+              width: menuWidth,
             }}
             className="bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 py-1 z-50"
           >
@@ -108,7 +110,7 @@ export default function RowActionsMenu({
                     action.onClick();
                     setOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer ${variantClass[action.variant ?? "default"]}`}
+                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm whitespace-nowrap hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer ${variantClass[action.variant ?? "default"]}`}
                 >
                   {action.icon}
                   {action.label}

@@ -35,6 +35,8 @@ import PermissionRoute, { DefaultRedirect } from "./lib/auth/PermissionRoute";
 import ReferralsPage from "./features/referrals/components/ReferralsPage";
 import ParticipantDetailPage from "./features/referrals/components/ParticipantDetailPage";
 import WaitlistPage from "./features/waitlist/components/WaitlistPage";
+import FeedbackPage from "./features/feedback/components/FeedbackPage";
+import FeedbackDetailPage from "./features/feedback/components/FeedbackDetailPage";
 
 function App() {
   return (
@@ -139,7 +141,10 @@ function App() {
 
           <Route path="/waitlist" element={<WaitlistPage />} />
 
-          
+          {/* no permission key for feedback yet */}
+          <Route path="/feedback" element={<FeedbackPage />} />
+          <Route path="/feedback/:feedbackId" element={<FeedbackDetailPage />} />
+
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>
