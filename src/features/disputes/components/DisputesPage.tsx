@@ -23,7 +23,7 @@ import {
 import type { ReportStatus } from "../types";
 import { usePageSize } from "@/lib/hooks/usePageSize";
 
-const tabs = ["All", "New", "Investigating", "Resolved", "Dismissed"];
+const tabs = ["All", "Investigating", "Resolved", "Disputed"];
 
 export default function DisputesPage() {
   const PAGE_SIZE = usePageSize();
@@ -127,7 +127,7 @@ export default function DisputesPage() {
   return (
     <div>
       <PageHeader
-        title="Disputes"
+        title="Reports"
         subtitle="Handle listings and users flagged by the community."
         actions={
           <Button

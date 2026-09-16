@@ -7,15 +7,24 @@ interface SendReminderModalProps {
   buyerName: string;
   lastNotified: string;
   onClose: () => void;
-  onSend: (data: { type: string; channel: string }) => void;
+  onSend: (data: { type: string; channel: string; message?: string }) => void;
+  isSending?: boolean;
 }
 
 const reminderTypes = ["Inspection Reminder", "Deadline Warning", "Custom Message"];
 const channels = ["PUSH", "EMAIL"];
 
-export default function SendReminderModal({ buyerName, lastNotified, onClose, onSend }: SendReminderModalProps) {
+export default function SendReminderModal({
+  buyerName,
+  lastNotified,
+  onClose,
+  onSend,
+  isSending = false,
+}: SendReminderModalProps) {
   const [type, setType] = useState(reminderTypes[0]);
   const [channel, setChannel] = useState(channels[0]);
+  const [message, setMessage] = useState("");
+  const isCustomMessage = type === "Custom Message";
 
   return (
     <BaseModal
@@ -26,6 +35,7 @@ export default function SendReminderModal({ buyerName, lastNotified, onClose, on
         <>
           <Button
             onClick={onClose}
+            disabled={isSending}
             bgColor="bg-white dark:bg-gray-900"
             textColor="text-brand-gray-dark dark:text-gray-200"
             borderColor="border-gray-200 dark:border-gray-700"
@@ -33,13 +43,20 @@ export default function SendReminderModal({ buyerName, lastNotified, onClose, on
             Cancel
           </Button>
           <Button
-            onClick={() => onSend({ type, channel })}
+            onClick={() =>
+              onSend({
+                type,
+                channel,
+                message: isCustomMessage ? message.trim() : undefined,
+              })
+            }
+            disabled={isSending || (isCustomMessage && !message.trim())}
             bgColor="bg-brand-blue hover:bg-[#3F5EE0]"
             textColor="text-white"
             borderColor="border-transparent"
             leftIcon={<FiBell className="w-4 h-4" />}
           >
-            Send Reminder
+            {isSending ? "Sending..." : "Send Reminder"}
           </Button>
         </>
       }
@@ -92,6 +109,21 @@ export default function SendReminderModal({ buyerName, lastNotified, onClose, on
           </button>
         ))}
       </div>
+
+      {isCustomMessage && (
+        <div className="mt-4">
+          <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-2">
+            Message
+          </p>
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Write the message to send to the buyer..."
+            rows={3}
+            className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:border-brand-blue resize-none"
+          />
+        </div>
+      )}
     </BaseModal>
   );
 }

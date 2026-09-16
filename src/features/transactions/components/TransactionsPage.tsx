@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-// import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import PageHeader from "@/components/generic/PageHeader";
 import TabFilter from "@/components/generic/TabFilter";
 import TableToolbar from "@/components/generic/TableToolbar";
@@ -9,22 +9,36 @@ import DateRangeFilter, {
 // import FiltersButton from "@/components/generic/FiltersButton";
 import DataTable from "@/components/generic/DataTable";
 import Pagination from "@/components/generic/Pagination";
-// import Button from "@/components/generic/Button";
-// import { PiExportFill } from "react-icons/pi";
-// import { FiChevronDown } from "react-icons/fi";
+import Button from "@/components/generic/Button";
+import { PiExportFill } from "react-icons/pi";
 import { createTransactionColumns } from "./columns";
-import { useTransactions } from "../queries";
+import ReceiptModal from "./ReceiptModal";
+import { buildReceiptFromRecord } from "../receipt";
+import {
+  useTransactions,
+  useTransactionLookup,
+  useExportTransactions,
+} from "../queries";
 import { usePageSize } from "@/lib/hooks/usePageSize";
+import { showToast } from "@/lib/utils/toast";
+import type { TransactionRow } from "../types";
 
-const tabs = ["All", "Active", "Completed", "Disputed", "Stalled"];
+const tabs = ["All", "Active", "Completed", "Refunded", "Disputed"];
 
 export default function TransactionsPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
   const [currentPage, setCurrentPage] = useState(1);
 
   const PAGE_SIZE = usePageSize();
+  const {
+    mutate: lookupTransaction,
+    data: receiptResponse,
+    reset: resetReceiptLookup,
+  } = useTransactionLookup();
+  const { mutateAsync: exportTransactions } = useExportTransactions();
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -50,9 +64,73 @@ export default function TransactionsPage() {
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const columns = useMemo(() => createTransactionColumns(), []);
+  const handleViewDetails = (row: TransactionRow) => {
+    navigate(`/transactions/${row.reference}`);
+  };
 
-  // no search or date params on the endpoint — filtering the current page
+  const handleDownloadReceipt = (row: TransactionRow) => {
+    lookupTransaction(row._id, {
+      onError: () =>
+        showToast.error("Couldn't load receipt", {
+          description: "Please try again in a moment.",
+        }),
+    });
+  };
+
+  const handleViewItem = (row: TransactionRow) => {
+    if (!row.listing) {
+      showToast.error("No listing attached to this transaction");
+      return;
+    }
+    navigate(`/listings/${row.listing.slug}`);
+  };
+
+  const handleViewBuyerProfile = (row: TransactionRow) => {
+    if (!row.buyer) {
+      showToast.error("No buyer on this transaction");
+      return;
+    }
+    navigate(`/users/${row.buyer.id}`);
+  };
+
+  const handleViewSellerProfile = (row: TransactionRow) => {
+    if (!row.seller) {
+      showToast.error("No seller on this transaction");
+      return;
+    }
+    navigate(`/users/${row.seller.id}`);
+  };
+
+  const handleRefund = () => {
+    showToast.error("Refund isn't wired up yet", {
+      description: "There's no refund endpoint available for transactions yet.",
+    });
+  };
+
+  const handleExport = () => {
+    showToast.promise(
+      exportTransactions({
+        tab: activeTab === "All" ? undefined : activeTab.toLowerCase(),
+        startDate: dateRange.from || undefined,
+        endDate: dateRange.to || undefined,
+      }),
+      {
+        loading: "Preparing export...",
+        success: "Export downloaded.",
+        error: "Export failed.",
+      },
+    );
+  };
+
+  const columns = createTransactionColumns({
+    onViewDetails: handleViewDetails,
+    onDownloadReceipt: handleDownloadReceipt,
+    onViewItem: handleViewItem,
+    onViewBuyerProfile: handleViewBuyerProfile,
+    onViewSellerProfile: handleViewSellerProfile,
+    onRefund: handleRefund,
+  });
+
   const visibleTransactions = useMemo(() => {
     const q = search.toLowerCase();
     if (!q) return transactions;
@@ -70,18 +148,14 @@ export default function TransactionsPage() {
       <PageHeader
         title="Transactions"
         subtitle="Manage every order from offer to escrow to hand-over — with full payment context."
-        // TODO: no transactions export endpoint yet
-        // actions={
-        //   <Button
-        //     leftIcon={<PiExportFill className="w-4 h-4 text-[#98A2B3]" />}
-        //     rightIcon={
-        //       <FiChevronDown className="w-4 h-4 text-brand-gray-dark" />
-        //     }
-        //     onClick={() => {}}
-        //   >
-        //     Export
-        //   </Button>
-        // }
+        actions={
+          <Button
+            leftIcon={<PiExportFill className="w-4 h-4 text-[#98A2B3]" />}
+            onClick={handleExport}
+          >
+            Export
+          </Button>
+        }
       />
 
       <TabFilter tabs={tabs} active={activeTab} onChange={handleTabChange} />
@@ -109,6 +183,13 @@ export default function TransactionsPage() {
         totalPages={totalPages}
         onPageChange={setCurrentPage}
       />
+
+      {receiptResponse && (
+        <ReceiptModal
+          receipt={buildReceiptFromRecord(receiptResponse.data)}
+          onClose={resetReceiptLookup}
+        />
+      )}
     </div>
   );
 }

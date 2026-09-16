@@ -1,15 +1,16 @@
 import BaseModal from "@/components/generic/BaseModal";
 import Button from "@/components/generic/Button";
 import { FiPrinter } from "react-icons/fi";
-import type { TransactionDetail } from "../types";
 import { TbFileDownload } from "react-icons/tb";
+import { currency, formatDateTime, formatLabel } from "../statusStyles";
+import type { ReceiptData } from "../receipt";
 
 interface ReceiptModalProps {
-  txn: TransactionDetail;
+  receipt: ReceiptData;
   onClose: () => void;
 }
 
-export default function ReceiptModal({ txn, onClose }: ReceiptModalProps) {
+export default function ReceiptModal({ receipt, onClose }: ReceiptModalProps) {
   return (
     <BaseModal
       title="Transaction Receipt"
@@ -25,7 +26,10 @@ export default function ReceiptModal({ txn, onClose }: ReceiptModalProps) {
           >
             Close
           </Button>
-          <Button leftIcon={<TbFileDownload className="w-4 h-4" />}>
+          <Button
+            leftIcon={<TbFileDownload className="w-4 h-4" />}
+            onClick={() => window.print()}
+          >
             Download PDF
           </Button>
           <Button
@@ -40,15 +44,17 @@ export default function ReceiptModal({ txn, onClose }: ReceiptModalProps) {
         </>
       }
     >
-      <div className="pl-6 pr-4 py-4">
+      <div className="print-area pl-6 pr-4 py-4">
         <div className="-mx-6 -mt-4 bg-brand-blue text-white text-center py-6 px-6 rounded-t-2xl">
           <p className="text-xs text-blue-100 uppercase tracking-wide">
             Declut Escrow Receipt
           </p>
-          <p className="text-3xl font-bold mt-1">{txn.payment.amountPaid}</p>
+          <p className="text-3xl font-bold mt-1">
+            {currency.format(receipt.amountPaid)}
+          </p>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-white/20 mt-2">
             <span className="w-1.5 h-1.5 rounded-full bg-white" />
-            Transaction Complete
+            {receipt.reference}
           </span>
         </div>
 
@@ -56,51 +62,69 @@ export default function ReceiptModal({ txn, onClose }: ReceiptModalProps) {
           <div className="flex flex-col pt-4">
             <div className="profile-info-row">
               <span className="profile-info-label">Transaction ID</span>
-              <a href="#" className="text-brand-blue">{txn.code}</a>
+              <span className="profile-info-value">{receipt.reference}</span>
             </div>
             <div className="profile-info-row">
               <span className="profile-info-label">Date</span>
-              <span className="profile-info-value">{txn.createdDate}</span>
+              <span className="profile-info-value">
+                {formatDateTime(receipt.createdAt)}
+              </span>
             </div>
             <div className="profile-info-row">
               <span className="profile-info-label">Buyer</span>
-              <span className="profile-info-value">{txn.parties.buyer.name}</span>
+              <span className="profile-info-value">{receipt.buyerName}</span>
             </div>
             <div className="profile-info-row">
               <span className="profile-info-label">Seller</span>
-              <span className="profile-info-value">{txn.parties.seller.name}</span>
+              <span className="profile-info-value">{receipt.sellerName}</span>
             </div>
             <div className="profile-info-row">
               <span className="profile-info-label">Item</span>
-              <span className="profile-info-value">{txn.product.name}</span>
+              <span className="profile-info-value">{receipt.itemName}</span>
             </div>
             <div className="profile-info-row">
               <span className="profile-info-label">Amount Paid</span>
-              <span className="profile-info-value">{txn.payment.amountPaid}</span>
+              <span className="profile-info-value">
+                {currency.format(receipt.amountPaid)}
+              </span>
             </div>
             <div className="profile-info-row">
               <span className="profile-info-label">Platform Fee</span>
-              <span className="profile-info-value">{txn.payment.platformFee}</span>
+              <span className="profile-info-value">
+                {currency.format(receipt.platformFee)}
+              </span>
             </div>
             <div className="profile-info-row">
               <span className="profile-info-label">Processing Fee</span>
-              <span className="profile-info-value">{txn.payment.processingFee}</span>
+              <span className="profile-info-value">
+                {currency.format(receipt.processingFee)}
+              </span>
             </div>
             <div className="profile-info-row">
               <span className="profile-info-label">Seller Received</span>
-              <span className="text-sm font-semibold text-green-600">{txn.payment.sellerReceivable}</span>
+              <span className="text-sm font-semibold text-green-600">
+                {receipt.sellerReceivable != null
+                  ? currency.format(receipt.sellerReceivable)
+                  : "Not yet finalized"}
+              </span>
             </div>
             <div className="profile-info-row">
               <span className="profile-info-label">Payment Method</span>
-              <span className="profile-info-value">{txn.payment.method}</span>
+              <span className="profile-info-value">
+                {formatLabel(receipt.paymentMethod)}
+              </span>
             </div>
             <div className="profile-info-row">
               <span className="profile-info-label">Gateway</span>
-              <span className="profile-info-value">{txn.payment.gateway}</span>
+              <span className="profile-info-value">
+                {formatLabel(receipt.gateway)}
+              </span>
             </div>
             <div className="profile-info-row">
-              <span className="profile-info-label">Settlement Ref</span>
-              <a href="#" className="text-brand-blue">{txn.escrowDetail.reference}</a>
+              <span className="profile-info-label">Escrow Reference</span>
+              <span className="profile-info-value">
+                {receipt.escrowReference ?? "—"}
+              </span>
             </div>
           </div>
         </div>

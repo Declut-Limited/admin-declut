@@ -112,7 +112,7 @@ export default function RowActionsMenu({
                   }}
                   className={`w-full flex items-center gap-2 px-3 py-2 text-sm whitespace-nowrap hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer ${variantClass[action.variant ?? "default"]}`}
                 >
-                  {action.icon}
+                  <span className="shrink-0 flex items-center">{action.icon}</span>
                   {action.label}
                 </button>
                 {action.dividerAfter && (
