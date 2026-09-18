@@ -81,8 +81,8 @@ export function AccountTab() {
 
       <div className="account-info-grid">
         <div className="account-info-item">
-          <p className="account-info-label">Admin ID</p>
-          <p className="account-info-value">{account.id}</p>
+          <p className="account-info-label">Admin Slug</p>
+          <p className="account-info-value">{account.slug}</p>
         </div>
         <div className="account-info-item">
           <p className="account-info-label">Full Name</p>
