@@ -39,6 +39,7 @@ export interface AdminRole {
 export interface AdminProfile {
   id: string;
   email: string;
+  slug?: string;
   name: string;
   firstName: string;
   lastName: string;
