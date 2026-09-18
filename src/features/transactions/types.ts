@@ -43,6 +43,7 @@ export interface TransactionRow {
   inspectionStatus: InspectionStatus;
   inspectionDeadlineAt: string | null;
   failedCodeAttempts: number;
+  disputeStatus?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -140,6 +141,16 @@ export interface TransactionEscrowSummary {
   createdAt: string;
 }
 
+export interface TransactionDisputeInfo {
+  createdAt: string;
+  status: string;
+  slug: string;
+  buyerStatement: string;
+  sellerStatement: string;
+  evidenceImages: ListingMedia[];
+  evidenceVideo?: ListingMedia;
+}
+
 export interface TransactionRefundInfo {
   id: string;
   slug: string;
@@ -188,8 +199,8 @@ export interface TransactionDetailRecord {
   insights: TransactionInsights;
   currentStage: string;
   refundInfo: TransactionRefundInfo | null;
-  // Not present in any sample response yet — revisit once a disputed transaction example is available.
-  disputeInfo?: unknown;
+  disputeStatus?: string;
+  disputeInfo?: TransactionDisputeInfo | null;
 }
 
 export interface TransactionDetailResponse {

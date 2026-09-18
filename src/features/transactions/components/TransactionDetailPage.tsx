@@ -603,9 +603,11 @@ export default function TransactionDetailPage() {
                 This transaction requires immediate review.
               </p>
               <p className="text-xs text-[#C10007] dark:text-red-500">
-                A dispute is open on this transaction. Detailed dispute data
-                (reason, statements, evidence) isn't returned by the API yet —
-                see the Inspection tab.
+                {txn.disputeStatus
+                  ? `Dispute status: ${formatLabel(txn.disputeStatus)}. `
+                  : ""}
+                Review the buyer and seller statements and evidence in the
+                Inspection tab.
               </p>
             </div>
           </div>
@@ -1195,23 +1197,80 @@ export default function TransactionDetailPage() {
             )}
           </div>
 
-          {/* Dispute info — the API doesn't return a disputeInfo object on any
-              sample transaction yet (disputed or otherwise), so this is a
-              placeholder until that field exists. */}
           {txn.status === "disputed" && (
             <>
               <p className="mx-4 text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-3">
                 Dispute Info
               </p>
               <div className="detail-section-card border-[#F04438]/20">
-                <p className="text-sm text-brand-gray-light">
-                  Dispute details (reason, category, buyer/seller statements,
-                  evidence) aren't returned by{" "}
-                  <span className="font-mono text-xs">
-                    /admin/transactions/:id
-                  </span>{" "}
-                  yet. This section will render once that data is available.
-                </p>
+                {txn.disputeInfo ? (
+                  <>
+                    <div className="flex items-center justify-between mb-3">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                          realStatusPillClass[txn.disputeStatus ?? txn.disputeInfo.status] ??
+                          statusFallback
+                        }`}
+                      >
+                        {formatLabel(txn.disputeStatus ?? txn.disputeInfo.status)}
+                      </span>
+                      <span className="text-xs text-brand-gray-light">
+                        {txn.disputeInfo.slug} · Raised{" "}
+                        {formatDateTime(txn.disputeInfo.createdAt)}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <p className="profile-info-label mb-1.5">
+                          Buyer's Statement
+                        </p>
+                        <p className="text-sm text-brand-gray-dark dark:text-gray-300 bg-[#FAFAFA] dark:bg-gray-900 rounded-lg p-3">
+                          {txn.disputeInfo.buyerStatement || "No statement provided."}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="profile-info-label mb-1.5">
+                          Seller's Statement
+                        </p>
+                        <p className="text-sm text-brand-gray-dark dark:text-gray-300 bg-[#FAFAFA] dark:bg-gray-900 rounded-lg p-3">
+                          {txn.disputeInfo.sellerStatement || "No statement provided."}
+                        </p>
+                      </div>
+                    </div>
+
+                    {(txn.disputeInfo.evidenceImages.length > 0 ||
+                      txn.disputeInfo.evidenceVideo) && (
+                      <div>
+                        <p className="profile-info-label mb-2">Evidence</p>
+                        <ImageGallery
+                          images={[
+                            ...txn.disputeInfo.evidenceImages.map((img) => ({
+                              id: img.publicId,
+                              url: img.secureUrl || img.url,
+                            })),
+                            ...(txn.disputeInfo.evidenceVideo
+                              ? [
+                                  {
+                                    id: txn.disputeInfo.evidenceVideo.publicId,
+                                    url:
+                                      txn.disputeInfo.evidenceVideo.secureUrl ||
+                                      txn.disputeInfo.evidenceVideo.url,
+                                    isVideo: true,
+                                  },
+                                ]
+                              : []),
+                          ]}
+                        />
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-brand-gray-light">
+                    Dispute details (reason, category, buyer/seller statements,
+                    evidence) aren't available for this transaction yet.
+                  </p>
+                )}
               </div>
             </>
           )}

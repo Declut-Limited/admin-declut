@@ -156,7 +156,7 @@ export default function UserDetailPage() {
   const details = user.details;
   const insights = regularUser?.insights ?? null;
   const recentTransactions = regularUser?.recentTransactions ?? [];
-  const permissions = adminUser?.details.permissions ?? null;
+  const permissions = adminUser?.details.assignedRole?.permissions ?? null;
 
   const listings = listingsError ? [] : (listingsData?.results ?? []);
   const listingsTotal = listingsError ? 0 : (listingsData?.total ?? 0);

@@ -1,3 +1,5 @@
+import type { ListingMedia } from "@/features/listings/types";
+
 export type EscrowStatus = "held" | "frozen" | "released" | "refunded";
 
 export interface EscrowParty {
@@ -26,6 +28,7 @@ export interface EscrowRow {
 export interface EscrowsListParams {
   page?: number;
   limit?: number;
+  status?: string;
   startDate?: string;
   endDate?: string;
 }
@@ -40,196 +43,155 @@ export interface EscrowsListResponse {
   };
 }
 
-export interface EscrowTimelineEvent {
+export interface EscrowTransactionSummary {
   id: string;
+  reference: string;
+  status: string;
+}
+
+export interface EscrowListingCategory {
+  _id: string;
+  title: string;
+}
+
+export interface EscrowListingSummary {
+  _id: string;
+  title: string;
+  description: string;
+  category: EscrowListingCategory | null;
+  condition: string;
+  price: number;
+  images: ListingMedia[];
+  mainImageUrl: string | null;
+  video?: ListingMedia;
+  location: { type: string; coordinates: [number, number] } | null;
+  locationLabel: string;
+  address: string;
+  hasDefect: boolean;
+  defectDescription: string | null;
+  status: string;
+  slug: string;
+  createdAt: string;
+  brand?: string;
+}
+
+export interface EscrowActor {
+  id: string;
+  name: string;
+  role: string;
+  image?: string;
+  rolePlayed: string;
+}
+
+export interface EscrowActivityLogEntry {
+  id: string;
+  slug: string;
+  event: string;
   label: string;
-  actor: string;
-  actorType?: string;
-  detail: string;
-  date: string;
-  isPending?: boolean;
+  metadata?: Record<string, unknown>;
+  actor: EscrowActor;
 }
 
-export interface EscrowNote {
+export interface EscrowTransactionNoteRecord {
   id: string;
-  author: string;
-  note: string;
-  date: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+  writtenBy: { id: string; name: string; role: string };
 }
 
-export interface EscrowActivityEntry {
+export interface EscrowDisputeInfo {
+  createdAt: string;
+  status: string;
+  slug: string;
+  reason: string;
+}
+
+export interface EscrowRefundTrigger {
+  id: string | null;
+  name: string;
+  slug: string | null;
+  role: string | null;
+  rolePlayed: string;
+}
+
+export interface EscrowRefundInfo {
   id: string;
-  label: string;
-  actor: string;
-  actorType: string;
-  date: string;
+  slug: string;
+  amount: number;
+  reason: string;
+  status: string;
+  triggeredBy: EscrowRefundTrigger;
+  payoutAccountNumber: string;
+  payoutBankCode: string;
+  refundedAt: string;
+  reference: string;
+  createdAt: string;
 }
 
-export interface EscrowDetail {
-  code: string;
-    status: "Held" | "Frozen" | "Refunded" | "Released";
-  transactionId: string;
-  createdDate: string;
-
-  amountHeld: string;
-  platformCommission: string;
-  sellerReceivable: string;
+export interface EscrowInsights {
+  amountHeld: number;
+  platformCommission: number;
+  sellerReceivable: number;
   holdingDuration: string;
   currentStage: string;
+}
 
-  // status-specific banner data
-  releaseDate?: string;
-  settlementTime?: string;
-  settlementReference?: string;
+export interface EscrowPlatformEarning {
+  platformFee: number;
+  processingFee: number;
+  totalEarned: number;
+}
 
-  refundDate?: string;
-  refundAmount?: string;
-  refundReference?: string;
+export interface EscrowFinancialBreakdown {
+  itemPrice: number;
+  platformFee: number;
+  platformFeePercentage: number;
+  processingFee: number;
+  processingFeePercentage: number;
+  totalPaidByBuyer: number;
+  sellerReceivable: number;
+  refundAmount: number | null;
+  netSettlement: number;
+}
 
-  holdingTime?: string;
-  inspectionDeadline?: string;
-  timeRemaining?: string;
+export interface EscrowPaymentDetails {
+  paymentReference: string;
+  paymentGateway: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  gatewayResponse: string;
+  gatewayReference: string;
+  currency: string;
+  paymentDate: string;
+  paymentTime: string;
+}
 
-  freezeReason?: string;
-frozenSince?: string;
-assignedOfficer?: string;
-slaRemainingFrozen?: string;
+export interface EscrowDetailRecord {
+  id: string;
+  slug: string;
+  status: EscrowStatus;
+  amount: number;
+  createdAt: string;
+  updatedAt: string;
+  transaction: EscrowTransactionSummary | null;
+  listing: EscrowListingSummary | null;
+  seller: EscrowParty | null;
+  buyer: EscrowParty | null;
+  activityLog: EscrowActivityLogEntry[];
+  transactionNotes: EscrowTransactionNoteRecord[];
+  disputeInfo: EscrowDisputeInfo | null;
+  refundInfo: EscrowRefundInfo | null;
+  insights: EscrowInsights;
+  platformEarning: EscrowPlatformEarning;
+  financialBreakdown: EscrowFinancialBreakdown;
+  paymentDetails: EscrowPaymentDetails;
+  // Always null so far across held/frozen/refunded/released samples —
+  // the backend hasn't started populating this yet.
+  settlementDetails: unknown | null;
+}
 
-  platformEarnings: {
-    platformFee: string;
-    processingFee: string;
-    totalEarned: string;
-    feesReversed?: boolean;
-  };
-
-  product: {
-    images: { id: string; url: string; isVideo?: boolean }[];
-    name: string;
-    category: string;
-    brand: string;
-    condition: string;
-    price: string;
-    location: string;
-    listingId: string;
-    listingStatus: string;
-    listedOn: string;
-    description: string;
-    defectSummary?: string;
-  };
-
-  parties: {
-    buyer: {
-      name: string;
-      id: string;
-      email: string;
-      avatarUrl?: string;
-      status: "Active" | "Suspended";
-      role: "Buyer";
-    };
-    seller: {
-      name: string;
-      id: string;
-      email: string;
-      avatarUrl?: string;
-      status: "Active" | "Suspended";
-      role: "Seller";
-    };
-  };
-
-  financialBreakdown: {
-    itemPrice: string;
-    platformFee: string;
-    processingFee: string;
-    taxes: string;
-    discountsApplied: string;
-    totalPaidByBuyer: string;
-    sellerReceivable: string;
-    refundAmount: string;
-    outstandingBalance: string;
-    netSettlementAmount: string;
-  };
-
-  timeline: EscrowTimelineEvent[];
-
-  transactionSnapshot: {
-    transactionId: string;
-    transactionStatus: string;
-    inspectionStatus: string;
-    buyerDecision: string;
-    refundStatus?: string;
-    disputeStatus?: string;
-  };
-
-  // Records tab
-  disputeDetails: {
-    hasDispute: boolean;
-    message?: string;
-    subMessage?: string;
-    disputeId?: string;
-    reason?: string;
-    status?: string;
-    opened?: string;
-    priority?: string;
-    currentStage?: string;
-    assignedOfficer?: string;
-    slaRemaining?: string;
-  };
-  refundDetails: {
-    hasRefund: boolean;
-    message?: string;
-    subMessage?: string;
-    refundId?: string;
-    refundReason?: string;
-    refundAmountDetail?: string;
-    refundStatus?: string;
-    approvedBy?: string;
-    refundDateDetail?: string;
-    refundReferenceDetail?: string;
-    settlementReversal?: string;
-    resolutionNotes?: string;
-  };
-
-  // Settlement tab
-  paymentDetails: {
-    paymentReference: string;
-    gatewayTransactionId: string;
-    paymentGateway: string;
-    paymentMethod: string;
-    cardType: string;
-    paymentStatus: string;
-    currency: string;
-    paymentDate: string;
-    paymentTime: string;
-    gatewayResponse: string;
-    gatewayReference: string;
-    settlementBatchId: string;
-  };
-  settlementDetails: {
-    settlementStatus: string;
-    expectedReleaseDate: string;
-    actualReleaseDate: string;
-    settlementReference: string;
-    bankName: string;
-    maskedBankAccount: string;
-    settlementAmount: string;
-    settlementBatch: string;
-    settlementInitiatedBy: string;
-    settlementCompletedBy: string;
-    settlementTime: string;
-    settlementNotes: string;
-  };
-
-  // Notes & Logs tab
-  notes: EscrowNote[];
-  activityLog: EscrowActivityEntry[];
-
-  // Held-only inspection panel
-  inspectionPanel?: {
-    inspectionDeadline: string;
-    countdown: string;
-    expectedReleaseDate: string;
-    buyerContactStatus: string;
-    sellerContactStatus: string;
-    reminderHistory: string;
-  };
+export interface EscrowDetailResponse {
+  success: boolean;
+  data: EscrowDetailRecord;
 }

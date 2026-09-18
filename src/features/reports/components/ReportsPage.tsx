@@ -13,19 +13,19 @@ import Pagination from "@/components/generic/Pagination";
 import Button from "@/components/generic/Button";
 import { PiExportFill } from "react-icons/pi";
 // import { FiChevronDown } from "react-icons/fi";
-import { createDisputeColumns } from "./columns";
+import { createReportColumns } from "./columns";
 import { showToast } from "@/lib/utils/toast";
 import {
-  useDisputes,
-  useExportDisputes,
+  useReports,
+  useExportReports,
   useUpdateReportStatus,
 } from "../queries";
 import type { ReportStatus } from "../types";
 import { usePageSize } from "@/lib/hooks/usePageSize";
 
-const tabs = ["All", "Investigating", "Resolved", "Disputed"];
+const tabs = ["All", "Investigating", "Resolved", "Dismissed", "Disputed"];
 
-export default function DisputesPage() {
+export default function ReportsPage() {
   const PAGE_SIZE = usePageSize();
 
   const [activeTab, setActiveTab] = useState("All");
@@ -33,7 +33,7 @@ export default function DisputesPage() {
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
   const [currentPage, setCurrentPage] = useState(1);
 
-  const disputesQuery = useDisputes({
+  const reportsQuery = useReports({
     page: currentPage,
     limit: PAGE_SIZE,
     status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
@@ -42,14 +42,14 @@ export default function DisputesPage() {
   });
   const navigate = useNavigate();
 
-  const { data } = disputesQuery;
+  const { data } = reportsQuery;
 
   const { mutateAsync: updateStatus } = useUpdateReportStatus();
-  const { mutateAsync: exportDisputes } = useExportDisputes();
+  const { mutateAsync: exportReports } = useExportReports();
 
   const handleExport = () => {
     showToast.promise(
-      exportDisputes({
+      exportReports({
         status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
         startDate: dateRange.from || undefined,
         endDate: dateRange.to || undefined,
@@ -62,7 +62,7 @@ export default function DisputesPage() {
     );
   };
 
-  const disputes = useMemo(() => data?.results ?? [], [data?.results]);
+  const reports = useMemo(() => data?.results ?? [], [data?.results]);
 
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -96,33 +96,28 @@ export default function DisputesPage() {
       });
     };
 
-    return createDisputeColumns({
-      onViewDetails: (dispute) => navigate(`/disputes/${dispute.slug}`),
-      onInvestigate: (dispute) =>
-        changeStatus(
-          dispute._id,
-          dispute.slug,
-          "investigating",
-          "Investigating",
-        ),
-      onDismiss: (dispute) =>
-        changeStatus(dispute._id, dispute.slug, "dismissed", "Dismissing"),
-      onResolve: (dispute) =>
-        changeStatus(dispute._id, dispute.slug, "resolved", "Resolving"),
+    return createReportColumns({
+      onViewDetails: (report) => navigate(`/reports/${report.slug}`),
+      onInvestigate: (report) =>
+        changeStatus(report._id, report.slug, "investigating", "Investigating"),
+      onDismiss: (report) =>
+        changeStatus(report._id, report.slug, "dismissed", "Dismissing"),
+      onResolve: (report) =>
+        changeStatus(report._id, report.slug, "resolved", "Resolving"),
     });
   }, [navigate, updateStatus]);
-  const visibleDisputes = useMemo(() => {
+  const visibleReports = useMemo(() => {
     const query = search.toLowerCase();
-    if (!query) return disputes;
-    return disputes.filter(
-      (dispute) =>
-        dispute.slug.toLowerCase().includes(query) ||
-        dispute.title.toLowerCase().includes(query) ||
-        dispute.reason.toLowerCase().includes(query) ||
-        (dispute.reporter?.name.toLowerCase().includes(query) ?? false) ||
-        (dispute.listing?.title.toLowerCase().includes(query) ?? false),
+    if (!query) return reports;
+    return reports.filter(
+      (report) =>
+        report.slug.toLowerCase().includes(query) ||
+        (report.title?.toLowerCase().includes(query) ?? false) ||
+        report.reason.toLowerCase().includes(query) ||
+        (report.reporter?.name.toLowerCase().includes(query) ?? false) ||
+        (report.listing?.title.toLowerCase().includes(query) ?? false),
     );
-  }, [disputes, search]);
+  }, [reports, search]);
 
   return (
     <div>
@@ -143,21 +138,21 @@ export default function DisputesPage() {
       <TabFilter tabs={tabs} active={activeTab} onChange={handleTabChange} />
 
       <TableToolbar
-        label="Disputes"
-        count={search ? visibleDisputes.length : total}
+        label="Reports"
+        count={search ? visibleReports.length : total}
         searchValue={search}
         onSearchChange={handleSearchChange}
-        searchPlaceholder="Search disputes..."
+        searchPlaceholder="Search reports..."
         filterSlot={
           <DateRangeFilter value={dateRange} onChange={handleDateRangeChange} />
         }
       />
 
       <DataTable
-        data={visibleDisputes}
+        data={visibleReports}
         columns={columns}
-        query={disputesQuery}
-        emptyMessage="No disputes found."
+        query={reportsQuery}
+        emptyMessage="No reports found."
       />
 
       <Pagination

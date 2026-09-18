@@ -46,14 +46,23 @@ export interface PermissionSet {
   delete: boolean;
 }
 
+export interface AssignedRole {
+  id: string;
+  name: string;
+  permissions: Record<string, PermissionSet>;
+}
+
 export interface AdminUserDetails {
   role: string;
+  slug: string;
   title: string;
   status: UserStatus;
+  company?: string;
   createdAt: string;
   email: string;
-  name?: string; 
-  permissions: Record<string, PermissionSet>;
+  name?: string;
+  phone?: string;
+  assignedRole?: AssignedRole;
 }
 
 export interface RegularUserDetails {

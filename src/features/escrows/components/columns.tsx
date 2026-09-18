@@ -1,94 +1,95 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ColumnDef } from "@tanstack/react-table";
-// import { FiEye } from "react-icons/fi";
-// import { HiOutlineReceiptRefund, HiOutlineUser } from "react-icons/hi2";
-// import { IoMailOutline } from "react-icons/io5";
-// import RowActionsMenu, {
-//   type RowAction,
-// } from "@/components/generic/RowActionsMenu";
-// import { TbReceipt } from "react-icons/tb";
-// import { BiPackage } from "react-icons/bi";
+import { FiEye } from "react-icons/fi";
+// import { HiOutlineReceiptRefund } from "react-icons/hi2";
+import { HiOutlineUser } from "react-icons/hi2";
+import { IoMailOutline } from "react-icons/io5";
+import RowActionsMenu, {
+  type RowAction,
+} from "@/components/generic/RowActionsMenu";
 import type { EscrowRow } from "../types";
 import PartyCell from "./PartyCell";
+import { statusPillClass, statusFallback, formatLabel, formatAmount } from "../statusStyles";
 
-// TODO: re-enable once the escrow action endpoints exist
-// interface EscrowColumnCallbacks {
-//   onViewTransaction: (escrow: EscrowRow) => void;
-//   onViewBuyerProfile: (escrow: EscrowRow) => void;
-//   onViewSellerProfile: (escrow: EscrowRow) => void;
-//   onContactBuyer: (escrow: EscrowRow) => void;
-//   onContactSeller: (escrow: EscrowRow) => void;
-//   onRefund: (escrow: EscrowRow) => void;
-// }
-
-const statusPillClass: Record<string, string> = {
-  held: "text-brand-blue bg-blue-50 dark:text-blue-400 dark:bg-blue-950",
-  frozen: "text-[#B54708] bg-[#FFFAEB] dark:text-amber-400 dark:bg-amber-950",
-  refunded: "text-red-500 bg-red-50 dark:text-red-400 dark:bg-red-950",
-  released: "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
-};
-
-const statusFallback =
-  "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800";
-
-const currency = new Intl.NumberFormat("en-NG", {
-  style: "currency",
-  currency: "NGN",
-  maximumFractionDigits: 0,
-});
-
-function formatLabel(value: string) {
-  return value.charAt(0).toUpperCase() + value.slice(1);
+export interface EscrowColumnCallbacks {
+  onViewDetails: (escrow: EscrowRow) => void;
+  onViewTransaction: (escrow: EscrowRow) => void;
+  onViewBuyerProfile: (escrow: EscrowRow) => void;
+  onViewSellerProfile: (escrow: EscrowRow) => void;
+  // onRefund: (escrow: EscrowRow) => void;
 }
 
-function formatAmount(value: number | null) {
-  return value === null || value === undefined ? "—" : currency.format(value);
-}
+export function createEscrowColumns(
+  callbacks: EscrowColumnCallbacks,
+): ColumnDef<EscrowRow, any>[] {
+  function getRowActions(row: EscrowRow): RowAction[] {
+    const base: RowAction[] = [
+      {
+        label: "View Details",
+        icon: <FiEye className="w-4 h-4" />,
+        onClick: () => callbacks.onViewDetails(row),
+      },
+    ];
 
-export function createEscrowColumns(): ColumnDef<EscrowRow, any>[] {
-  // TODO: re-enable with the action endpoints
-  // function getRowActions(row: EscrowRow): RowAction[] {
-  //   const base: RowAction[] = [
-  //     {
-  //       label: "View Transaction",
-  //       icon: <FiEye className="w-4 h-4" />,
-  //       onClick: () => callbacks.onViewTransaction(row),
-  //     },
-  //     {
-  //       label: "View Buyer Profile",
-  //       icon: <HiOutlineUser className="w-4 h-4" />,
-  //       onClick: () => callbacks.onViewBuyerProfile(row),
-  //       dividerAfter: true,
-  //     },
-  //     {
-  //       label: "View Seller Profile",
-  //       icon: <HiOutlineUser className="w-4 h-4" />,
-  //       onClick: () => callbacks.onViewSellerProfile(row),
-  //     },
-  //     {
-  //       label: "Contact Buyer",
-  //       icon: <IoMailOutline className="w-4 h-4" />,
-  //       onClick: () => callbacks.onContactBuyer(row),
-  //       dividerAfter: true,
-  //     },
-  //     {
-  //       label: "Contact Seller",
-  //       icon: <IoMailOutline className="w-4 h-4" />,
-  //       onClick: () => callbacks.onContactSeller(row),
-  //     },
-  //   ];
-  //
-  //   if (row.status !== "refunded" && row.status !== "released") {
-  //     base.push({
-  //       label: "Refund",
-  //       icon: <HiOutlineReceiptRefund className="w-4 h-4" />,
-  //       variant: "danger",
-  //       onClick: () => callbacks.onRefund(row),
-  //     });
-  //   }
-  //
-  //   return base;
-  // }
+    if (row.transaction) {
+      base.push({
+        label: "View Transaction",
+        icon: <FiEye className="w-4 h-4" />,
+        onClick: () => callbacks.onViewTransaction(row),
+        dividerAfter: true,
+      });
+    }
+
+    if (row.buyer) {
+      base.push({
+        label: "View Buyer Profile",
+        icon: <HiOutlineUser className="w-4 h-4" />,
+        onClick: () => callbacks.onViewBuyerProfile(row),
+      });
+    }
+
+    if (row.seller) {
+      base.push({
+        label: "View Seller Profile",
+        icon: <HiOutlineUser className="w-4 h-4" />,
+        onClick: () => callbacks.onViewSellerProfile(row),
+        dividerAfter: true,
+      });
+    }
+
+    if (row.buyer) {
+      const buyerEmail = row.buyer.email;
+      base.push({
+        label: "Contact Buyer",
+        icon: <IoMailOutline className="w-4 h-4" />,
+        onClick: () => {
+          window.location.href = `mailto:${buyerEmail}`;
+        },
+      });
+    }
+
+    if (row.seller) {
+      const sellerEmail = row.seller.email;
+      base.push({
+        label: "Contact Seller",
+        icon: <IoMailOutline className="w-4 h-4" />,
+        onClick: () => {
+          window.location.href = `mailto:${sellerEmail}`;
+        },
+      });
+    }
+
+    // if (row.status !== "refunded" && row.status !== "released") {
+    //   base.push({
+    //     label: "Refund",
+    //     icon: <HiOutlineReceiptRefund className="w-4 h-4" />,
+    //     variant: "danger",
+    //     onClick: () => callbacks.onRefund(row),
+    //   });
+    // }
+
+    return base;
+  }
 
   return [
     {
@@ -197,13 +198,12 @@ export function createEscrowColumns(): ColumnDef<EscrowRow, any>[] {
         </span>
       ),
     },
-    // TODO: re-enable with the action endpoints
-    // {
-    //   id: "actions",
-    //   header: "Action",
-    //   cell: ({ row }) => (
-    //     <RowActionsMenu actions={getRowActions(row.original)} />
-    //   ),
-    // },
+    {
+      id: "actions",
+      header: "Action",
+      cell: ({ row }) => (
+        <RowActionsMenu actions={getRowActions(row.original)} menuWidth={200} />
+      ),
+    },
   ];
 }

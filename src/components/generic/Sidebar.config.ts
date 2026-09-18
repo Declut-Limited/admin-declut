@@ -19,6 +19,7 @@ import setting2Icon from '@/assets/icons/setting-2.svg'
 import giftIcon from '@/assets/icons/gift.svg'
 import profileAdd from '@/assets/icons/profile-add.svg'
 import messageQuestionIcon from '@/assets/icons/message-question.svg'
+import profileCircleWhiteIcon from '@/assets/icons/profile-circle-white.svg'
 // import setting4Icon from '@/assets/icons/setting-4.svg'
 
 export interface NavItem {
@@ -48,6 +49,7 @@ export type PermissionModule =
   | 'waitlist'
   | 'settings'
   | 'roles'
+  | 'feedback'
 
 export interface NavItem {
   label: string
@@ -83,7 +85,7 @@ export const navGroups: NavGroup[] = [
   {
     label: 'Trust & Safety',
     items: [
-      { label: 'Disputes', path: '/disputes', icon: documentTextIcon, module: 'reports' },
+      { label: 'Reports', path: '/reports', icon: documentTextIcon, module: 'reports' },
       { label: 'Activity Logs', path: '/activity-logs', icon: layerIcon, module: 'activity' },
     ],
   },
@@ -94,15 +96,15 @@ export const navGroups: NavGroup[] = [
       // { label: 'Promotions', path: '/promotions', icon: ticketDiscountIcon },
       { label: 'Notifications', path: '/notifications', icon: notificationBingIcon, module: 'notifications' },
       { label: 'Content', path: '/content', icon: textIcon, module: 'content' },
-      { label: 'Referrals', path: '/referrals', icon: giftIcon },
-      { label: 'Waitlist', path: '/waitlist', icon: profileAdd },
-      // TODO: no `feedback` permission key in the API yet
-      { label: 'Feedback', path: '/feedback', icon: messageQuestionIcon },
+      { label: 'Referrals', path: '/referrals', icon: giftIcon, module: 'referrals' },
+      { label: 'Waitlist', path: '/waitlist', icon: profileAdd, module: 'waitlist' },
+      { label: 'Feedback', path: '/feedback', icon: messageQuestionIcon, module: 'feedback' },
     ],
   },
   {
     label: 'Admin',
     items: [
+      { label: 'Admin Users', path: '/admin-users', icon: profileCircleWhiteIcon, module: 'users' },
       { label: 'Settings', path: '/settings', icon: setting2Icon, module: 'settings' },
     ],
   },

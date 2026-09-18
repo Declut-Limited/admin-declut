@@ -32,6 +32,7 @@ export interface TransactionColumnCallbacks {
 
 export function createTransactionColumns(
   callbacks: TransactionColumnCallbacks,
+  options?: { showDisputeStatus?: boolean },
 ): ColumnDef<TransactionRow, any>[] {
   function getRowActions(row: TransactionRow): RowAction[] {
     const base: RowAction[] = [
@@ -232,6 +233,26 @@ export function createTransactionColumns(
         </span>
       ),
     },
+    ...(options?.showDisputeStatus
+      ? [
+          {
+            accessorKey: "disputeStatus",
+            header: "Dispute Status",
+            cell: ({ row }) =>
+              row.original.disputeStatus ? (
+                <span
+                  className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
+                    statusPillClass[row.original.disputeStatus] ?? statusFallback
+                  }`}
+                >
+                  {formatLabel(row.original.disputeStatus)}
+                </span>
+              ) : (
+                <span className="text-brand-gray-light">—</span>
+              ),
+          } satisfies ColumnDef<TransactionRow, any>,
+        ]
+      : []),
     {
       accessorKey: "createdAt",
       header: "Created",

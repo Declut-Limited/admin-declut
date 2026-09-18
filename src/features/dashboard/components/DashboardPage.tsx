@@ -122,7 +122,7 @@ function buildStats(cards: DashboardCards): StatCard[] {
       trend: statusToTrend[cards.pendingInspections.extra.status] ?? "neutral",
     },
     {
-      label: "Open Disputes",
+      label: "Open Reports",
       value: cards.openDisputes.value.toLocaleString(),
       meta: cards.openDisputes.extra.result,
       trend: statusToTrend[cards.openDisputes.extra.status] ?? "neutral",
@@ -327,7 +327,7 @@ export default function DashboardPage() {
     return [
       { label: "Manage Users", path: "/users", module: "users" },
       { label: "Review Listings", path: "/listings", module: "listings" },
-      { label: "Open Disputes", path: "/disputes", module: "reports" },
+      { label: "Open Reports", path: "/reports", module: "reports" },
       {
         label: "View Transactions",
         path: "/transactions",

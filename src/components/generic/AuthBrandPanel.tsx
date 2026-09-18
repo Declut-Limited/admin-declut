@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import logo from "@/assets/icons/auth-logo.svg";
-import { FiShield } from "react-icons/fi";
+// import { FiShield } from "react-icons/fi";
 import { PiShieldCheckFill } from "react-icons/pi";
 
 interface AuthBrandPanelProps {
@@ -76,10 +76,10 @@ export default function AuthBrandPanel({
           <p className="text-md text-gray-400 mt-2 max-w-xs">{subtext}</p>
         </div>
 
-        <div className="auth-badge w-fit" style={{background: "rgba(255, 255, 255, 0.04)"}}>
+        {/* <div className="auth-badge w-fit" style={{background: "rgba(255, 255, 255, 0.04)"}}>
           <FiShield className="w-3.5 h-3.5" />
           Protected by SSO, 2FA &amp; role-based access control
-        </div>
+        </div> */}
       </div>
 
       <div className="flex items-center justify-between text-xs text-gray-500">

@@ -2,15 +2,15 @@ import { useMemo, useState, useEffect } from "react";
 import PageHeader from "@/components/generic/PageHeader";
 import TabFilter from "@/components/generic/TabFilter";
 import TableToolbar from "@/components/generic/TableToolbar";
-import FiltersButton from "@/components/generic/FiltersButton";
 import DataTable from "@/components/generic/DataTable";
 import Pagination from "@/components/generic/Pagination";
 import Button from "@/components/generic/Button";
 import { PiExportFill } from "react-icons/pi";
-import CustomSelect from "@/components/generic/CustomSelect";
-import { createUserColumns } from "./columns";
+import { FaCirclePlus } from "react-icons/fa6";
+import InviteUserModal from "@/features/users/components/InviteUserModal";
+import { createAdminUserColumns } from "./adminColumns";
 import SuspendUserModal from "./SuspendUserModal";
-import { useNavigate } from "react-router-dom";
+import AdminUserDetailsModal from "./AdminUserDetailsModal";
 import {
   useUsers,
   useExportUsers,
@@ -25,9 +25,9 @@ import DateRangeFilter from "@/components/generic/DateRangeFilter";
 import EditAdminRoleModal from "./EditAdminRoleModal";
 import { usePageSize } from "@/lib/hooks/usePageSize";
 
-const tabs = ["All", "Active", "Suspended", "Pending", "Banned", "Deactivated"];
+const tabs = ["All", "Active", "Pending", "Deactivated"];
 
-export default function UsersPage() {
+export default function AdminUsersPage() {
   const PAGE_SIZE = usePageSize();
 
   const [activeTab, setActiveTab] = useState("All");
@@ -35,11 +35,10 @@ export default function UsersPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
-  const [accountType, setAccountType] = useState("");
 
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [suspendingUser, setSuspendingUser] = useState<UserRow | null>(null);
-
-  const navigate = useNavigate();
+  const [viewingUserId, setViewingUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -63,18 +62,11 @@ export default function UsersPage() {
     setCurrentPage(1);
   };
 
-  const handleTypeChange = (val: string) => {
-    setAccountType(val === "All Types" ? "" : val);
-    setCurrentPage(1);
-  };
-
   const usersQuery = useUsers({
     page: currentPage,
     limit: PAGE_SIZE,
+    type: "admin",
     status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
-    type: accountType
-      ? (accountType.toLowerCase() as "user" | "admin")
-      : undefined,
     search: debouncedSearch || undefined,
     startDate: dateRange.from || undefined,
     endDate: dateRange.to || undefined,
@@ -95,7 +87,7 @@ export default function UsersPage() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const columns = useMemo(
     () =>
-      createUserColumns({
+      createAdminUserColumns({
         onSuspend: (user) => setSuspendingUser(user),
         onReactivate: (user) => {
           showToast.promise(reactivateUser(user.id), {
@@ -104,27 +96,10 @@ export default function UsersPage() {
             error: "Couldn't reactivate user.",
           });
         },
-        onEdit: (user) => {
-          if (user.type !== "admin") {
-            showToast.info("Not editable", {
-              description: "Only admin accounts have an assignable role.",
-            });
-            return;
-          }
-          setEditingAdmin(user);
-        },
-        onBan: () => {
-          // if (user.type !== "admin") {
-          //   showToast.info("Not editable", {
-          //     description: "Only admin accounts have an assignable role.",
-          //   });
-          //   return;
-          // }
-          // setEditingAdmin(user);
-        },
-        onViewDetails: (user) => navigate(`/users/${user.id}`),
+        onEdit: (user) => setEditingAdmin(user),
+        onViewDetails: (user) => setViewingUserId(user.id),
       }),
-    [navigate, reactivateUser],
+    [reactivateUser],
   );
 
   const handleConfirmSuspend = (payload: SuspendUserPayload) => {
@@ -145,10 +120,8 @@ export default function UsersPage() {
   const handleExport = () => {
     showToast.promise(
       exportUsers({
+        type: "admin",
         status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
-        type: accountType
-          ? (accountType.toLowerCase() as "user" | "admin")
-          : undefined,
         search: debouncedSearch || undefined,
         startDate: dateRange.from || undefined,
         endDate: dateRange.to || undefined,
@@ -180,16 +153,28 @@ export default function UsersPage() {
   return (
     <div>
       <PageHeader
-        title="Users"
-        subtitle="Manage buyer and seller accounts across the platform."
+        title="Admin Users"
+        subtitle="Manage administrators, their roles, permissions, and account access across the platform."
         actions={
-          <Button
-            leftIcon={<PiExportFill className="w-4 h-4 text-[#98A2B3]" />}
-            onClick={handleExport}
-            disabled={isExporting}
-          >
-            {isExporting ? "Exporting..." : "Export"}
-          </Button>
+          <>
+            <Button
+              leftIcon={<PiExportFill className="w-4 h-4 text-[#98A2B3]" />}
+              onClick={handleExport}
+              disabled={isExporting}
+            >
+              {isExporting ? "Exporting..." : "Export"}
+            </Button>
+
+            <Button
+              leftIcon={<FaCirclePlus className="w-4 h-4 text-[#FFFFFF]" />}
+              bgColor="bg-[#2563EB] hover:bg-[#3F5EE0]"
+              textColor="text-white"
+              borderColor="border-transparent"
+              onClick={() => setInviteModalOpen(true)}
+            >
+              Invite User
+            </Button>
+          </>
         }
       />
 
@@ -203,20 +188,7 @@ export default function UsersPage() {
           onSearchChange={setSearch}
           searchPlaceholder="Search users..."
           filterSlot={
-            <>
-              <DateRangeFilter
-                value={dateRange}
-                onChange={handleDateRangeChange}
-              />
-              <FiltersButton activeCount={accountType ? 1 : 0}>
-                <CustomSelect
-                  label="Account Type"
-                  value={accountType || "All Types"}
-                  options={["All Types", "User", "Admin"]}
-                  onChange={handleTypeChange}
-                />
-              </FiltersButton>
-            </>
+            <DateRangeFilter value={dateRange} onChange={handleDateRangeChange} />
           }
         />
 
@@ -224,7 +196,7 @@ export default function UsersPage() {
           data={users}
           columns={columns}
           query={usersQuery}
-          emptyMessage="No users found."
+          emptyMessage="No admin users found."
         />
 
         <Pagination
@@ -234,6 +206,9 @@ export default function UsersPage() {
         />
       </div>
 
+      {inviteModalOpen && (
+        <InviteUserModal onClose={() => setInviteModalOpen(false)} />
+      )}
       {suspendingUser && (
         <SuspendUserModal
           userName={suspendingUser.name}
@@ -250,6 +225,13 @@ export default function UsersPage() {
           isSubmitting={isUpdatingRole}
           onClose={() => setEditingAdmin(null)}
           onConfirm={handleConfirmRoleChange}
+        />
+      )}
+
+      {viewingUserId && (
+        <AdminUserDetailsModal
+          userId={viewingUserId}
+          onClose={() => setViewingUserId(null)}
         />
       )}
     </div>

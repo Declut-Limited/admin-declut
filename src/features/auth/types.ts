@@ -1,4 +1,5 @@
 import type { DashboardPreferences } from "../profile/types"
+import type { PhoneValue } from "@/lib/utils/phone"
 
 export interface LoginPayload {
   email: string
@@ -41,7 +42,7 @@ export interface AdminProfile {
   name: string;
   firstName: string;
   lastName: string;
-  phone: string;
+  phone: PhoneValue;
   company: string;
   dashboardPreferences: DashboardPreferences;
   passwordChangedAt: string | null;

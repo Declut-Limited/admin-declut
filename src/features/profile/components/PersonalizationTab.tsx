@@ -2,11 +2,12 @@
 import Button from "@/components/generic/Button";
 import CustomSelect from "@/components/generic/CustomSelect";
 import Skeleton from "@/components/generic/Skeleton";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { BsCheckCircleFill } from "react-icons/bs";
 import { useTheme } from "@/lib/theme/useTheme";
 import { useMe, useUpdateDashboardPreferences } from "@/features/auth/queries";
 import type { AdminProfile } from "@/features/auth/types";
+import type { PermissionModule } from "@/components/generic/Sidebar.config";
 import { showToast } from "@/lib/utils/toast";
 import { getApiErrorMessage } from "@/lib/utils/getApiErrorMessage";
 import type { DashboardPreferences } from "../types";
@@ -24,7 +25,7 @@ const DEFAULT_PREFERENCES: DashboardPreferences = {
   language: "English",
 };
 
-const LANDING_PAGE_OPTIONS = [
+const LANDING_PAGE_OPTIONS: { label: string; value: PermissionModule }[] = [
   { label: "Dashboard", value: "dashboard" },
   { label: "Users", value: "users" },
   { label: "Listings", value: "listings" },
@@ -42,12 +43,17 @@ const LANDING_PAGE_OPTIONS = [
   { label: "Roles", value: "roles" },
 ];
 
-const landingLabel = (value: string) =>
-  LANDING_PAGE_OPTIONS.find((o) => o.value === value.toLowerCase())?.label ??
+const landingLabel = (
+  options: typeof LANDING_PAGE_OPTIONS,
+  value: string,
+) =>
+  options.find((o) => o.value === value.toLowerCase())?.label ??
+  options[0]?.label ??
   LANDING_PAGE_OPTIONS[0].label;
 
-const landingValue = (label: string) =>
-  LANDING_PAGE_OPTIONS.find((o) => o.label === label)?.value ??
+const landingValue = (options: typeof LANDING_PAGE_OPTIONS, label: string) =>
+  options.find((o) => o.label === label)?.value ??
+  options[0]?.value ??
   LANDING_PAGE_OPTIONS[0].value;
 
 const timezoneLabel = (value: string) =>
@@ -92,6 +98,11 @@ function PersonalizationForm({ me }: { me: AdminProfile }) {
   const [formData, setFormData] = useState<DashboardPreferences>(
     me.dashboardPreferences ?? DEFAULT_PREFERENCES,
   );
+
+  const landingPageOptions = useMemo(() => {
+    const permissions = me.role?.permissions;
+    return LANDING_PAGE_OPTIONS.filter((o) => permissions?.[o.value]?.view);
+  }, [me.role?.permissions]);
 
   const onChange = <K extends keyof DashboardPreferences>(
     field: K,
@@ -150,9 +161,11 @@ function PersonalizationForm({ me }: { me: AdminProfile }) {
         <div className="settings-field">
           <CustomSelect
             label="Landing Page"
-            value={landingLabel(formData.landingPage)}
-            options={LANDING_PAGE_OPTIONS.map((o) => o.label)}
-            onChange={(val) => onChange("landingPage", landingValue(val))}
+            value={landingLabel(landingPageOptions, formData.landingPage)}
+            options={landingPageOptions.map((o) => o.label)}
+            onChange={(val) =>
+              onChange("landingPage", landingValue(landingPageOptions, val))
+            }
           />
         </div>
         <div className="settings-field">

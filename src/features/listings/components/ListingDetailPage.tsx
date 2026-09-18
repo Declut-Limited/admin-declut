@@ -6,15 +6,15 @@ import ListingLocationMap from "@/components/generic/ListingLocationMap";
 import { FaArrowLeftLong } from "react-icons/fa6";
 import { IoMail } from "react-icons/io5";
 import NotFoundState from "@/components/generic/NotFoundState";
-import { FiEdit3, FiFlag, FiPackage } from "react-icons/fi";
+import { FiEdit3, FiPackage } from "react-icons/fi";
 import PageLoader from "@/components/generic/PageLoader";
 import {
   useListing,
   useDeleteListing,
   useEmailSeller,
   useUpdateListing,
-  useFlagListing,
-  useUnflagListing,
+  // useFlagListing,
+  // useUnflagListing,
   useDelistListing,
   useRelistListing,
 } from "../queries";
@@ -94,8 +94,8 @@ export default function ListingDetailPage() {
     useDeleteListing();
   const { mutateAsync: updateListing, isPending: isUpdating } =
     useUpdateListing();
-  const { mutateAsync: flagListing } = useFlagListing();
-  const { mutateAsync: unflagListing } = useUnflagListing();
+  // const { mutateAsync: flagListing } = useFlagListing();
+  // const { mutateAsync: unflagListing } = useUnflagListing();
   const { mutateAsync: delistListing } = useDelistListing();
   const { mutateAsync: relistListing } = useRelistListing();
   const [emailModalOpen, setEmailModalOpen] = useState(false);
@@ -162,17 +162,17 @@ export default function ListingDetailPage() {
     );
   };
 
-  const handleToggleFlag = () => {
-    const isFlagged = listing.status === "flagged";
-    showToast.promise(
-      isFlagged ? unflagListing(listing.id) : flagListing(listing.id),
-      {
-        loading: isFlagged ? "Unflagging..." : "Flagging...",
-        success: isFlagged ? "Listing unflagged." : "Listing flagged.",
-        error: "Couldn't update listing.",
-      },
-    );
-  };
+  // const handleToggleFlag = () => {
+  //   const isFlagged = listing.status === "flagged";
+  //   showToast.promise(
+  //     isFlagged ? unflagListing(listing.id) : flagListing(listing.id),
+  //     {
+  //       loading: isFlagged ? "Unflagging..." : "Flagging...",
+  //       success: isFlagged ? "Listing unflagged." : "Listing flagged.",
+  //       error: "Couldn't update listing.",
+  //     },
+  //   );
+  // };
 
   const handleToggleDelist = () => {
     const isDelisted =
@@ -257,12 +257,12 @@ export default function ListingDetailPage() {
             Edit
           </Button>
 
-          <Button
+          {/* <Button
             onClick={handleToggleFlag}
             leftIcon={<FiFlag className="w-4 h-4 text-brand-gray-dark" />}
           >
             {listing.status === "flagged" ? "Unflag" : "Flag"}
-          </Button>
+          </Button> */}
 
           <Button
             onClick={handleToggleDelist}

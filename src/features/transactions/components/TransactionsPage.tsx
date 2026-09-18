@@ -122,14 +122,17 @@ export default function TransactionsPage() {
     );
   };
 
-  const columns = createTransactionColumns({
-    onViewDetails: handleViewDetails,
-    onDownloadReceipt: handleDownloadReceipt,
-    onViewItem: handleViewItem,
-    onViewBuyerProfile: handleViewBuyerProfile,
-    onViewSellerProfile: handleViewSellerProfile,
-    onRefund: handleRefund,
-  });
+  const columns = createTransactionColumns(
+    {
+      onViewDetails: handleViewDetails,
+      onDownloadReceipt: handleDownloadReceipt,
+      onViewItem: handleViewItem,
+      onViewBuyerProfile: handleViewBuyerProfile,
+      onViewSellerProfile: handleViewSellerProfile,
+      onRefund: handleRefund,
+    },
+    { showDisputeStatus: activeTab === "Disputed" },
+  );
 
   const visibleTransactions = useMemo(() => {
     const q = search.toLowerCase();

@@ -8,12 +8,13 @@ import ResetPasswordPage from "./features/auth/components/ResetPasswordPage";
 import PasswordResetSuccessPage from "./features/auth/components/PasswordResetSuccessPage";
 import UsersPage from "./features/users/components/UsersPage";
 import UserDetailPage from "./features/users/components/UserDetailPage";
+import AdminUsersPage from "./features/users/components/AdminUsersPage";
 import ListingsPage from "./features/listings/components/ListingsPage";
 import ListingDetailPage from "./features/listings/components/ListingDetailPage";
 import CategoriesPage from "./features/categories/components/CategoriesPage";
 import ReviewsPage from "./features/reviews/components/ReviewsPage";
-import DisputesPage from "./features/disputes/components/DisputesPage";
-import DisputeDetailPage from "./features/disputes/components/DisputeDetailPage";
+import ReportsPage from "./features/reports/components/ReportsPage";
+import ReportDetailPage from "./features/reports/components/ReportDetailPage";
 import ActivityLogsPage from "./features/activity-logs/components/ActivityLogsPage";
 import ActivityLogDetailPage from "./features/activity-logs/components/ActivityLogDetailPage";
 import PromotionsPage from "./features/promotions/components/PromotionsPage";
@@ -64,6 +65,7 @@ function App() {
           <Route element={<PermissionRoute module="users" />}>
             <Route path="/users" element={<UsersPage />} />
             <Route path="/users/:userId" element={<UserDetailPage />} />
+            <Route path="/admin-users" element={<AdminUsersPage />} />
           </Route>
 
           <Route element={<PermissionRoute module="listings" />}>
@@ -83,10 +85,10 @@ function App() {
           </Route>
 
           <Route element={<PermissionRoute module="reports" />}>
-            <Route path="/disputes" element={<DisputesPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
             <Route
-              path="/disputes/:reportCode"
-              element={<DisputeDetailPage />}
+              path="/reports/:reportCode"
+              element={<ReportDetailPage />}
             />
           </Route>
 
@@ -129,21 +131,26 @@ function App() {
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
 
-          {/* no permission key for these yet */}
+          {/* no permission key for promotions yet */}
           <Route path="/promotions" element={<PromotionsPage />} />
           <Route
             path="/promotions/:promotionId"
             element={<PromotionDetailPage />}
           />
-          {/* no permission key for referrals yet */}
-          <Route path="/referrals" element={<ReferralsPage />} />
-          <Route path="/referrals/participants/:participantId" element={<ParticipantDetailPage />} />
 
-          <Route path="/waitlist" element={<WaitlistPage />} />
+          <Route element={<PermissionRoute module="referrals" />}>
+            <Route path="/referrals" element={<ReferralsPage />} />
+            <Route path="/referrals/participants/:participantId" element={<ParticipantDetailPage />} />
+          </Route>
 
-          {/* no permission key for feedback yet */}
-          <Route path="/feedback" element={<FeedbackPage />} />
-          <Route path="/feedback/:feedbackId" element={<FeedbackDetailPage />} />
+          <Route element={<PermissionRoute module="waitlist" />}>
+            <Route path="/waitlist" element={<WaitlistPage />} />
+          </Route>
+
+          <Route element={<PermissionRoute module="feedback" />}>
+            <Route path="/feedback" element={<FeedbackPage />} />
+            <Route path="/feedback/:feedbackId" element={<FeedbackDetailPage />} />
+          </Route>
 
           <Route path="/profile" element={<ProfilePage />} />
         </Route>

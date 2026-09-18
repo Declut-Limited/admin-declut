@@ -9,17 +9,9 @@ import { useMe, useUpdateProfileGeneral } from "@/features/auth/queries";
 import type { AdminProfile } from "@/features/auth/types";
 import { showToast } from "@/lib/utils/toast";
 import { getApiErrorMessage } from "@/lib/utils/getApiErrorMessage";
+import { combinePhoneNumber, splitPhoneNumber } from "@/lib/utils/phone";
 
 const COUNTRY_CODES = ["+234", "+233", "+254", "+27", "+44", "+1"];
-const DEFAULT_COUNTRY_CODE = "+234";
-
-function splitPhone(phone: string) {
-  const match = COUNTRY_CODES.find((code) => phone.startsWith(code));
-  if (match) {
-    return { code: match, number: phone.slice(match.length) };
-  }
-  return { code: DEFAULT_COUNTRY_CODE, number: phone ?? "" };
-}
 
 export function GeneralTab() {
   const { data: me, isLoading, isError, error } = useMe();
@@ -53,8 +45,8 @@ function GeneralForm({ me }: { me: AdminProfile }) {
   const initial = {
     firstName: me.firstName ?? "",
     lastName: me.lastName ?? "",
-    phoneCountryCode: splitPhone(me.phone ?? "").code,
-    phoneNumber: splitPhone(me.phone ?? "").number,
+    phoneCountryCode: splitPhoneNumber(me.phone).code,
+    phoneNumber: splitPhoneNumber(me.phone).number,
     email: me.email ?? "",
   };
 
@@ -69,7 +61,7 @@ function GeneralForm({ me }: { me: AdminProfile }) {
       updateGeneral({
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
-        phone: formData.phoneNumber.trim(),
+        phone: combinePhoneNumber(formData.phoneCountryCode, formData.phoneNumber),
         email: formData.email.trim(),
       }),
       {

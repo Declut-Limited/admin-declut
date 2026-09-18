@@ -44,10 +44,11 @@ export default function IssueResolutionSlaTab() {
 
 type SlaFormState = Omit<
   IssueResolutionSlaSettings,
-  "sellerResponseTimeHours" | "reminderTimeHours"
+  "sellerResponseSlaTimeInHour" | "reminderSlaTimeInHour"
 > & {
-  sellerResponseTimeHours: string;
-  reminderTimeHours: string;
+  sellerResponseSlaTimeInHour: string;
+  reminderSlaTimeInHour: string;
+  escalateTo: string;
 };
 
 function IssueResolutionSlaForm({ settings }: { settings: Settings }) {
@@ -55,12 +56,14 @@ function IssueResolutionSlaForm({ settings }: { settings: Settings }) {
     useUpdateIssueResolutionSlaSettings();
 
   const [formData, setFormData] = useState<SlaFormState>({
-    sellerResponseSlaEnabled: settings.sellerResponseSlaEnabled ?? false,
-    sellerResponseTimeHours: String(settings.sellerResponseTimeHours ?? 24),
-    autoEscalateOnExpiry: settings.autoEscalateOnExpiry ?? true,
+    enableSellerSLA: settings.enableSellerSLA ?? false,
+    sellerResponseSlaTimeInHour: String(
+      settings.sellerResponseSlaTimeInHour ?? 24,
+    ),
+    autoEscalateSlaOnExpiry: settings.autoEscalateSlaOnExpiry ?? true,
     escalateTo: settings.escalateTo || "Admin Review",
-    sendReminderBeforeDeadline: settings.sendReminderBeforeDeadline ?? true,
-    reminderTimeHours: String(settings.reminderTimeHours ?? 6),
+    sendSlaReminderBeforeDeadline: settings.sendSlaReminderBeforeDeadline ?? true,
+    reminderSlaTimeInHour: String(settings.reminderSlaTimeInHour ?? 6),
   });
 
   const toggle = (field: keyof SlaFormState) => {
@@ -76,9 +79,12 @@ function IssueResolutionSlaForm({ settings }: { settings: Settings }) {
 
   const handleSave = () => {
     const payload: IssueResolutionSlaSettings = {
-      ...formData,
-      sellerResponseTimeHours: Number(formData.sellerResponseTimeHours) || 0,
-      reminderTimeHours: Number(formData.reminderTimeHours) || 0,
+      enableSellerSLA: formData.enableSellerSLA,
+      sellerResponseSlaTimeInHour:
+        Number(formData.sellerResponseSlaTimeInHour) || 0,
+      autoEscalateSlaOnExpiry: formData.autoEscalateSlaOnExpiry,
+      sendSlaReminderBeforeDeadline: formData.sendSlaReminderBeforeDeadline,
+      reminderSlaTimeInHour: Number(formData.reminderSlaTimeInHour) || 0,
     };
 
     showToast.promise(updateSla(payload), {
@@ -101,12 +107,12 @@ function IssueResolutionSlaForm({ settings }: { settings: Settings }) {
           </p>
         </div>
         <ToggleSwitch
-          checked={formData.sellerResponseSlaEnabled}
-          onChange={() => toggle("sellerResponseSlaEnabled")}
+          checked={formData.enableSellerSLA}
+          onChange={() => toggle("enableSellerSLA")}
         />
       </div>
 
-      {!formData.sellerResponseSlaEnabled && (
+      {!formData.enableSellerSLA && (
         <>
           <div className="settings-divider-dashed" />
           <div className="settings-notice-box">
@@ -116,7 +122,7 @@ function IssueResolutionSlaForm({ settings }: { settings: Settings }) {
         </>
       )}
 
-      {formData.sellerResponseSlaEnabled && (
+      {formData.enableSellerSLA && (
         <>
           <div className="settings-field">
             <label className="block text-xs text-[#1D2939] dark:text-gray-300 mb-1.5 font-medium">
@@ -125,9 +131,9 @@ function IssueResolutionSlaForm({ settings }: { settings: Settings }) {
             <div className="settings-suffix-input">
               <input
                 type="number"
-                value={formData.sellerResponseTimeHours}
+                value={formData.sellerResponseSlaTimeInHour}
                 onChange={(e) =>
-                  setField("sellerResponseTimeHours", e.target.value)
+                  setField("sellerResponseSlaTimeInHour", e.target.value)
                 }
                 className="settings-suffix-input-field"
               />
@@ -149,12 +155,12 @@ function IssueResolutionSlaForm({ settings }: { settings: Settings }) {
               </p>
             </div>
             <ToggleSwitch
-              checked={formData.autoEscalateOnExpiry}
-              onChange={() => toggle("autoEscalateOnExpiry")}
+              checked={formData.autoEscalateSlaOnExpiry}
+              onChange={() => toggle("autoEscalateSlaOnExpiry")}
             />
           </div>
 
-          {formData.autoEscalateOnExpiry && (
+          {formData.autoEscalateSlaOnExpiry && (
             <div className="settings-field">
               <label className="block text-xs text-[#1D2939] dark:text-gray-300 mb-1.5 font-medium">
                 Escalate To
@@ -162,7 +168,7 @@ function IssueResolutionSlaForm({ settings }: { settings: Settings }) {
               <div className="settings-static-field">{formData.escalateTo}</div>
               <p className="settings-field-hint">
                 Escalated cases enter the Admin review queue under Trust &amp;
-                Safety &gt; Disputes.
+                Safety &gt; Reports.
               </p>
             </div>
           )}
@@ -177,12 +183,12 @@ function IssueResolutionSlaForm({ settings }: { settings: Settings }) {
               </p>
             </div>
             <ToggleSwitch
-              checked={formData.sendReminderBeforeDeadline}
-              onChange={() => toggle("sendReminderBeforeDeadline")}
+              checked={formData.sendSlaReminderBeforeDeadline}
+              onChange={() => toggle("sendSlaReminderBeforeDeadline")}
             />
           </div>
 
-          {formData.sendReminderBeforeDeadline && (
+          {formData.sendSlaReminderBeforeDeadline && (
             <div className="settings-field-row">
               <div className="settings-field">
                 <label className="block text-xs text-[#1D2939] dark:text-gray-300 mb-1.5 font-medium">
@@ -190,9 +196,9 @@ function IssueResolutionSlaForm({ settings }: { settings: Settings }) {
                 </label>
                 <input
                   type="number"
-                  value={formData.reminderTimeHours}
+                  value={formData.reminderSlaTimeInHour}
                   onChange={(e) =>
-                    setField("reminderTimeHours", e.target.value)
+                    setField("reminderSlaTimeInHour", e.target.value)
                   }
                   className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-brand-gray-dark dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-blue"
                 />
@@ -229,11 +235,11 @@ function IssueResolutionSlaForm({ settings }: { settings: Settings }) {
 }
 
 function SlaSummary({ formData }: { formData: SlaFormState }) {
-  const reminderValue = formData.sendReminderBeforeDeadline
-    ? `${formData.reminderTimeHours} hours before deadline`
+  const reminderValue = formData.sendSlaReminderBeforeDeadline
+    ? `${formData.reminderSlaTimeInHour} hours before deadline`
     : "Disabled";
 
-  const expiryValue = formData.autoEscalateOnExpiry
+  const expiryValue = formData.autoEscalateSlaOnExpiry
     ? "Automatically escalate to Admin"
     : "Stays open until resolved manually";
 
@@ -245,7 +251,7 @@ function SlaSummary({ formData }: { formData: SlaFormState }) {
         <div>
           <p className="sla-summary-label">Seller Response Time</p>
           <p className="sla-summary-value">
-            {formData.sellerResponseTimeHours} hours
+            {formData.sellerResponseSlaTimeInHour} hours
           </p>
         </div>
         <div>
@@ -268,11 +274,11 @@ function SlaSummary({ formData }: { formData: SlaFormState }) {
         <span className={`sla-flow-chip ${chipClass.neutral}`}>
           Seller notified
         </span>
-        {formData.sendReminderBeforeDeadline && (
+        {formData.sendSlaReminderBeforeDeadline && (
           <>
             <FiArrowRight className="w-3.5 h-3.5 text-brand-gray-light shrink-0" />
             <span className={`sla-flow-chip ${chipClass.neutral}`}>
-              Reminder at {formData.reminderTimeHours}h remaining
+              Reminder at {formData.reminderSlaTimeInHour}h remaining
             </span>
           </>
         )}
@@ -282,7 +288,7 @@ function SlaSummary({ formData }: { formData: SlaFormState }) {
         </span>
         <span className="text-brand-gray-light">/</span>
         <span className={`sla-flow-chip ${chipClass.danger}`}>
-          {formData.autoEscalateOnExpiry
+          {formData.autoEscalateSlaOnExpiry
             ? "No response → escalated to Admin"
             : "No response → stays open"}
         </span>

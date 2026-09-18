@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMe } from "@/features/auth/queries";
 import type { AdminProfile } from "@/features/auth/types";
 import { getApiErrorMessage } from "@/lib/utils/getApiErrorMessage";
+import { formatPhoneNumber } from "@/lib/utils/phone";
 
 const NOT_IN_API_YET = "—";
 
@@ -95,6 +96,12 @@ export function AccountTab() {
           <p className="account-info-label">Role</p>
           <p className="account-info-value account-info-value-link">
             {account.role?.name}
+          </p>
+        </div>
+        <div className="account-info-item">
+          <p className="account-info-label">Phone Number</p>
+          <p className="account-info-value">
+            {formatPhoneNumber(account.phone) || NOT_IN_API_YET}
           </p>
         </div>
         <div className="account-info-item">

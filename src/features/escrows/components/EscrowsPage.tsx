@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-// import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import PageHeader from "@/components/generic/PageHeader";
 import TabFilter from "@/components/generic/TabFilter";
 import TableToolbar from "@/components/generic/TableToolbar";
@@ -14,10 +14,13 @@ import { FiDollarSign } from "react-icons/fi";
 import { createEscrowColumns } from "./columns";
 import { useEscrows } from "../queries";
 import { usePageSize } from "@/lib/hooks/usePageSize";
+import { showToast } from "@/lib/utils/toast";
+import type { EscrowRow } from "../types";
 
 const tabs = ["All", "Held", "Frozen", "Refunded", "Released"];
 
 export default function EscrowPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
@@ -38,6 +41,7 @@ export default function EscrowPage() {
   const escrowsQuery = useEscrows({
     page: currentPage,
     limit: PAGE_SIZE,
+    status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
     startDate: dateRange.from || undefined,
     endDate: dateRange.to || undefined,
   });
@@ -48,26 +52,61 @@ export default function EscrowPage() {
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const columns = useMemo(() => createEscrowColumns(), []);
+  const handleViewDetails = (row: EscrowRow) => {
+    navigate(`/escrow/${row.slug}`);
+  };
+
+  const handleViewTransaction = (row: EscrowRow) => {
+    if (!row.transaction) {
+      showToast.error("No transaction attached to this escrow");
+      return;
+    }
+    navigate(`/transactions/${row.transaction.reference}`);
+  };
+
+  const handleViewBuyerProfile = (row: EscrowRow) => {
+    if (!row.buyer) {
+      showToast.error("No buyer on this escrow");
+      return;
+    }
+    navigate(`/users/${row.buyer.id}`);
+  };
+
+  const handleViewSellerProfile = (row: EscrowRow) => {
+    if (!row.seller) {
+      showToast.error("No seller on this escrow");
+      return;
+    }
+    navigate(`/users/${row.seller.id}`);
+  };
+
+  // const handleRefund = () => {
+  //   showToast.error("Refund isn't wired up yet", {
+  //     description: "There's no refund endpoint available for escrows yet.",
+  //   });
+  // };
+
+  const columns = createEscrowColumns({
+    onViewDetails: handleViewDetails,
+    onViewTransaction: handleViewTransaction,
+    onViewBuyerProfile: handleViewBuyerProfile,
+    onViewSellerProfile: handleViewSellerProfile,
+    // onRefund: handleRefund,
+  });
 
   const visibleEscrows = useMemo(() => {
-    return escrows.filter((escrow) => {
-      const matchesTab =
-        activeTab === "All" || escrow.status === activeTab.toLowerCase();
-
-      const q = search.toLowerCase();
-      const matchesSearch =
-        !q ||
+    const q = search.toLowerCase();
+    if (!q) return escrows;
+    return escrows.filter(
+      (escrow) =>
         escrow.slug.toLowerCase().includes(q) ||
         (escrow.transaction?.reference.toLowerCase().includes(q) ?? false) ||
         (escrow.buyer?.name.toLowerCase().includes(q) ?? false) ||
-        (escrow.seller?.name.toLowerCase().includes(q) ?? false);
+        (escrow.seller?.name.toLowerCase().includes(q) ?? false),
+    );
+  }, [escrows, search]);
 
-      return matchesTab && matchesSearch;
-    });
-  }, [escrows, activeTab, search]);
-
-  const isFiltering = activeTab !== "All" || Boolean(search);
+  const isFiltering = Boolean(search);
 
   return (
     <div>

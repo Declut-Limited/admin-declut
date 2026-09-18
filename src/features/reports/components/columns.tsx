@@ -2,23 +2,24 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { FiEye, FiSearch } from "react-icons/fi";
 import { IoIosCloseCircleOutline } from "react-icons/io";
-import { BsCheckCircle } from "react-icons/bs";
+// import { BsCheckCircle } from "react-icons/bs";
 import RowActionsMenu, {
   type RowAction,
 } from "@/components/generic/RowActionsMenu";
-import type { DisputeRow } from "../types";
+import type { ReportRow } from "../types";
 
-interface DisputeColumnCallbacks {
-  onViewDetails: (dispute: DisputeRow) => void;
-  onInvestigate: (dispute: DisputeRow) => void;
-  onDismiss: (dispute: DisputeRow) => void;
-  onResolve: (dispute: DisputeRow) => void;
+interface ReportColumnCallbacks {
+  onViewDetails: (report: ReportRow) => void;
+  onInvestigate: (report: ReportRow) => void;
+  onDismiss: (report: ReportRow) => void;
+  onResolve: (report: ReportRow) => void;
 }
 
 const statusPillClass: Record<string, string> = {
   new: "text-brand-blue bg-blue-50 dark:text-blue-400 dark:bg-blue-950",
   investigating:
     "text-[#B54708] bg-[#FFFAEB] dark:text-amber-400 dark:bg-amber-950",
+  disputed: "text-[#B42318] bg-[#FEF3F2] dark:text-red-400 dark:bg-red-950",
   dismissed:
     "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800",
   resolved: "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
@@ -41,10 +42,10 @@ function formatDate(iso: string) {
   });
 }
 
-export function createDisputeColumns(
-  callbacks: DisputeColumnCallbacks,
-): ColumnDef<DisputeRow, any>[] {
-  function getRowActions(row: DisputeRow): RowAction[] {
+export function createReportColumns(
+  callbacks: ReportColumnCallbacks,
+): ColumnDef<ReportRow, any>[] {
+  function getRowActions(row: ReportRow): RowAction[] {
     const base: RowAction[] = [
       {
         label: "View Details",
@@ -69,14 +70,14 @@ export function createDisputeColumns(
       });
     }
 
-    if (row.status !== "resolved") {
-      base.push({
-        label: "Resolve",
-        icon: <BsCheckCircle className="w-4 h-4" />,
-        variant: "success",
-        onClick: () => callbacks.onResolve(row),
-      });
-    }
+    // if (row.status !== "resolved") {
+    //   base.push({
+    //     label: "Resolve",
+    //     icon: <BsCheckCircle className="w-4 h-4" />,
+    //     variant: "success",
+    //     onClick: () => callbacks.onResolve(row),
+    //   });
+    // }
 
     return base;
   }
