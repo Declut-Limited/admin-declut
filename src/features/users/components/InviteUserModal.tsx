@@ -7,7 +7,7 @@ import { useRoles } from "@/features/settings/queries";
 import { useInviteSubAdmin } from "../queries";
 import { showToast } from "@/lib/utils/toast";
 import { getApiErrorMessage } from "@/lib/utils/getApiErrorMessage";
-import { FiEye, FiEyeOff } from "react-icons/fi";
+// import { FiEye, FiEyeOff } from "react-icons/fi";
 
 interface InviteUserModalProps {
   onClose: () => void;
@@ -20,12 +20,12 @@ function formatModule(module: string) {
 export default function InviteUserModal({ onClose }: InviteUserModalProps) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [title, setTitle] = useState("");
-  const [company, setCompany] = useState("");
+  // const [password, setPassword] = useState("");
+  // const [title, setTitle] = useState("");
+  // const [company, setCompany] = useState("");
   const [roleName, setRoleName] = useState("");
 
-  const [showPassword, setShowPassword] = useState(false);
+  // const [showPassword, setShowPassword] = useState(false);
 
   const {
     data: roles = [],
@@ -53,8 +53,8 @@ export default function InviteUserModal({ onClose }: InviteUserModalProps) {
   const canSubmit =
     fullName.trim().length > 0 &&
     email.trim().length > 0 &&
-    password.trim().length > 0 &&
-    title.trim().length > 0 &&
+    // password.trim().length > 0 &&
+    // title.trim().length > 0 &&
     Boolean(selectedRole);
 
   const handleSubmit = () => {
@@ -64,9 +64,9 @@ export default function InviteUserModal({ onClose }: InviteUserModalProps) {
       inviteSubAdmin({
         name: fullName.trim(),
         email: email.trim(),
-        password: password.trim(),
-        title: title.trim(),
-        company: company.trim(),
+        // password: password.trim(),
+        // title: title.trim(),
+        // company: company.trim(),
         roleId: selectedRole._id,
       }).then(() => onClose()),
       {
@@ -128,6 +128,7 @@ export default function InviteUserModal({ onClose }: InviteUserModalProps) {
           />
         </div>
 
+        {/* Temporary Password / Title — no longer part of the invite payload
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="relative">
             <FormInput
@@ -160,6 +161,7 @@ export default function InviteUserModal({ onClose }: InviteUserModalProps) {
             onChange={(e) => setTitle(e.target.value)}
           />
         </div>
+        */}
 
         <div className="grid grid-cols-2 gap-4">
           <CustomSelect
@@ -169,12 +171,14 @@ export default function InviteUserModal({ onClose }: InviteUserModalProps) {
             options={roleOptions}
             onChange={setRoleName}
           />
+          {/* Company — no longer part of the invite payload
           <FormInput
             label="Company (optional)"
             placeholder="e.g. Zenith Traders"
             value={company}
             onChange={(e) => setCompany(e.target.value)}
           />
+          */}
         </div>
         {rolesError && (
           <p className="text-xs text-red-500 mt-1">

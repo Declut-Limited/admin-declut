@@ -52,7 +52,6 @@ export interface TransactionsListParams {
   page?: number;
   limit?: number;
   status?: string;
-  tab?: string;
   startDate?: string;
   endDate?: string;
 }

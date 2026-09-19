@@ -2,7 +2,7 @@ export type UserStatus = "active" | "pending" | "suspended" | "banned";
 
 export interface UserRow {
   type: "user" | "admin";
-  id: string;
+  _id: string;
   slug?: string; 
   name: string;
   email: string;
@@ -197,9 +197,9 @@ export interface UpdateKycPayload {
 export interface InviteSubAdminPayload {
   email: string;
   name: string;
-  password: string;
-  title: string;
-  company: string;
+  // password: string;
+  // title: string;
+  // company: string;
   roleId: string;
 }
 

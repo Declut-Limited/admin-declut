@@ -217,13 +217,13 @@ export default function AdminUserDetailsModal({
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#F4F3FF] text-[#5925DC] dark:bg-indigo-950 dark:text-indigo-400">
                   {roleName}
                 </span>
-                <span
+                {/* <span
                   className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                     statusPillClass[details.status] ?? statusFallback
                   }`}
                 >
                   {formatStatus(details.status)}
-                </span>
+                </span> */}
               </span>
             </div>
             <div className="profile-info-row">

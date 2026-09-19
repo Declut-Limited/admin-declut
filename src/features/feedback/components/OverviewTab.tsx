@@ -15,7 +15,7 @@ import { HiOutlineClock } from "react-icons/hi2";
 import type { IconType } from "react-icons";
 import documentTextIcon from "@/assets/icons/document-text-black.svg";
 import radarIcon from "@/assets/icons/radar.svg";
-import profileCircleIcon from "@/assets/icons/profile-circle.svg";
+// import profileCircleIcon from "@/assets/icons/profile-circle.svg";
 import tickCircleIcon from "@/assets/icons/tick-circle.svg";
 import starIcon from "@/assets/icons/star-black.svg";
 import dangerIcon from "@/assets/icons/danger.svg";
@@ -90,11 +90,11 @@ export default function OverviewTab() {
       value: String(overview.awaitingFirstReview),
       icon: radarIcon,
     },
-    {
-      label: "Currently with an Admin",
-      value: String(overview.currentlyWithAdmin),
-      icon: profileCircleIcon,
-    },
+    // {
+    //   label: "Currently with an Admin",
+    //   value: String(overview.currentlyWithAdmin),
+    //   icon: profileCircleIcon,
+    // },
     {
       label: "Resolved",
       value: String(overview.resolved),

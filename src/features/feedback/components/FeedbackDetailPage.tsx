@@ -426,7 +426,7 @@ export default function FeedbackDetailPage() {
             )}
           </div>
 
-          <div className="detail-section-card border-none">
+          {/* <div className="detail-section-card border-none">
             <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-3">
               Submission Context
             </p>
@@ -446,7 +446,7 @@ export default function FeedbackDetailPage() {
               <span className="profile-info-label">Screen</span>
               <span className="profile-info-value">{detail.submissionContext.screen}</span>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 

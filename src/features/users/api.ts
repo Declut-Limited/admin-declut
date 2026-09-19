@@ -29,6 +29,11 @@ export const reactivateUser = async (userId: string) => {
   return data;
 };
 
+export const banUser = async (userId: string) => {
+  const { data } = await api.patch(`/admin/users/${userId}/ban`);
+  return data;
+};
+
 export const getListingsByUser = async (
   userId: string,
   params: { page?: number; limit?: number },

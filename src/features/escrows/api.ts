@@ -18,3 +18,13 @@ export const getEscrowById = async (
   const { data } = await api.get(`/admin/escrows/${escrowId}`);
   return data;
 };
+
+export const exportEscrows = async (
+  params: Omit<EscrowsListParams, "page" | "limit">,
+): Promise<Blob> => {
+  const { data } = await api.get("/admin/escrows/export", {
+    params,
+    responseType: "blob",
+  });
+  return data;
+};

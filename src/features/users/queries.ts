@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getUsers, exportUsers, getUserById, suspendUser, reactivateUser, getListingsByUser, updateUserKyc, inviteSubAdmin, updateSubAdminRole } from "./api";
+import { getUsers, exportUsers, getUserById, suspendUser, reactivateUser, banUser, getListingsByUser, updateUserKyc, inviteSubAdmin, updateSubAdminRole } from "./api";
 import type { InviteSubAdminPayload, SuspendUserPayload, UpdateKycPayload, UpdateSubAdminRolePayload, UsersListParams } from "./types";
 
 export const useUsers = (params: UsersListParams) => {
@@ -53,6 +53,18 @@ export const useReactivateUser = () => {
 
   return useMutation({
     mutationFn: (userId: string) => reactivateUser(userId),
+    onSuccess: (_data, userId) => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["users", "detail", userId] });
+    },
+  });
+};
+
+export const useBanUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: string) => banUser(userId),
     onSuccess: (_data, userId) => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["users", "detail", userId] });

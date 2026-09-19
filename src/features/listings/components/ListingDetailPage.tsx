@@ -339,7 +339,7 @@ export default function ListingDetailPage() {
                     : NOT_IN_API_YET}
                 </p>
               </div>
-              <div>
+              {/* <div>
                 <p className="text-xs text-brand-gray-light">
                   Quantity Available
                 </p>
@@ -352,7 +352,7 @@ export default function ListingDetailPage() {
                 <p className="text-sm font-medium text-brand-gray-dark dark:text-gray-100">
                   {String(specs.sku ?? NOT_IN_API_YET)}
                 </p>
-              </div>
+              </div> */}
             </div>
           </div>
 

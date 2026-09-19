@@ -8,11 +8,11 @@ import DateRangeFilter, {
 } from "@/components/generic/DateRangeFilter";
 import DataTable from "@/components/generic/DataTable";
 import Pagination from "@/components/generic/Pagination";
-// import Button from "@/components/generic/Button";
-// import { PiExportFill } from "react-icons/pi";
+import Button from "@/components/generic/Button";
+import { PiExportFill } from "react-icons/pi";
 import { FiDollarSign } from "react-icons/fi";
 import { createEscrowColumns } from "./columns";
-import { useEscrows } from "../queries";
+import { useEscrows, useExportEscrows } from "../queries";
 import { usePageSize } from "@/lib/hooks/usePageSize";
 import { showToast } from "@/lib/utils/toast";
 import type { EscrowRow } from "../types";
@@ -47,6 +47,9 @@ export default function EscrowPage() {
   });
 
   const { data } = escrowsQuery;
+
+  const { mutateAsync: exportEscrows, isPending: isExporting } =
+    useExportEscrows();
 
   const escrows = useMemo(() => data?.results ?? [], [data?.results]);
   const total = data?.total ?? 0;
@@ -86,6 +89,21 @@ export default function EscrowPage() {
   //   });
   // };
 
+  const handleExport = () => {
+    showToast.promise(
+      exportEscrows({
+        status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
+        startDate: dateRange.from || undefined,
+        endDate: dateRange.to || undefined,
+      }),
+      {
+        loading: "Preparing export...",
+        success: "Export downloaded.",
+        error: "Export failed.",
+      },
+    );
+  };
+
   const columns = createEscrowColumns({
     onViewDetails: handleViewDetails,
     onViewTransaction: handleViewTransaction,
@@ -113,18 +131,15 @@ export default function EscrowPage() {
       <PageHeader
         title="Escrow"
         subtitle="Manage every order from offer to escrow to hand-over — with full payment context."
-        // TODO: no escrows export endpoint yet
-        // actions={
-        //   <Button
-        //     leftIcon={<PiExportFill className="w-4 h-4 text-[#98A2B3]" />}
-        //     rightIcon={
-        //       <FiChevronDown className="w-4 h-4 text-brand-gray-dark" />
-        //     }
-        //     onClick={() => {}}
-        //   >
-        //     Export
-        //   </Button>
-        // }
+        actions={
+          <Button
+            leftIcon={<PiExportFill className="w-4 h-4 text-[#98A2B3]" />}
+            onClick={handleExport}
+            disabled={isExporting}
+          >
+            {isExporting ? "Exporting..." : "Export"}
+          </Button>
+        }
       />
 
       <TabFilter tabs={tabs} active={activeTab} onChange={handleTabChange} />

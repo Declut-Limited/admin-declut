@@ -53,7 +53,7 @@ export default function TransactionsPage() {
   const transactionsQuery = useTransactions({
     page: currentPage,
     limit: PAGE_SIZE,
-    tab: activeTab === "All" ? undefined : activeTab.toLowerCase(),
+    status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
     startDate: dateRange.from || undefined,
     endDate: dateRange.to || undefined,
   });
@@ -110,7 +110,7 @@ export default function TransactionsPage() {
   const handleExport = () => {
     showToast.promise(
       exportTransactions({
-        tab: activeTab === "All" ? undefined : activeTab.toLowerCase(),
+        status: activeTab === "All" ? undefined : activeTab.toLowerCase(),
         startDate: dateRange.from || undefined,
         endDate: dateRange.to || undefined,
       }),

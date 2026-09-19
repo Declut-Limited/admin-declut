@@ -8,6 +8,7 @@ import Pagination from "@/components/generic/Pagination";
 import Button from "@/components/generic/Button";
 import { PiExportFill } from "react-icons/pi";
 import CustomSelect from "@/components/generic/CustomSelect";
+import ConfirmModal from "@/components/generic/ConfirmModal";
 import { createUserColumns } from "./columns";
 import SuspendUserModal from "./SuspendUserModal";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +17,7 @@ import {
   useExportUsers,
   useSuspendUser,
   useReactivateUser,
+  useBanUser,
   useUpdateSubAdminRole,
 } from "../queries";
 import type { SuspendUserPayload, UserRow } from "../types";
@@ -38,6 +40,7 @@ export default function UsersPage() {
   const [accountType, setAccountType] = useState("");
 
   const [suspendingUser, setSuspendingUser] = useState<UserRow | null>(null);
+  const [banningUser, setBanningUser] = useState<UserRow | null>(null);
 
   const navigate = useNavigate();
 
@@ -86,6 +89,7 @@ export default function UsersPage() {
   const { mutateAsync: suspendUser, isPending: isSuspending } =
     useSuspendUser();
   const { mutateAsync: reactivateUser } = useReactivateUser();
+  const { mutateAsync: banUser, isPending: isBanning } = useBanUser();
   const [editingAdmin, setEditingAdmin] = useState<UserRow | null>(null);
   const { mutateAsync: updateSubAdminRole, isPending: isUpdatingRole } =
     useUpdateSubAdminRole();
@@ -98,7 +102,7 @@ export default function UsersPage() {
       createUserColumns({
         onSuspend: (user) => setSuspendingUser(user),
         onReactivate: (user) => {
-          showToast.promise(reactivateUser(user.id), {
+          showToast.promise(reactivateUser(user._id), {
             loading: `Reactivating ${user.name}...`,
             success: `${user.name} can now access their account.`,
             error: "Couldn't reactivate user.",
@@ -113,25 +117,30 @@ export default function UsersPage() {
           }
           setEditingAdmin(user);
         },
-        onBan: () => {
-          // if (user.type !== "admin") {
-          //   showToast.info("Not editable", {
-          //     description: "Only admin accounts have an assignable role.",
-          //   });
-          //   return;
-          // }
-          // setEditingAdmin(user);
-        },
-        onViewDetails: (user) => navigate(`/users/${user.id}`),
+        onBan: (user) => setBanningUser(user),
+        onViewDetails: (user) => navigate(`/users/${user._id}`),
       }),
     [navigate, reactivateUser],
   );
+
+  const handleConfirmBan = () => {
+    if (!banningUser) return;
+
+    showToast.promise(
+      banUser(banningUser._id).then(() => setBanningUser(null)),
+      {
+        loading: `Banning ${banningUser.name}...`,
+        success: `${banningUser.name} has been banned.`,
+        error: "Couldn't ban user.",
+      },
+    );
+  };
 
   const handleConfirmSuspend = (payload: SuspendUserPayload) => {
     if (!suspendingUser) return;
 
     showToast.promise(
-      suspendUser({ userId: suspendingUser.id, payload }).then(() =>
+      suspendUser({ userId: suspendingUser._id, payload }).then(() =>
         setSuspendingUser(null),
       ),
       {
@@ -166,7 +175,7 @@ export default function UsersPage() {
 
     showToast.promise(
       updateSubAdminRole({
-        subAdminId: editingAdmin.id,
+        subAdminId: editingAdmin._id,
         payload: { roleId },
       }).then(() => setEditingAdmin(null)),
       {
@@ -250,6 +259,18 @@ export default function UsersPage() {
           isSubmitting={isUpdatingRole}
           onClose={() => setEditingAdmin(null)}
           onConfirm={handleConfirmRoleChange}
+        />
+      )}
+
+      {banningUser && (
+        <ConfirmModal
+          title={`Ban ${banningUser.name}`}
+          message={`This will permanently ban ${banningUser.name} and block them from accessing their account. This action cannot be undone.`}
+          confirmLabel="Ban User"
+          variant="danger"
+          isSubmitting={isBanning}
+          onClose={() => setBanningUser(null)}
+          onConfirm={handleConfirmBan}
         />
       )}
     </div>

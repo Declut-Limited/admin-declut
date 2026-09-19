@@ -25,7 +25,7 @@ import DateRangeFilter from "@/components/generic/DateRangeFilter";
 import EditAdminRoleModal from "./EditAdminRoleModal";
 import { usePageSize } from "@/lib/hooks/usePageSize";
 
-const tabs = ["All", "Active", "Pending", "Deactivated"];
+const tabs = ["All", "Active", "Suspended", "Deactivated"];
 
 export default function AdminUsersPage() {
   const PAGE_SIZE = usePageSize();
@@ -90,14 +90,14 @@ export default function AdminUsersPage() {
       createAdminUserColumns({
         onSuspend: (user) => setSuspendingUser(user),
         onReactivate: (user) => {
-          showToast.promise(reactivateUser(user.id), {
+          showToast.promise(reactivateUser(user._id), {
             loading: `Reactivating ${user.name}...`,
             success: `${user.name} can now access their account.`,
             error: "Couldn't reactivate user.",
           });
         },
         onEdit: (user) => setEditingAdmin(user),
-        onViewDetails: (user) => setViewingUserId(user.id),
+        onViewDetails: (user) => setViewingUserId(user._id),
       }),
     [reactivateUser],
   );
@@ -106,7 +106,7 @@ export default function AdminUsersPage() {
     if (!suspendingUser) return;
 
     showToast.promise(
-      suspendUser({ userId: suspendingUser.id, payload }).then(() =>
+      suspendUser({ userId: suspendingUser._id, payload }).then(() =>
         setSuspendingUser(null),
       ),
       {
@@ -139,7 +139,7 @@ export default function AdminUsersPage() {
 
     showToast.promise(
       updateSubAdminRole({
-        subAdminId: editingAdmin.id,
+        subAdminId: editingAdmin._id,
         payload: { roleId },
       }).then(() => setEditingAdmin(null)),
       {
@@ -186,7 +186,7 @@ export default function AdminUsersPage() {
           count={total}
           searchValue={search}
           onSearchChange={setSearch}
-          searchPlaceholder="Search users..."
+          searchPlaceholder="Search admin users..."
           filterSlot={
             <DateRangeFilter value={dateRange} onChange={handleDateRangeChange} />
           }
