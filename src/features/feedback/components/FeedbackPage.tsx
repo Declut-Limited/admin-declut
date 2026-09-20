@@ -8,13 +8,12 @@ import calendar from "@/assets/icons/calendar.svg";
 import DateRangeFilter, { type DateRange } from "@/components/generic/DateRangeFilter";
 import OverviewTab from "./OverviewTab";
 import AllFeedbackTab from "./AllFeedbackTab";
+import type { FeedbackPeriod } from "../types";
 
 const TABS = ["Overview", "All Feedback"] as const;
 type FeedbackTab = (typeof TABS)[number];
 
-type PeriodFilter = "thisMonth" | "lastMonth" | "last3Months" | "thisYear" | "custom";
-
-const periodOptions: { label: string; value: PeriodFilter }[] = [
+const periodOptions: { label: string; value: FeedbackPeriod }[] = [
   { label: "This Month", value: "thisMonth" },
   { label: "Last Month", value: "lastMonth" },
   { label: "Last 3 Months", value: "last3Months" },
@@ -24,7 +23,7 @@ const periodOptions: { label: string; value: PeriodFilter }[] = [
 
 export default function FeedbackPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [period, setPeriod] = useState<PeriodFilter>("thisMonth");
+  const [period, setPeriod] = useState<FeedbackPeriod>("thisMonth");
   const [periodOpen, setPeriodOpen] = useState(false);
   const [customRange, setCustomRange] = useState<DateRange>({ from: "", to: "" });
   const ref = useRef<HTMLDivElement>(null);
@@ -120,7 +119,9 @@ export default function FeedbackPage() {
         ))}
       </div>
 
-      {activeTab === "Overview" && <OverviewTab />}
+      {activeTab === "Overview" && (
+        <OverviewTab period={period} customRange={customRange} />
+      )}
       {activeTab === "All Feedback" && <AllFeedbackTab />}
     </div>
   );

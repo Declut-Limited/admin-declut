@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import TableToolbar from "@/components/generic/TableToolbar";
 import Pagination from "@/components/generic/Pagination";
@@ -6,15 +6,56 @@ import FiltersButton from "@/components/generic/FiltersButton";
 import CustomSelect from "@/components/generic/CustomSelect";
 import DateRangeFilter, { type DateRange } from "@/components/generic/DateRangeFilter";
 import FeedbackTable from "./FeedbackTable";
-import { PAGE_SIZE } from "@/lib/constants/pagination";
-import { mockFeedbackRows, needsAttentionFilters, statusLabels, typeLabels } from "../mockData";
+import { usePageSize } from "@/lib/hooks/usePageSize";
+import { statusLabels, typeLabels } from "../mockData";
+import { useFeedbackList } from "../queries";
+import type { FeedbackStatus, FeedbackType } from "../types";
 
 const statusOptions = ["All Statuses", ...Object.values(statusLabels)];
 const typeOptions = ["All Types", ...Object.values(typeLabels)];
 
+const statusValueByLabel = Object.fromEntries(
+  (Object.entries(statusLabels) as [FeedbackStatus, string][]).map(
+    ([value, label]) => [label, value],
+  ),
+) as Record<string, FeedbackStatus>;
+
+const typeValueByLabel = Object.fromEntries(
+  (Object.entries(typeLabels) as [FeedbackType, string][]).map(
+    ([value, label]) => [label, value],
+  ),
+) as Record<string, FeedbackType>;
+
+interface NeedsAttentionFilter {
+  key: string;
+  label: string;
+  status?: FeedbackStatus;
+  type?: FeedbackType;
+}
+
+const needsAttentionFilters: NeedsAttentionFilter[] = [
+  {
+    key: "unreviewedReportProblem",
+    label: "Unreviewed problem reports",
+    status: "new",
+    type: "report_a_problem",
+  },
+  {
+    key: "lowRatedUnresolvedFeedback",
+    label: "Low-rated feedback",
+  },
+  {
+    key: "escalatedToOtherTeam",
+    label: "Escalated to other teams",
+    status: "escalated",
+  },
+];
+
 export default function AllFeedbackTab() {
+  const PAGE_SIZE = usePageSize();
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
@@ -22,6 +63,14 @@ export default function AllFeedbackTab() {
   const [activeNaFilter, setActiveNaFilter] = useState(
     () => needsAttentionFilters.find((f) => f.key === searchParams.get("na")) ?? null,
   );
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const clearNaFilter = () => {
     setActiveNaFilter(null);
@@ -31,47 +80,29 @@ export default function AllFeedbackTab() {
     setCurrentPage(1);
   };
 
-  const visibleRows = useMemo(() => {
-    return mockFeedbackRows.filter((row) => {
-      if (activeNaFilter && !activeNaFilter.predicate(row)) return false;
+  const feedbackQuery = useFeedbackList({
+    page: currentPage,
+    limit: PAGE_SIZE,
+    status:
+      activeNaFilter?.status ??
+      (statusFilter ? statusValueByLabel[statusFilter] : undefined),
+    type:
+      activeNaFilter?.type ??
+      (typeFilter ? typeValueByLabel[typeFilter] : undefined),
+    search: debouncedSearch || undefined,
+    startDate: dateRange.from || undefined,
+    endDate: dateRange.to || undefined,
+  });
 
-      const q = search.toLowerCase();
-      const matchesSearch =
-        !q ||
-        row.userName.toLowerCase().includes(q) ||
-        row.userEmail.toLowerCase().includes(q) ||
-        row.message.toLowerCase().includes(q) ||
-        row.id.toLowerCase().includes(q);
+  const { data } = feedbackQuery;
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-      const matchesStatus = !statusFilter || statusLabels[row.status] === statusFilter;
-      const matchesType = !typeFilter || typeLabels[row.type] === typeFilter;
-
-      let matchesDate = true;
-      if (dateRange.from || dateRange.to) {
-        const submitted = new Date(row.submittedAt).getTime();
-        if (Number.isNaN(submitted)) matchesDate = false;
-        else {
-          if (dateRange.from && submitted < new Date(dateRange.from).setHours(0, 0, 0, 0))
-            matchesDate = false;
-          if (dateRange.to && submitted > new Date(dateRange.to).setHours(23, 59, 59, 999))
-            matchesDate = false;
-        }
-      }
-
-      return matchesSearch && matchesStatus && matchesType && matchesDate;
-    });
-  }, [search, statusFilter, typeFilter, dateRange, activeNaFilter]);
-
-  const totalPages = Math.max(1, Math.ceil(visibleRows.length / PAGE_SIZE));
-  const paginatedRows = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return visibleRows.slice(start, start + PAGE_SIZE);
-  }, [visibleRows, currentPage]);
-
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setCurrentPage(1);
-  };
+  // the list endpoint has no rating filter, so this na filter is applied client-side
+  const isLowRatedNaFilter = activeNaFilter?.key === "lowRatedUnresolvedFeedback";
+  const rows = isLowRatedNaFilter
+    ? (data?.results ?? []).filter((row) => row.isLowRated && row.status !== "resolved")
+    : (data?.results ?? []);
 
   const activeFilterCount = (statusFilter ? 1 : 0) + (typeFilter ? 1 : 0);
 
@@ -93,9 +124,9 @@ export default function AllFeedbackTab() {
 
       <TableToolbar
         label="All Feedback"
-        count={visibleRows.length}
+        count={isLowRatedNaFilter ? rows.length : total}
         searchValue={search}
-        onSearchChange={handleSearchChange}
+        onSearchChange={setSearch}
         searchPlaceholder="Search feedback..."
         filterSlot={
           <>
@@ -132,7 +163,11 @@ export default function AllFeedbackTab() {
         }
       />
 
-      <FeedbackTable rows={paginatedRows} emptyMessage="No feedback matches these filters." />
+      <FeedbackTable
+        rows={rows}
+        emptyMessage="No feedback matches these filters."
+        query={feedbackQuery}
+      />
 
       <Pagination
         currentPage={currentPage}

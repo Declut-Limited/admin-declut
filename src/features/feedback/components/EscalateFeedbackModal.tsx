@@ -3,10 +3,10 @@ import BaseModal from "@/components/generic/BaseModal";
 import Button from "@/components/generic/Button";
 import CustomSelect from "@/components/generic/CustomSelect";
 import FormTextarea from "@/components/generic/FormTextArea";
-import type { FeedbackRow } from "../types";
+import type { FeedbackDetail, FeedbackListItem } from "../types";
 
 interface EscalateFeedbackModalProps {
-  feedback: FeedbackRow;
+  feedback: FeedbackListItem | FeedbackDetail;
   onClose: () => void;
   onEscalate: (payload: { escalateTo: string; reason: string; notes: string }) => void;
   isSubmitting?: boolean;
@@ -35,7 +35,7 @@ export default function EscalateFeedbackModal({
     <BaseModal
       title="Escalate Feedback"
       titleColor="text-[#F04438]"
-      subtitle={feedback.id}
+      subtitle={feedback.slug}
       onClose={onClose}
       width="max-w-2xl"
       height="max-h-[90vh]"

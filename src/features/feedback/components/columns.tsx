@@ -3,7 +3,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { FiEye } from "react-icons/fi";
 import { BsCheckCircle } from "react-icons/bs";
 import { MdOutlineRateReview } from "react-icons/md";
-import { HiOutlineUserPlus } from "react-icons/hi2";
 import { TbAlertTriangle } from "react-icons/tb";
 import RowActionsMenu, {
   type RowAction,
@@ -11,14 +10,13 @@ import RowActionsMenu, {
 import StarRating from "@/components/generic/StarRating";
 import { getInitials } from "@/lib/utils/getInitials";
 import { statusLabels, statusPillClass, typeLabels, typePillClass } from "../mockData";
-import type { FeedbackRow } from "../types";
+import type { FeedbackListItem } from "../types";
 
 interface FeedbackColumnCallbacks {
-  onViewDetails: (row: FeedbackRow) => void;
-  onMarkInReview: (row: FeedbackRow) => void;
-  onMarkResolved: (row: FeedbackRow) => void;
-  onAssign: (row: FeedbackRow) => void;
-  onEscalate: (row: FeedbackRow) => void;
+  onViewDetails: (row: FeedbackListItem) => void;
+  onMarkInReview: (row: FeedbackListItem) => void;
+  onMarkResolved: (row: FeedbackListItem) => void;
+  onEscalate: (row: FeedbackListItem) => void;
 }
 
 function formatDate(iso: string) {
@@ -34,8 +32,8 @@ function formatDate(iso: string) {
 export function createFeedbackColumns(
   callbacks: FeedbackColumnCallbacks,
   compact = false,
-): ColumnDef<FeedbackRow, any>[] {
-  function getRowActions(row: FeedbackRow): RowAction[] {
+): ColumnDef<FeedbackListItem, any>[] {
+  function getRowActions(row: FeedbackListItem): RowAction[] {
     const actions: RowAction[] = [];
 
     if (row.status !== "resolved") {
@@ -61,12 +59,6 @@ export function createFeedbackColumns(
       });
     }
 
-    actions.push({
-      label: row.assignedTo ? "Reassign" : "Assign",
-      icon: <HiOutlineUserPlus className="w-4 h-4" />,
-      onClick: () => callbacks.onAssign(row),
-    });
-
     if (row.status !== "escalated") {
       actions.push({
         label: "Escalate",
@@ -87,16 +79,16 @@ export function createFeedbackColumns(
       cell: () => <input type="checkbox" className="rounded border-gray-300" />,
     },
     {
-      accessorKey: "id",
+      accessorKey: "slug",
       header: "ID",
       cell: ({ row }) => (
         <span className="text-brand-blue font-medium whitespace-nowrap">
-          {row.original.id}
+          {row.original.slug}
         </span>
       ),
     },
     {
-      accessorKey: "userName",
+      id: "user",
       header: "User",
       cell: ({ row }) => (
         <div className="flex items-center gap-2.5">
@@ -104,13 +96,13 @@ export function createFeedbackColumns(
             className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white shrink-0"
             style={{ background: "linear-gradient(135deg, #D19E00, #2563EB)" }}
           >
-            {getInitials(row.original.userName)}
+            {getInitials(row.original.user.name)}
           </span>
           <div>
             <p className="font-medium text-brand-gray-dark dark:text-gray-100">
-              {row.original.userName}
+              {row.original.user.name}
             </p>
-            <p className="text-xs text-brand-gray-light">{row.original.userEmail}</p>
+            <p className="text-xs text-brand-gray-light">{row.original.user.email}</p>
           </div>
         </div>
       ),
@@ -136,29 +128,29 @@ export function createFeedbackColumns(
           <span className="text-xs text-brand-gray-dark dark:text-gray-300">
             {row.original.rating}/5
           </span>
-          {row.original.rating <= 2 && (
+          {row.original.isLowRated && (
             <span className="text-xs font-medium text-[#B42318] dark:text-red-400">Low</span>
           )}
         </div>
       ),
     },
     {
-      accessorKey: "message",
+      accessorKey: "feedbackDescription",
       header: "Feedback",
       cell: ({ row }) => (
         <p
-          title={row.original.message}
+          title={row.original.feedbackDescription}
           className="text-brand-gray-dark dark:text-gray-300 max-w-xs truncate"
         >
-          {row.original.message}
+          {row.original.feedbackDescription}
         </p>
       ),
     },
     {
-      accessorKey: "submittedAt",
+      accessorKey: "createdAt",
       header: "Submitted",
       cell: ({ row }) => (
-        <span className="whitespace-nowrap">{formatDate(row.original.submittedAt)}</span>
+        <span className="whitespace-nowrap">{formatDate(row.original.createdAt)}</span>
       ),
     },
     {
@@ -169,23 +161,8 @@ export function createFeedbackColumns(
           className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${statusPillClass[row.original.status]}`}
         >
           {statusLabels[row.original.status]}
-          {row.original.status === "escalated" && row.original.escalatedTo
-            ? ` · ${row.original.escalatedTo}`
-            : ""}
         </span>
       ),
-    },
-    {
-      id: "assignedTo",
-      header: "Assigned To",
-      cell: ({ row }) =>
-        row.original.assignedTo ? (
-          <span className="text-brand-gray-dark dark:text-gray-300 whitespace-nowrap">
-            {row.original.assignedTo}
-          </span>
-        ) : (
-          <span className="text-brand-blue">Unassigned</span>
-        ),
     },
     {
       id: "actions",

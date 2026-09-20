@@ -3,10 +3,10 @@ import BaseModal from "@/components/generic/BaseModal";
 import Button from "@/components/generic/Button";
 import { getInitials } from "@/lib/utils/getInitials";
 import { mockAssignableUsers, typeLabels } from "../mockData";
-import type { FeedbackRow } from "../types";
+import type { FeedbackDetail, FeedbackListItem } from "../types";
 
 interface AssignFeedbackModalProps {
-  feedback: FeedbackRow;
+  feedback: FeedbackListItem | FeedbackDetail;
   onClose: () => void;
   onAssign: (userName: string | null) => void;
   isSubmitting?: boolean;
@@ -18,12 +18,12 @@ export default function AssignFeedbackModal({
   onAssign,
   isSubmitting,
 }: AssignFeedbackModalProps) {
-  const [selected, setSelected] = useState<string | null>(feedback.assignedTo);
+  const [selected, setSelected] = useState<string | null>(feedback.assignedTo ?? null);
 
   return (
     <BaseModal
       title="Assign Feedback"
-      subtitle={`${feedback.id} · ${typeLabels[feedback.type]}`}
+      subtitle={`${feedback.slug} · ${typeLabels[feedback.type]}`}
       onClose={onClose}
       width="max-w-md"
       footer={

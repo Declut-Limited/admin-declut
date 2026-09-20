@@ -69,7 +69,7 @@ export function createAdminUserColumns(
         variant: "danger",
         onClick: () => callbacks.onSuspend(row),
       });
-    } else {
+    } else if (row.status !== "pending") {
       base.push({
         label: "Reactivate",
         icon: <BsCheckCircle className="w-4 h-4" />,
