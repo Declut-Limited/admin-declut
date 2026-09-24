@@ -29,6 +29,7 @@ import {
 } from "../queries";
 import type { FeedbackNoteRecord } from "../types";
 
+
 const ratingLabel: Record<number, string> = {
   5: "Excellent",
   4: "Good",
