@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiFile } from "react-icons/fi";
+import { FiArrowLeft, FiEdit3, FiFile, FiTrash2 } from "react-icons/fi";
 import { MdOutlineRateReview } from "react-icons/md";
 import { TbAlertTriangle } from "react-icons/tb";
 import { BsCheckCircleFill } from "react-icons/bs";
+import { LuNotepadText } from "react-icons/lu";
 import Button from "@/components/generic/Button";
 import NotFoundState from "@/components/generic/NotFoundState";
 import PageLoader from "@/components/generic/PageLoader";
@@ -11,6 +12,7 @@ import ConfirmModal from "@/components/generic/ConfirmModal";
 import StarRating from "@/components/generic/StarRating";
 import { getInitials } from "@/lib/utils/getInitials";
 import { showToast } from "@/lib/utils/toast";
+import { useMe } from "@/features/auth/queries";
 import EscalateFeedbackModal from "./EscalateFeedbackModal";
 import {
   statusLabels,
@@ -18,7 +20,14 @@ import {
   typeLabels,
   typePillClass,
 } from "../mockData";
-import { useFeedback, useUpdateFeedbackStatus } from "../queries";
+import {
+  useAddFeedbackNote,
+  useDeleteFeedbackNote,
+  useFeedback,
+  useUpdateFeedbackNote,
+  useUpdateFeedbackStatus,
+} from "../queries";
+import type { FeedbackNoteRecord } from "../types";
 
 const ratingLabel: Record<number, string> = {
   5: "Excellent",
@@ -41,9 +50,15 @@ export default function FeedbackDetailPage() {
   const { feedbackId } = useParams<{ feedbackId: string }>();
   const navigate = useNavigate();
 
+  const { data: me } = useMe();
   const { data: detail, isLoading, isError } = useFeedback(feedbackId);
   const { mutateAsync: updateStatus, isPending: isUpdatingStatus } =
     useUpdateFeedbackStatus();
+  const { mutate: addNote, isPending: isAddingNote } =
+    useAddFeedbackNote(detail?.id);
+  const { mutate: updateNote, isPending: isUpdatingNote } =
+    useUpdateFeedbackNote();
+  const { mutateAsync: deleteNoteAsync } = useDeleteFeedbackNote();
 
   const [escalating, setEscalating] = useState(false);
   const [resolving, setResolving] = useState(false);
@@ -68,6 +83,31 @@ export default function FeedbackDetailPage() {
         error: "Couldn't update feedback status.",
       },
     );
+  };
+
+  const handleAddNote = (description: string) => {
+    addNote(description, {
+      onSuccess: () => showToast.success("Note added"),
+      onError: () => showToast.error("Couldn't add note"),
+    });
+  };
+
+  const handleUpdateNote = (noteId: string, description: string) => {
+    updateNote(
+      { noteId, description },
+      {
+        onSuccess: () => showToast.success("Note updated"),
+        onError: () => showToast.error("Couldn't update note"),
+      },
+    );
+  };
+
+  const handleDeleteNote = (noteId: string) => {
+    showToast.promise(deleteNoteAsync(noteId), {
+      loading: "Deleting note...",
+      success: "Note deleted.",
+      error: "Couldn't delete note.",
+    });
   };
 
   return (
@@ -184,6 +224,16 @@ export default function FeedbackDetailPage() {
               )}
             </div>
           )}
+
+          <NotesSection
+            notes={detail.internalNotes}
+            currentAdminId={me?.id}
+            onAddNote={handleAddNote}
+            isAdding={isAddingNote}
+            onUpdateNote={handleUpdateNote}
+            isUpdating={isUpdatingNote}
+            onDeleteNote={handleDeleteNote}
+          />
 
           <div className="detail-section-card border-none">
             <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-3">
@@ -342,6 +392,168 @@ export default function FeedbackDetailPage() {
                 error: "Couldn't resolve feedback.",
               },
             );
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function NotesSection({
+  notes,
+  currentAdminId,
+  onAddNote,
+  isAdding,
+  onUpdateNote,
+  isUpdating,
+  onDeleteNote,
+}: {
+  notes: FeedbackNoteRecord[];
+  currentAdminId: string | undefined;
+  onAddNote: (description: string) => void;
+  isAdding: boolean;
+  onUpdateNote: (noteId: string, description: string) => void;
+  isUpdating: boolean;
+  onDeleteNote: (noteId: string) => void;
+}) {
+  const [newNote, setNewNote] = useState("");
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
+
+  const handleSubmit = () => {
+    const trimmed = newNote.trim();
+    if (!trimmed) return;
+    onAddNote(trimmed);
+    setNewNote("");
+  };
+
+  const startEditing = (note: FeedbackNoteRecord) => {
+    setEditingNoteId(note.id);
+    setEditValue(note.description);
+  };
+
+  const handleSaveEdit = (noteId: string) => {
+    const trimmed = editValue.trim();
+    if (!trimmed) return;
+    onUpdateNote(noteId, trimmed);
+    setEditingNoteId(null);
+  };
+
+  return (
+    <div className="detail-section-card border-none">
+      <p className="text-xs font-semibold text-brand-gray-light uppercase tracking-wide mb-3">
+        Internal Notes
+      </p>
+
+      <div className="flex flex-col gap-2 mb-3">
+        {notes.length === 0 && (
+          <p className="text-sm text-brand-gray-light">No notes yet.</p>
+        )}
+        {notes.map((note) => {
+          const isOwnNote =
+            !!currentAdminId && note.writtenBy?.id === currentAdminId;
+          const isEditing = editingNoteId === note.id;
+
+          return (
+            <div
+              key={note.id}
+              className="bg-[#EFF6FF] dark:bg-blue-950 rounded-lg p-3 group relative"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-brand-gray-dark dark:text-gray-100">
+                  {note.writtenBy?.name ?? "Admin"}
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-brand-gray-light">
+                    {formatDateTime(note.createdAt)}
+                  </span>
+                  {isOwnNote && !isEditing && (
+                    <>
+                      <button
+                        onClick={() => startEditing(note)}
+                        className="text-brand-gray-light hover:text-brand-blue"
+                      >
+                        <FiEdit3 className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => setDeletingNoteId(note.id)}
+                        className="text-brand-gray-light hover:text-red-500"
+                      >
+                        <FiTrash2 className="w-3 h-3" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {isEditing ? (
+                <div className="mt-2">
+                  <textarea
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:border-brand-blue resize-none"
+                  />
+                  <div className="flex items-center justify-end gap-2 mt-2">
+                    <button
+                      onClick={() => setEditingNoteId(null)}
+                      className="text-xs text-brand-gray-dark dark:text-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      disabled={isUpdating || !editValue.trim()}
+                      onClick={() => handleSaveEdit(note.id)}
+                      className="text-xs bg-brand-blue text-white px-3 py-1.5 rounded-lg hover:bg-[#3F5EE0] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isUpdating ? "Saving..." : "Save"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-brand-gray-dark dark:text-gray-300 mt-1">
+                  {note.description}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <textarea
+          value={newNote}
+          onChange={(e) => setNewNote(e.target.value)}
+          placeholder="Add a private note..."
+          rows={3}
+          className="w-full px-3 py-2.5 bg-white dark:bg-gray-800 text-sm placeholder:text-gray-400 focus:outline-none resize-none"
+        />
+        <div className="flex items-center justify-between px-3 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+          <span className="text-xs text-brand-gray-light">
+            Visible to admins only
+          </span>
+          <button
+            disabled={isAdding || !newNote.trim()}
+            onClick={handleSubmit}
+            className="flex items-center gap-1.5 bg-brand-blue text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-[#3F5EE0] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <LuNotepadText className="w-3 h-3" />{" "}
+            {isAdding ? "Adding..." : "Add Note"}
+          </button>
+        </div>
+      </div>
+
+      {deletingNoteId && (
+        <ConfirmModal
+          title="Delete note"
+          message="Are you sure you want to delete this note? This can't be undone."
+          confirmLabel="Delete"
+          variant="danger"
+          onClose={() => setDeletingNoteId(null)}
+          onConfirm={() => {
+            onDeleteNote(deletingNoteId);
+            setDeletingNoteId(null);
           }}
         />
       )}

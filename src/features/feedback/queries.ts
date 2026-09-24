@@ -1,9 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  addFeedbackNote,
+  deleteFeedbackNote,
   getFeedbackAnalytics,
   getFeedbackById,
   getFeedbackList,
   getFeedbackRecentAttention,
+  updateFeedbackNote,
   updateFeedbackStatus,
 } from "./api";
 import type {
@@ -63,6 +66,43 @@ export const useUpdateFeedbackStatus = () => {
     onSuccess: (_data, { feedbackId }) => {
       queryClient.invalidateQueries({ queryKey: ["feedback"] });
       queryClient.invalidateQueries({ queryKey: ["feedback", "detail", feedbackId] });
+    },
+  });
+};
+
+export const useAddFeedbackNote = (feedbackId: string | undefined) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (description: string) =>
+      addFeedbackNote({ feedbackId: feedbackId as string, description }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feedback"] });
+    },
+  });
+};
+
+export const useUpdateFeedbackNote = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      noteId,
+      description,
+    }: {
+      noteId: string;
+      description: string;
+    }) => updateFeedbackNote(noteId, description),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feedback"] });
+    },
+  });
+};
+
+export const useDeleteFeedbackNote = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (noteId: string) => deleteFeedbackNote(noteId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feedback"] });
     },
   });
 };

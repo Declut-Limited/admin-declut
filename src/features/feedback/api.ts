@@ -5,6 +5,7 @@ import type {
   FeedbackDetailResponse,
   FeedbackListParams,
   FeedbackListResponse,
+  FeedbackNoteRecord,
   FeedbackRecentAttentionResponse,
   FeedbackStatusUpdatePayload,
 } from "./types";
@@ -41,5 +42,30 @@ export const updateFeedbackStatus = async (
   payload: FeedbackStatusUpdatePayload,
 ): Promise<FeedbackDetailResponse> => {
   const { data } = await api.patch(`/admin/feedback/${feedbackId}/status`, payload);
+  return data;
+};
+
+export const addFeedbackNote = async (payload: {
+  feedbackId: string;
+  description: string;
+}): Promise<{ success: boolean; data: FeedbackNoteRecord }> => {
+  const { data } = await api.post("/admin/feedback-notes", payload);
+  return data;
+};
+
+export const updateFeedbackNote = async (
+  noteId: string,
+  description: string,
+): Promise<{ success: boolean; data: FeedbackNoteRecord }> => {
+  const { data } = await api.patch(`/admin/feedback-notes/${noteId}`, {
+    description,
+  });
+  return data;
+};
+
+export const deleteFeedbackNote = async (
+  noteId: string,
+): Promise<{ success: boolean }> => {
+  const { data } = await api.delete(`/admin/feedback-notes/${noteId}`);
   return data;
 };

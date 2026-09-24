@@ -101,6 +101,13 @@ export interface FeedbackActivityLog {
   createdAt: string;
 }
 
+export interface FeedbackNoteRecord {
+  id: string;
+  description: string;
+  createdAt: string;
+  writtenBy?: { id: string; name: string; role: string };
+}
+
 export interface FeedbackDetail {
   id: string;
   slug: string;
@@ -114,7 +121,7 @@ export interface FeedbackDetail {
   isLowRated: boolean;
   user: FeedbackDetailUser;
   activityLogs: FeedbackActivityLog[];
-  internalNotes: unknown[];
+  internalNotes: FeedbackNoteRecord[];
   escalatedTo?: string;
   escalatedReason?: string;
   escalatedInternalNote?: string;

@@ -239,11 +239,11 @@ body {
 
   /* revenue chart */
   .chart-card {
-    @apply bg-[#FAFAFA] dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl p-5;
+    @apply flex flex-col bg-[#FAFAFA] dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl p-5;
   }
 
   .chart-container {
-    @apply bg-white rounded-md p-2 dark:bg-[#FFFFE71A];
+    @apply flex-1 bg-white rounded-md p-2 dark:bg-[#FFFFE71A];
   }
 
   .chart-toggle-group {

@@ -281,20 +281,6 @@ export default function CreateCampaignModal({
                   onChange={(e) => set("description", e.target.value)}
                 />
                 <div className="grid grid-cols-2 gap-4">
-                  <FormInput
-                    label="Internal Campaign Code"
-                    placeholder="HOLIDAY-26"
-                    value={form.code}
-                    onChange={(e) => set("code", e.target.value)}
-                  />
-                  <CustomSelect
-                    label="Campaign Status"
-                    value={form.status}
-                    options={["Draft", "Scheduled", "Active"]}
-                    onChange={(v) => set("status", v)}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
                   <DatePicker
                     label="Start Date"
                     value={form.startDate}
@@ -305,6 +291,20 @@ export default function CreateCampaignModal({
                     value={form.endDate}
                     onChange={(v) => set("endDate", v)}
                   />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormInput
+                    label="Internal Campaign Code"
+                    placeholder="HOLIDAY-26"
+                    value={form.code}
+                    onChange={(e) => set("code", e.target.value)}
+                  />
+                  {/* <CustomSelect
+                    label="Campaign Status"
+                    value={form.status}
+                    options={["Draft", "Scheduled", "Active"]}
+                    onChange={(v) => set("status", v)}
+                  /> */}
                 </div>
               </div>
             )}
