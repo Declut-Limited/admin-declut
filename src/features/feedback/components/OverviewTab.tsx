@@ -212,7 +212,7 @@ export default function OverviewTab({ period, customRange }: OverviewTabProps) {
       {/* trend + rating distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="chart-card">
-          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-4">
+          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
             Feedback Trend
           </p>
           <div className="chart-container">
@@ -313,7 +313,7 @@ export default function OverviewTab({ period, customRange }: OverviewTabProps) {
         </div>
 
         <div className="chart-card">
-          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-4">
+          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
             Rating Distribution
           </p>
           <div className="chart-container">
@@ -347,13 +347,16 @@ export default function OverviewTab({ period, customRange }: OverviewTabProps) {
                   </p>
                 </div>
 
-                <div className="flex flex-col gap-3 mt-4">
+                <div className="flex flex-col gap-4 mt-4">
                   {ratingDistribution.map((r) => (
-                    <div key={r.stars} className="flex items-center gap-3">
-                      <span className="text-xs text-brand-gray-dark dark:text-gray-300 w-10 shrink-0">
-                        {r.stars} star{r.stars === 1 ? "" : "s"}
-                      </span>
-                      <div className="category-progress-track flex-1">
+                    <div key={r.stars}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="category-row-label">
+                          {r.stars} star{r.stars === 1 ? "" : "s"}
+                        </span>
+                        <span className="category-row-value">{r.count}</span>
+                      </div>
+                      <div className="category-progress-track">
                         <div
                           className="h-full rounded-full"
                           style={{
@@ -362,9 +365,6 @@ export default function OverviewTab({ period, customRange }: OverviewTabProps) {
                           }}
                         />
                       </div>
-                      <span className="text-xs text-brand-gray-light w-6 text-right shrink-0">
-                        {r.count}
-                      </span>
                     </div>
                   ))}
                 </div>
@@ -377,10 +377,10 @@ export default function OverviewTab({ period, customRange }: OverviewTabProps) {
       {/* type + status */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="chart-card">
-          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-4">
+          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
             Feedback by Type
           </p>
-          <div className="chart-container flex flex-col gap-4 py-2">
+          <div className="chart-container flex flex-col gap-4">
             {analyticsError ? (
               <div className="flex flex-col items-center justify-center gap-2 py-10">
                 <p className="text-sm text-brand-gray-dark dark:text-gray-300">
@@ -429,10 +429,10 @@ export default function OverviewTab({ period, customRange }: OverviewTabProps) {
         </div>
 
         <div className="chart-card">
-          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-4">
+          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
             Feedback by Status
           </p>
-          <div className="chart-container py-2">
+          <div className="chart-container flex flex-col gap-4">
             {analyticsError ? (
               <div className="flex flex-col items-center justify-center gap-2 py-10">
                 <p className="text-sm text-brand-gray-dark dark:text-gray-300">
@@ -449,53 +449,35 @@ export default function OverviewTab({ period, customRange }: OverviewTabProps) {
                 </button>
               </div>
             ) : analyticsLoading ? (
-              <div className="flex flex-col gap-3">
-                <Skeleton className="h-2.5 w-full rounded-full" />
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="flex items-center justify-between">
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i}>
+                  <div className="flex items-center justify-between mb-2">
                     <Skeleton className="h-3.5 w-24" />
                     <Skeleton className="h-3.5 w-16" />
                   </div>
-                ))}
-              </div>
+                  <Skeleton className="h-2 w-full rounded-full" />
+                </div>
+              ))
             ) : (
-              <>
-                <div className="flex w-full h-2.5 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800">
-                  {byStatus
-                    .filter((s) => s.count > 0)
-                    .map((s) => (
-                      <div
-                        key={s.status}
-                        style={{
-                          width: s.percentage,
-                          backgroundColor: statusDotColor[s.status],
-                        }}
-                      />
-                    ))}
-                </div>
-
-                <div className="flex flex-col gap-3 mt-4">
-                  {byStatus.map((s) => (
+              byStatus.map((s) => (
+                <div key={s.status}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="category-row-label">{statusLabels[s.status]}</span>
+                    <span className="category-row-value">
+                      {s.count} ({s.percentage})
+                    </span>
+                  </div>
+                  <div className="category-progress-track">
                     <div
-                      key={s.status}
-                      className="flex items-center justify-between text-xs"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="donut-legend-dot"
-                          style={{ backgroundColor: statusDotColor[s.status] }}
-                        />
-                        <span className="text-brand-gray-dark dark:text-gray-300">
-                          {statusLabels[s.status]}
-                        </span>
-                      </div>
-                      <span className="text-brand-gray-light">
-                        {s.count} ({s.percentage})
-                      </span>
-                    </div>
-                  ))}
+                      className="h-full rounded-full"
+                      style={{
+                        width: s.percentage,
+                        backgroundColor: statusDotColor[s.status],
+                      }}
+                    />
+                  </div>
                 </div>
-              </>
+              ))
             )}
           </div>
         </div>

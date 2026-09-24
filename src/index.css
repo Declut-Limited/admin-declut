@@ -243,7 +243,7 @@ body {
   }
 
   .chart-container {
-    @apply flex-1 bg-white rounded-md p-2 dark:bg-[#FFFFE71A];
+    @apply flex-1 bg-white rounded-md px-4 py-6 dark:bg-[#FFFFE71A];
   }
 
   .chart-toggle-group {

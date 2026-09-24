@@ -283,7 +283,7 @@ export default function OverviewTab() {
 
       {/* reward spend */}
       <div className="chart-card">
-        <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-4">
+        <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
           Reward Spend
         </p>
 
@@ -328,7 +328,7 @@ export default function OverviewTab() {
 
       {/* campaign performance */}
       <div className="chart-card">
-        <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-4">
+        <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
           Campaign Performance
         </p>
         <div className="chart-container overflow-x-auto">
@@ -381,7 +381,7 @@ export default function OverviewTab() {
       {/* top referrers + qualification status */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="chart-card">
-          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-4">
+          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
             Top Referrers
           </p>
           <div className="chart-container">
@@ -420,7 +420,7 @@ export default function OverviewTab() {
         </div>
 
         <div className="chart-card">
-          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-4">
+          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
             Qualification Status
           </p>
           <div className="chart-container flex flex-col items-center">

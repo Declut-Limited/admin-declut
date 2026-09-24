@@ -682,7 +682,7 @@ export default function DashboardPage() {
 
       {/* listings per month */}
       <div className="chart-card mt-6">
-        <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-4">
+        <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
           Listings Per Month
         </p>
 
@@ -755,7 +755,7 @@ export default function DashboardPage() {
       <div className="two-col-grid">
         {/* category distribution */}
         <div className="chart-card">
-          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-4">
+          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
             Category Distribution
           </p>
 
@@ -838,7 +838,7 @@ export default function DashboardPage() {
 
         {/* transaction status */}
         <div className="chart-card">
-          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-4">
+          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
             Transaction Status
           </p>
 
