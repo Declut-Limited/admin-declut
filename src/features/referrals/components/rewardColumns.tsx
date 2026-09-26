@@ -1,21 +1,28 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ColumnDef } from "@tanstack/react-table";
-import { FiEye, FiFileText, FiFlag } from "react-icons/fi";
+import { FiEye, FiCheckCircle } from "react-icons/fi";
 import RowActionsMenu, {
   type RowAction,
 } from "@/components/generic/RowActionsMenu";
-import type { Reward } from "../types";
+import type { ReferralRewardListItem } from "../types";
 
 interface RewardColumnCallbacks {
-  onView: (reward: Reward) => void;
-  onDownloadReceipt: (reward: Reward) => void;
-  onPay: (reward: Reward) => void;
+  onView: (reward: ReferralRewardListItem) => void;
+  onMarkPaid: (reward: ReferralRewardListItem) => void;
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
+  allSelected: boolean;
+  onToggleSelectAll: () => void;
 }
 
-const paymentClass: Record<string, string> = {
-  pending: "text-[#B54708]",
-  paid: "text-[#027A48]",
+const paymentPillClass: Record<string, string> = {
+  pending: "text-[#B54708] bg-[#FFFAEB] dark:text-amber-400 dark:bg-amber-950",
+  paid: "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
+  canceled: "text-[#B42318] bg-[#FEF3F2] dark:text-red-400 dark:bg-red-950",
 };
+
+const paymentFallback =
+  "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800";
 
 const currency = new Intl.NumberFormat("en-NG", {
   style: "currency",
@@ -23,8 +30,11 @@ const currency = new Intl.NumberFormat("en-NG", {
   maximumFractionDigits: 0,
 });
 
-function formatStatus(status: string) {
-  return status.charAt(0).toUpperCase() + status.slice(1);
+function formatWord(word: string) {
+  return word
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function formatDate(iso: string) {
@@ -39,26 +49,21 @@ function formatDate(iso: string) {
 
 export function createRewardColumns(
   callbacks: RewardColumnCallbacks,
-): ColumnDef<Reward, any>[] {
-  function getRowActions(row: Reward): RowAction[] {
+): ColumnDef<ReferralRewardListItem, any>[] {
+  function getRowActions(row: ReferralRewardListItem): RowAction[] {
     const base: RowAction[] = [
       {
         label: "View",
         icon: <FiEye className="w-4 h-4" />,
         onClick: () => callbacks.onView(row),
       },
-      {
-        label: "Download Receipt",
-        icon: <FiFileText className="w-4 h-4" />,
-        onClick: () => callbacks.onDownloadReceipt(row),
-      },
     ];
 
     if (row.payment === "pending") {
       base.push({
-        label: "Pay",
-        icon: <FiFlag className="w-4 h-4" />,
-        onClick: () => callbacks.onPay(row),
+        label: "Mark as Paid",
+        icon: <FiCheckCircle className="w-4 h-4" />,
+        onClick: () => callbacks.onMarkPaid(row),
       });
     }
 
@@ -69,13 +74,32 @@ export function createRewardColumns(
     {
       id: "select",
       header: () => (
-        <input type="checkbox" className="rounded border-gray-300" />
+        <input
+          type="checkbox"
+          checked={callbacks.allSelected}
+          onChange={callbacks.onToggleSelectAll}
+          className="rounded border-gray-300"
+        />
       ),
-      cell: () => <input type="checkbox" className="rounded border-gray-300" />,
+      cell: ({ row }) => (
+        <input
+          type="checkbox"
+          checked={callbacks.selectedIds.has(row.original._id)}
+          onChange={() => callbacks.onToggleSelect(row.original._id)}
+          className="rounded border-gray-300"
+        />
+      ),
     },
-    { accessorKey: "id", header: "Reward ID" },
-    { accessorKey: "participant", header: "Participant" },
-    { accessorKey: "campaign", header: "Campaign" },
+    {
+      id: "participant",
+      header: "Participant",
+      cell: ({ row }) => row.original.participant?.name ?? "—",
+    },
+    {
+      id: "campaign",
+      header: "Campaign",
+      cell: ({ row }) => row.original.campaign?.name ?? "—",
+    },
     {
       accessorKey: "reward",
       header: "Reward",
@@ -91,13 +115,19 @@ export function createRewardColumns(
       header: "Payment",
       cell: ({ row }) => (
         <span
-          className={`text-xs font-medium ${paymentClass[row.original.payment] ?? "text-brand-gray-light"}`}
+          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+            paymentPillClass[row.original.payment] ?? paymentFallback
+          }`}
         >
-          {formatStatus(row.original.payment)}
+          {formatWord(row.original.payment)}
         </span>
       ),
     },
-    { accessorKey: "schedule", header: "Schedule" },
+    {
+      accessorKey: "schedule",
+      header: "Schedule",
+      cell: ({ row }) => formatWord(row.original.schedule),
+    },
     {
       id: "actions",
       header: "Action",

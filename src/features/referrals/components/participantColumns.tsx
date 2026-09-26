@@ -1,20 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ColumnDef } from "@tanstack/react-table";
 import { FiEye } from "react-icons/fi";
-import type { Participant } from "../types";
+import type { ReferralParticipantListItem } from "../types";
 
 interface ParticipantColumnCallbacks {
-  onViewDetails: (participant: Participant) => void;
+  onViewDetails: (participant: ReferralParticipantListItem) => void;
 }
 
 const statusPillClass: Record<string, string> = {
   qualified: "text-brand-blue bg-blue-50 dark:text-blue-400 dark:bg-blue-950",
-  approved: "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
+  paid: "text-[#027A48] bg-[#F6FEF9] dark:text-green-400 dark:bg-green-950",
   expired: "text-[#B42318] bg-[#FEF3F2] dark:text-red-400 dark:bg-red-950",
   in_progress:
     "text-[#B54708] bg-[#FFFAEB] dark:text-amber-400 dark:bg-amber-950",
   disqualified:
     "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800",
+  left: "text-brand-gray-light bg-gray-50 dark:text-gray-400 dark:bg-gray-800",
 };
 
 const statusFallback =
@@ -45,7 +46,7 @@ function formatDate(iso: string) {
 
 export function createParticipantColumns(
   callbacks: ParticipantColumnCallbacks,
-): ColumnDef<Participant, any>[] {
+): ColumnDef<ReferralParticipantListItem, any>[] {
   return [
     {
       id: "select",
@@ -54,24 +55,32 @@ export function createParticipantColumns(
       ),
       cell: () => <input type="checkbox" className="rounded border-gray-300" />,
     },
-    { accessorKey: "name", header: "Participant" },
-    { accessorKey: "campaignName", header: "Campaign Name" },
+    {
+      id: "participant",
+      header: "Participant",
+      cell: ({ row }) => row.original.participant?.name ?? "—",
+    },
+    {
+      id: "campaign",
+      header: "Campaign Name",
+      cell: ({ row }) => row.original.campaign?.name ?? "—",
+    },
     { accessorKey: "referredUsers", header: "Referred Users" },
     { accessorKey: "qualified", header: "Qualified" },
-    { accessorKey: "ownTransactions", header: "Own Transactions" },
+    // { accessorKey: "ownTransactions", header: "Own Transactions" },
     {
-      accessorKey: "progress",
+      accessorKey: "progressPercentage",
       header: "Progress",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <span className="participant-progress-track">
             <span
               className="participant-progress-fill"
-              style={{ width: `${row.original.progress}%` }}
+              style={{ width: `${row.original.progressPercentage}%` }}
             />
           </span>
           <span className="text-xs text-brand-gray-dark dark:text-gray-300">
-            {row.original.progress}%
+            {row.original.progressPercentage}%
           </span>
         </div>
       ),

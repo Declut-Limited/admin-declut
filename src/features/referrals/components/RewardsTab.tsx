@@ -1,105 +1,145 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import TableToolbar from "@/components/generic/TableToolbar";
 import DataTable from "@/components/generic/DataTable";
 import Pagination from "@/components/generic/Pagination";
+import Button from "@/components/generic/Button";
+import ConfirmModal from "@/components/generic/ConfirmModal";
+import { PiExportFill } from "react-icons/pi";
+import { FiCheckCircle } from "react-icons/fi";
 import DateRangeFilter, {
   type DateRange,
 } from "@/components/generic/DateRangeFilter";
 import FiltersButton from "@/components/generic/FiltersButton";
 import CustomSelect from "@/components/generic/CustomSelect";
-import ConfirmModal from "@/components/generic/ConfirmModal";
+import { showToast } from "@/lib/utils/toast";
+import { usePageSize } from "@/lib/hooks/usePageSize";
+import {
+  useReferralCampaigns,
+  useReferralRewards,
+  useExportReferralRewards,
+  useMarkRewardPaid,
+  useBulkMarkRewardsPaid,
+} from "../queries";
 import { createRewardColumns } from "./rewardColumns";
 import ViewRewardModal from "./ViewRewardModal";
-import { showToast } from "@/lib/utils/toast";
-import { PAGE_SIZE } from "@/lib/constants/pagination";
-import type { Reward } from "../types";
+import type { ReferralRewardListItem } from "../types";
 
-// TODO: replace with /admin/referrals/rewards once available
-const mockRewards: Reward[] = [
-  { id: "RWD-003", participant: "Somto Nwosu", campaign: "August Marketplace Boost", reward: 10000, qualifiedOn: "2026-09-30", payment: "pending", schedule: "Manual Batch" },
-  { id: "RWD-004", participant: "Hauwa Musa", campaign: "Hauwa Musa", reward: 5000, qualifiedOn: "2026-08-31", payment: "pending", schedule: "Manual Batch" },
-  { id: "RWD-005", participant: "Femi Balogun", campaign: "Verified Seller Drive", reward: 3000, qualifiedOn: "2026-10-31", payment: "paid", schedule: "Manual Batch" },
-  { id: "RWD-007", participant: "Nneka Obi", campaign: "June Referral Sprint", reward: 2000, qualifiedOn: "2026-06-30", payment: "paid", schedule: "Manual Batch" },
-];
+const STATUS_OPTIONS = ["All Statuses", "Pending", "Paid", "Canceled"];
 
 export default function RewardsTab() {
+  const PAGE_SIZE = usePageSize();
+
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
-  const [paymentFilter, setPaymentFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [campaignFilter, setCampaignFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const [viewingReward, setViewingReward] = useState<Reward | null>(null);
-  const [payingReward, setPayingReward] = useState<Reward | null>(null);
+  const [viewingReward, setViewingReward] =
+    useState<ReferralRewardListItem | null>(null);
+  const [markingPaidReward, setMarkingPaidReward] =
+    useState<ReferralRewardListItem | null>(null);
+  const [bulkMarkPaidOpen, setBulkMarkPaidOpen] = useState(false);
 
-  const rewards = mockRewards;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const campaignsQuery = useReferralCampaigns({ page: 1, limit: 100 });
+  const campaigns = campaignsQuery.data?.results ?? [];
+  const campaignOptions = [
+    "All Campaigns",
+    ...Array.from(new Set(campaigns.map((c) => c.name))),
+  ];
+  const selectedCampaignId = campaigns.find((c) => c.name === campaignFilter)
+    ?._id;
+
+  const rewardsQuery = useReferralRewards({
+    page: currentPage,
+    limit: PAGE_SIZE,
+    status: statusFilter ? statusFilter.toLowerCase() : undefined,
+    campaignId: selectedCampaignId,
+    search: debouncedSearch || undefined,
+    startDate: dateRange.from || undefined,
+    endDate: dateRange.to || undefined,
+  });
+
+  const { data } = rewardsQuery;
+  const rewards = useMemo(() => data?.results ?? [], [data?.results]);
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const { mutateAsync: exportRewards } = useExportReferralRewards();
+  const { mutateAsync: markPaid, isPending: isMarkingPaid } =
+    useMarkRewardPaid();
+  const { mutateAsync: bulkMarkPaid, isPending: isBulkMarkingPaid } =
+    useBulkMarkRewardsPaid();
+
+  const selectedPendingIds = useMemo(
+    () =>
+      rewards
+        .filter((r) => selectedIds.has(r._id) && r.payment === "pending")
+        .map((r) => r._id),
+    [rewards, selectedIds],
+  );
+
+  const allSelected =
+    rewards.length > 0 && rewards.every((r) => selectedIds.has(r._id));
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) {
+        rewards.forEach((r) => next.delete(r._id));
+      } else {
+        rewards.forEach((r) => next.add(r._id));
+      }
+      return next;
+    });
+  };
 
   const columns = useMemo(
     () =>
       createRewardColumns({
         onView: (reward) => setViewingReward(reward),
-        onDownloadReceipt: (reward) => {
-          // TODO: wire receipt endpoint
-          showToast.info("Receipt unavailable", {
-            description: `No receipt endpoint yet for ${reward.id}.`,
-          });
-        },
-        onPay: (reward) => setPayingReward(reward),
+        onMarkPaid: (reward) => setMarkingPaidReward(reward),
+        selectedIds,
+        onToggleSelect: toggleSelect,
+        allSelected,
+        onToggleSelectAll: toggleSelectAll,
       }),
-    [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedIds, allSelected, rewards],
   );
 
-  const visibleRewards = useMemo(() => {
-    return rewards.filter((reward) => {
-      const q = search.toLowerCase();
-      const matchesSearch =
-        !q ||
-        reward.participant.toLowerCase().includes(q) ||
-        reward.campaign.toLowerCase().includes(q) ||
-        reward.id.toLowerCase().includes(q);
-
-      const matchesPayment =
-        !paymentFilter || reward.payment === paymentFilter.toLowerCase();
-
-      let matchesDate = true;
-      if (dateRange.from || dateRange.to) {
-        const qualified = new Date(reward.qualifiedOn).getTime();
-        if (Number.isNaN(qualified)) matchesDate = false;
-        else {
-          if (
-            dateRange.from &&
-            qualified < new Date(dateRange.from).setHours(0, 0, 0, 0)
-          )
-            matchesDate = false;
-          if (
-            dateRange.to &&
-            qualified > new Date(dateRange.to).setHours(23, 59, 59, 999)
-          )
-            matchesDate = false;
-        }
-      }
-
-      return matchesSearch && matchesPayment && matchesDate;
-    });
-  }, [rewards, search, paymentFilter, dateRange]);
-
-  const totalPages = Math.max(1, Math.ceil(visibleRewards.length / PAGE_SIZE));
-
-  const paginatedRewards = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return visibleRewards.slice(start, start + PAGE_SIZE);
-  }, [visibleRewards, currentPage]);
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    setSelectedIds(new Set());
+  };
 
   return (
     <div>
       <TableToolbar
         label="Referrals"
-        count={visibleRewards.length}
+        count={total}
         searchValue={search}
-        onSearchChange={(value) => {
-          setSearch(value);
-          setCurrentPage(1);
-        }}
-        searchPlaceholder="Search users..."
+        onSearchChange={setSearch}
+        searchPlaceholder="Search rewards..."
         filterSlot={
           <>
             <DateRangeFilter
@@ -109,31 +149,82 @@ export default function RewardsTab() {
                 setCurrentPage(1);
               }}
             />
-            <FiltersButton activeCount={paymentFilter ? 1 : 0}>
+            <FiltersButton
+              activeCount={(statusFilter ? 1 : 0) + (campaignFilter ? 1 : 0)}
+            >
               <CustomSelect
                 label="Payment"
-                value={paymentFilter || "All Payments"}
-                options={["All Payments", "Pending", "Paid"]}
+                value={statusFilter || "All Statuses"}
+                options={STATUS_OPTIONS}
                 onChange={(val) => {
-                  setPaymentFilter(val === "All Payments" ? "" : val);
+                  setStatusFilter(val === "All Statuses" ? "" : val);
+                  setCurrentPage(1);
+                }}
+              />
+              <CustomSelect
+                label="Campaign"
+                value={campaignFilter || "All Campaigns"}
+                options={campaignOptions}
+                onChange={(val) => {
+                  setCampaignFilter(val === "All Campaigns" ? "" : val);
                   setCurrentPage(1);
                 }}
               />
             </FiltersButton>
+            <Button
+              leftIcon={<PiExportFill className="w-4 h-4 text-[#98A2B3]" />}
+              onClick={() => {
+                showToast.promise(
+                  exportRewards({
+                    status: statusFilter ? statusFilter.toLowerCase() : undefined,
+                    campaignId: selectedCampaignId,
+                    search: debouncedSearch || undefined,
+                    startDate: dateRange.from || undefined,
+                    endDate: dateRange.to || undefined,
+                  }),
+                  {
+                    loading: "Preparing export...",
+                    success: "Export downloaded.",
+                    error: "Export failed.",
+                  },
+                );
+              }}
+            >
+              Export
+            </Button>
           </>
         }
       />
 
+      {selectedPendingIds.length > 0 && (
+        <div className="flex items-center justify-between px-4 py-2 bg-blue-50 dark:bg-blue-950 rounded-lg mb-2">
+          <span className="text-sm text-brand-blue">
+            {selectedPendingIds.length} pending reward
+            {selectedPendingIds.length === 1 ? "" : "s"} selected
+          </span>
+          <Button
+            leftIcon={<FiCheckCircle className="w-4 h-4 text-white" />}
+            bgColor="bg-brand-blue hover:bg-[#3F5EE0]"
+            textColor="text-white"
+            borderColor="border-transparent"
+            onClick={() => setBulkMarkPaidOpen(true)}
+          >
+            Mark as Paid
+          </Button>
+        </div>
+      )}
+
       <DataTable
-        data={paginatedRewards}
+        data={rewards}
         columns={columns}
+        query={rewardsQuery}
         emptyMessage="No rewards found."
       />
 
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
-        onPageChange={setCurrentPage}
+        onPageChange={handlePageChange}
       />
 
       {viewingReward && (
@@ -143,19 +234,49 @@ export default function RewardsTab() {
         />
       )}
 
-      {payingReward && (
+      {markingPaidReward && (
         <ConfirmModal
-          title="Pay reward"
-          message={`Pay ${payingReward.participant} for ${payingReward.campaign}? This creates a payout record.`}
-          confirmLabel="Pay"
+          title="Mark reward as paid"
+          message={`Mark the reward for ${markingPaidReward.participant?.name ?? "this participant"} as paid?`}
+          confirmLabel="Mark as Paid"
           variant="default"
-          onClose={() => setPayingReward(null)}
+          isSubmitting={isMarkingPaid}
+          onClose={() => setMarkingPaidReward(null)}
           onConfirm={() => {
-            // TODO: wire pay endpoint
-            showToast.success("Reward paid", {
-              description: `${payingReward.id} has been marked as paid.`,
-            });
-            setPayingReward(null);
+            showToast.promise(
+              markPaid(markingPaidReward._id).then(() =>
+                setMarkingPaidReward(null),
+              ),
+              {
+                loading: "Marking reward as paid...",
+                success: "Reward marked as paid.",
+                error: "Couldn't mark reward as paid.",
+              },
+            );
+          }}
+        />
+      )}
+
+      {bulkMarkPaidOpen && (
+        <ConfirmModal
+          title="Mark rewards as paid"
+          message={`Mark ${selectedPendingIds.length} selected reward${selectedPendingIds.length === 1 ? "" : "s"} as paid?`}
+          confirmLabel="Mark as Paid"
+          variant="default"
+          isSubmitting={isBulkMarkingPaid}
+          onClose={() => setBulkMarkPaidOpen(false)}
+          onConfirm={() => {
+            showToast.promise(
+              bulkMarkPaid({ rewardIds: selectedPendingIds }).then(() => {
+                setBulkMarkPaidOpen(false);
+                setSelectedIds(new Set());
+              }),
+              {
+                loading: "Marking rewards as paid...",
+                success: "Rewards marked as paid.",
+                error: "Couldn't mark rewards as paid.",
+              },
+            );
           }}
         />
       )}

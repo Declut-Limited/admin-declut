@@ -6,20 +6,39 @@ import FormTextarea from "@/components/generic/FormTextArea";
 import CustomSelect from "@/components/generic/CustomSelect";
 import MultiCheckboxSelect from "@/components/generic/MultiCheckboxSelect";
 import DatePicker from "@/components/generic/DatePicker";
+import PageLoader from "@/components/generic/PageLoader";
 import ScheduleCampaignModal from "./ScheduleCampaignModal";
 import { BsCheckCircleFill } from "react-icons/bs";
-import { showToast } from "@/lib/utils/toast";
-import type { CampaignFormData } from "../types";
+import { getApiErrorMessage } from "@/lib/utils/getApiErrorMessage";
+import { useReferralCampaign } from "../queries";
+import type {
+  CampaignFormData,
+  CampaignStatus,
+  ReferralCampaign,
+  ReferralCampaignPayload,
+  ReferralCampaignValidationRules,
+} from "../types";
 
 interface CreateCampaignModalProps {
+  // when present, fetches the full campaign and edits it; omit to create new
+  campaignId?: string;
+  isSubmitting?: boolean;
   onClose: () => void;
+  onSubmit: (payload: ReferralCampaignPayload) => void;
+}
+
+interface CampaignWizardProps {
+  campaign?: ReferralCampaign;
+  isSubmitting?: boolean;
+  onClose: () => void;
+  onSubmit: (payload: ReferralCampaignPayload) => void;
 }
 
 const STEPS = [
   "Basic Information",
   "Reward",
   "Referral Requirements",
-  "Referrer Requirements",
+  // "Referrer Requirements", // no corresponding API field
   "Time Rules",
   "Eligibility",
   "Validation Rules",
@@ -27,35 +46,73 @@ const STEPS = [
   "Review & Publish",
 ] as const;
 
-const REWARD_TYPES = ["Fixed Cash Reward", "Wallet Credit (Future)"];
-const REFERRED_USER_ACTIONS = ["Complete Purchase", "Complete Sale"];
-const TRANSACTION_TYPES = [
-  "Any Successful Transaction",
-  "Purchases Only",
-  "Sales Only",
+interface Option {
+  label: string;
+  value: string;
+}
+
+// Only "fixed_cash" is confirmed by the API for now.
+const REWARD_TYPES: Option[] = [
+  { label: "Fixed Cash Reward", value: "fixed_cash" },
+  // { label: "Wallet Credit", value: "wallet_credit" }, // not supported by the API yet
 ];
-const COUNTDOWN_OPTIONS = [
-  "Campaign Start",
-  "Referrer's First Referral",
-  "First Referred Registration",
+const REFERRED_USER_ACTIONS: Option[] = [
+  { label: "Complete Sale", value: "complete_sale" },
+  { label: "Complete Transaction", value: "complete_transaction" },
 ];
-const ELIGIBLE_USERS = ["Verified Users Only", "All Registered Users"];
-const GEO_OPTIONS = ["All Supported Locations", "Lagos Only", "Nigeria Only"];
-const VALIDATION_RULES = [
-  "Transaction Completed",
-  "Escrow released",
-  "Not refunded",
-  "Not disputed",
-  "Not flagged as fraud",
-  "Meets minimum transaction amount",
+// no corresponding API field — see the removed "Referrer Requirements" step below
+// const TRANSACTION_TYPES = [
+//   "Any Successful Transaction",
+//   "Purchases Only",
+//   "Sales Only",
+// ];
+// no corresponding API field — see the removed "Countdown Starts From" field below
+// const COUNTDOWN_OPTIONS = [
+//   "Campaign Start",
+//   "Referrer's First Referral",
+//   "First Referred Registration",
+// ];
+const ELIGIBLE_USERS: Option[] = [
+  { label: "All Registered Users", value: "all_registered_users" },
+  { label: "New Users Only", value: "new_users_only" },
+  { label: "Existing Users", value: "existing_users" },
 ];
-const PAYOUT_METHODS = ["Bank Transfer", "Wallet Credit"];
-const PAYMENT_SCHEDULES = [
-  "Weekly Batch",
-  "Manual Batch",
-  "Immediately after approval",
+const GEO_OPTIONS: Option[] = [
+  { label: "All Supported Locations", value: "all_supported_locations" },
+  // { label: "Lagos", value: "lagos" },
+  // { label: "Abuja", value: "abuja" },
+  // { label: "Port Harcourt", value: "port_harcourt" },
+];
+const VALIDATION_RULES: { label: string; key: keyof ReferralCampaignValidationRules }[] = [
+  { label: "Transaction Completed", key: "transactionCompleted" },
+  { label: "Escrow released", key: "escrowReleased" },
+  { label: "Not refunded", key: "notRefunded" },
+  { label: "Not disputed", key: "notDisputed" },
+  { label: "Not flagged as fraud", key: "notFlagged" },
+  { label: "Meets minimum transaction amount", key: "meetsMinimumTransactionAmount" },
+];
+// Only "bank_transfer" is confirmed by the API for now.
+const PAYMENT_METHODS: Option[] = [
+  { label: "Bank Transfer", value: "bank_transfer" },
+  // { label: "Wallet Credit", value: "wallet_credit" }, // not supported by the API yet
+];
+const PAYMENT_SCHEDULES: Option[] = [
+  { label: "Weekly Batch", value: "weekly_batch" },
+  { label: "Daily Batch", value: "daily_batch" },
+  { label: "Immediately after approval", value: "immediately_after_approval" },
+  { label: "Manual Batch", value: "manual_batch" },
 ];
 const COUNT_OPTIONS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
+
+function labelOf(options: Option[]) {
+  return options.map((o) => o.label);
+}
+function valueForLabel(options: Option[], label: string) {
+  return options.find((o) => o.label === label)?.value;
+}
+function labelForValue(options: Option[], value: string) {
+  return options.find((o) => o.value === value)?.label;
+}
 
 const currency = new Intl.NumberFormat("en-NG", {
   style: "currency",
@@ -79,16 +136,76 @@ const initialForm: CampaignFormData = {
   useSeparateValues: false,
   minValueCompletedSale: "",
   minValueCompletedTransaction: "",
-  referrerTransactionsRequired: "",
-  transactionType: "",
   qualificationWindow: "",
-  countdownStartsFrom: "",
   eligibleUsers: "",
   geographicRestriction: "",
-  validationRules: [...VALIDATION_RULES],
+  validationRules: VALIDATION_RULES.map((r) => r.label),
   payoutMethod: "",
   paymentSchedule: "",
 };
+
+function isoDate(value: string) {
+  if (!value) return "";
+  return value.length > 10 ? value.slice(0, 10) : value;
+}
+
+function buildInitialState(campaign?: ReferralCampaign): {
+  form: CampaignFormData;
+  actions: string[];
+} {
+  if (!campaign) return { form: initialForm, actions: [] };
+
+  const requirement = campaign.referralRequirement;
+  const sameValue =
+    requirement.minimumTransactionValueCompletedSale ===
+    requirement.minimumTransactionValueCompletedTransaction;
+
+  return {
+    form: {
+      name: campaign.name,
+      description: campaign.description,
+      code: campaign.internalCampaignCode,
+      status: campaign.status,
+      startDate: isoDate(campaign.startDate),
+      endDate: isoDate(campaign.endDate),
+      rewardType:
+        labelForValue(REWARD_TYPES, campaign.rewardType) ?? campaign.rewardType,
+      rewardAmount: String(campaign.rewardAmount ?? ""),
+      maxBudget: String(campaign.maxCampaignBudget ?? ""),
+      referralsRequired: String(requirement.referralAmount ?? ""),
+      referredUserAction: "",
+      minTransactionValue: String(
+        requirement.minimumTransactionValueCompletedSale ?? "",
+      ),
+      useSeparateValues: !sameValue,
+      minValueCompletedSale: String(
+        requirement.minimumTransactionValueCompletedSale ?? "",
+      ),
+      minValueCompletedTransaction: String(
+        requirement.minimumTransactionValueCompletedTransaction ?? "",
+      ),
+      qualificationWindow: String(campaign.qualificationWindow ?? ""),
+      eligibleUsers:
+        labelForValue(ELIGIBLE_USERS, campaign.eligibility.eligibleUsers) ??
+        campaign.eligibility.eligibleUsers,
+      geographicRestriction:
+        labelForValue(GEO_OPTIONS, campaign.eligibility.eligibleLocation) ??
+        campaign.eligibility.eligibleLocation,
+      validationRules: VALIDATION_RULES.filter(
+        (r) => campaign.validationRules[r.key],
+      ).map((r) => r.label),
+      payoutMethod:
+        labelForValue(PAYMENT_METHODS, campaign.paymentMethod) ??
+        campaign.paymentMethod,
+      paymentSchedule:
+        labelForValue(PAYMENT_SCHEDULES, campaign.paymentSchedule) ??
+        campaign.paymentSchedule,
+    },
+    actions: requirement.eachReferredTask.map(
+      (task) => labelForValue(REFERRED_USER_ACTIONS, task) ?? task,
+    ),
+  };
+}
 
 function formatDate(iso: string) {
   if (!iso) return "—";
@@ -106,13 +223,132 @@ function money(value: string) {
   return Number.isFinite(n) && value ? currency.format(n) : "—";
 }
 
+function buildPayload(
+  form: CampaignFormData,
+  actions: string[],
+  status: CampaignStatus,
+  schedule?: { date: string; time: string },
+): ReferralCampaignPayload {
+  const saleValue = Number(
+    form.useSeparateValues ? form.minValueCompletedSale : form.minTransactionValue,
+  );
+  const transactionValue = Number(
+    form.useSeparateValues
+      ? form.minValueCompletedTransaction
+      : form.minTransactionValue,
+  );
+
+  const validationRules = VALIDATION_RULES.reduce((acc, rule) => {
+    acc[rule.key] = form.validationRules.includes(rule.label);
+    return acc;
+  }, {} as ReferralCampaignValidationRules);
+
+  const payload: ReferralCampaignPayload = {
+    name: form.name,
+    description: form.description,
+    internalCampaignCode: form.code,
+    status,
+    startDate: form.startDate ? `${form.startDate}T00:00:00.000Z` : "",
+    endDate: form.endDate ? `${form.endDate}T23:59:59.000Z` : "",
+    rewardType: valueForLabel(REWARD_TYPES, form.rewardType) ?? "fixed_cash",
+    rewardAmount: Number(form.rewardAmount) || 0,
+    maxCampaignBudget: Number(form.maxBudget) || 0,
+    referralRequirement: {
+      referralAmount: Number(form.referralsRequired) || 0,
+      eachReferredTask: actions.map(
+        (label) => valueForLabel(REFERRED_USER_ACTIONS, label) ?? label,
+      ),
+      minimumTransactionValueCompletedSale: Number.isFinite(saleValue)
+        ? saleValue
+        : 0,
+      minimumTransactionValueCompletedTransaction: Number.isFinite(
+        transactionValue,
+      )
+        ? transactionValue
+        : 0,
+    },
+    qualificationWindow: Number(form.qualificationWindow) || 0,
+    eligibility: {
+      eligibleUsers:
+        valueForLabel(ELIGIBLE_USERS, form.eligibleUsers) ??
+        "all_registered_users",
+      eligibleLocation:
+        valueForLabel(GEO_OPTIONS, form.geographicRestriction) ??
+        "all_supported_locations",
+    },
+    validationRules,
+    paymentMethod:
+      valueForLabel(PAYMENT_METHODS, form.payoutMethod) ?? "bank_transfer",
+    paymentSchedule:
+      valueForLabel(PAYMENT_SCHEDULES, form.paymentSchedule) ?? "weekly_batch",
+  };
+
+  if (status === "scheduled" && schedule) {
+    payload.activationDate = `${schedule.date}T00:00:00.000Z`;
+    payload.activationTime = schedule.time;
+  }
+
+  return payload;
+}
+
 export default function CreateCampaignModal({
+  campaignId,
+  isSubmitting,
   onClose,
+  onSubmit,
 }: CreateCampaignModalProps) {
+  const {
+    data: campaign,
+    isLoading,
+    isError,
+    error,
+  } = useReferralCampaign(campaignId);
+
+  if (campaignId && isLoading) {
+    return (
+      <BaseModal title="Edit Campaign" onClose={onClose} width="max-w-5xl">
+        <div className="py-20">
+          <PageLoader />
+        </div>
+      </BaseModal>
+    );
+  }
+
+  if (campaignId && (isError || !campaign)) {
+    return (
+      <BaseModal title="Edit Campaign" onClose={onClose} width="max-w-5xl">
+        <div className="detail-empty-state">
+          {getApiErrorMessage(error, "Couldn't load this campaign.")}
+        </div>
+      </BaseModal>
+    );
+  }
+
+  return (
+    <CampaignWizard
+      campaign={campaign}
+      isSubmitting={isSubmitting}
+      onClose={onClose}
+      onSubmit={onSubmit}
+    />
+  );
+}
+
+function CampaignWizard({
+  campaign,
+  isSubmitting,
+  onClose,
+  onSubmit,
+}: CampaignWizardProps) {
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState<CampaignFormData>(initialForm);
-  const [actions, setActions] = useState<string[]>([]);
+  const [{ form: initial, actions: initialActions }] = useState(() =>
+    buildInitialState(campaign),
+  );
+  const [form, setForm] = useState<CampaignFormData>(initial);
+  const [actions, setActions] = useState<string[]>(initialActions);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+
+  const isEditing = Boolean(campaign);
 
   const set = <K extends keyof CampaignFormData>(
     key: K,
@@ -120,46 +356,34 @@ export default function CreateCampaignModal({
   ) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const includesSale = actions.includes("Complete Sale");
-  const includesPurchase = actions.includes("Complete Purchase");
+  const includesTransaction = actions.includes("Complete Transaction");
 
-  // const toggleValidationRule = (rule: string) => {
-  //   set(
-  //     "validationRules",
-  //     form.validationRules.includes(rule)
-  //       ? form.validationRules.filter((r) => r !== rule)
-  //       : [...form.validationRules, rule],
-  //   );
-  // };
+  const toggleValidationRule = (rule: string) => {
+    set(
+      "validationRules",
+      form.validationRules.includes(rule)
+        ? form.validationRules.filter((r) => r !== rule)
+        : [...form.validationRules, rule],
+    );
+  };
 
   const handlePublish = () => {
-    // TODO: wire to referralsApi.createCampaign
-    showToast.success("Campaign published", {
-      description: `${form.name} is now live.`,
-    });
-    onClose();
+    onSubmit(buildPayload(form, actions, "published"));
   };
 
   const handleSaveDraft = () => {
-    // TODO: wire to referralsApi.createCampaign with status draft
-    showToast.success("Saved as draft", {
-      description: `${form.name} has been saved.`,
-    });
-    onClose();
+    onSubmit(buildPayload(form, actions, "draft"));
   };
 
   const handleSchedule = (schedule: { date: string; time: string }) => {
-    // TODO: wire to referralsApi.scheduleCampaign
-    showToast.success("Campaign scheduled", {
-      description: `${form.name} will activate on ${formatDate(schedule.date)} at ${schedule.time}.`,
-    });
+    onSubmit(buildPayload(form, actions, "scheduled", schedule));
     setScheduleOpen(false);
-    onClose();
   };
 
   return (
     <>
       <BaseModal
-        title="Create Campaign"
+        title={isEditing ? "Edit Campaign" : "Create Campaign"}
         onClose={onClose}
         width="max-w-5xl"
         footer={
@@ -176,14 +400,16 @@ export default function CreateCampaignModal({
               </Button>
               <Button
                 onClick={handleSaveDraft}
+                disabled={isSubmitting}
                 bgColor="bg-white dark:bg-gray-900"
                 textColor="text-brand-gray-dark dark:text-gray-200"
                 borderColor="border-gray-200 dark:border-gray-700"
               >
-                Save as Draft
+                {isSubmitting ? "Saving..." : "Save as Draft"}
               </Button>
               <Button
                 onClick={() => setScheduleOpen(true)}
+                disabled={isSubmitting}
                 bgColor="bg-white dark:bg-gray-900"
                 textColor="text-brand-gray-dark dark:text-gray-200"
                 borderColor="border-gray-200 dark:border-gray-700"
@@ -192,11 +418,12 @@ export default function CreateCampaignModal({
               </Button>
               <Button
                 onClick={handlePublish}
+                disabled={isSubmitting}
                 bgColor="bg-brand-blue hover:bg-[#3F5EE0]"
                 textColor="text-white"
                 borderColor="border-transparent"
               >
-                Publish Campaign
+                {isSubmitting ? "Publishing..." : "Publish Campaign"}
               </Button>
             </>
           ) : (
@@ -299,12 +526,6 @@ export default function CreateCampaignModal({
                     value={form.code}
                     onChange={(e) => set("code", e.target.value)}
                   />
-                  {/* <CustomSelect
-                    label="Campaign Status"
-                    value={form.status}
-                    options={["Draft", "Scheduled", "Active"]}
-                    onChange={(v) => set("status", v)}
-                  /> */}
                 </div>
               </div>
             )}
@@ -315,7 +536,7 @@ export default function CreateCampaignModal({
                   label="Reward Type"
                   required
                   value={form.rewardType || "e.g. Fixed Cash Reward"}
-                  options={REWARD_TYPES}
+                  options={labelOf(REWARD_TYPES)}
                   onChange={(v) => set("rewardType", v)}
                 />
                 <div className="grid grid-cols-2 gap-4">
@@ -350,9 +571,9 @@ export default function CreateCampaignModal({
                 <MultiCheckboxSelect
                   label="What must each referred user do?"
                   required
-                  placeholder="e.g. Completed Sale"
+                  placeholder="e.g. Complete Sale"
                   value={actions}
-                  options={REFERRED_USER_ACTIONS}
+                  options={labelOf(REFERRED_USER_ACTIONS)}
                   onChange={setActions}
                 />
 
@@ -376,7 +597,7 @@ export default function CreateCampaignModal({
                 </label>
 
                 {form.useSeparateValues && (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-4">
                     {includesSale && (
                       <FormInput
                         label="Minimum qualifying transaction value for completed sale"
@@ -389,7 +610,7 @@ export default function CreateCampaignModal({
                         }
                       />
                     )}
-                    {includesPurchase && (
+                    {includesTransaction && (
                       <FormInput
                         label="Minimum qualifying transaction value for completed transaction"
                         required
@@ -406,6 +627,7 @@ export default function CreateCampaignModal({
               </div>
             )}
 
+            {/* "Referrer Requirements" step — no corresponding API field yet.
             {step === 3 && (
               <div className="campaign-wizard-panel">
                 <CustomSelect
@@ -424,8 +646,9 @@ export default function CreateCampaignModal({
                 />
               </div>
             )}
+            */}
 
-            {step === 4 && (
+            {step === 3 && (
               <div className="campaign-wizard-panel">
                 <div>
                   <label className="block text-xs text-[#1D2939] dark:text-gray-300 mb-1.5 font-medium">
@@ -447,7 +670,7 @@ export default function CreateCampaignModal({
                     </span>
                   </div>
                 </div>
-
+                {/* "Countdown Starts From" — the API only takes the raw day count above.
                 <CustomSelect
                   label="Countdown Starts From..."
                   required
@@ -455,16 +678,17 @@ export default function CreateCampaignModal({
                   options={COUNTDOWN_OPTIONS}
                   onChange={(v) => set("countdownStartsFrom", v)}
                 />
+                */}
               </div>
             )}
 
-            {step === 5 && (
+            {step === 4 && (
               <div className="campaign-wizard-panel">
                 <CustomSelect
                   label="Eligible Users"
                   required
-                  value={form.eligibleUsers || "e.g. Verified Users Only"}
-                  options={ELIGIBLE_USERS}
+                  value={form.eligibleUsers || "e.g. All Registered Users"}
+                  options={labelOf(ELIGIBLE_USERS)}
                   onChange={(v) => set("eligibleUsers", v)}
                 />
                 <CustomSelect
@@ -473,15 +697,15 @@ export default function CreateCampaignModal({
                   value={
                     form.geographicRestriction || "e.g. All Supported Locations"
                   }
-                  options={GEO_OPTIONS}
+                  options={labelOf(GEO_OPTIONS)}
                   onChange={(v) => set("geographicRestriction", v)}
                 />
               </div>
             )}
 
-            {/* {step === 6 && (
+            {step === 5 && (
               <div className="campaign-wizard-panel">
-                {VALIDATION_RULES.map((rule) => (
+                {VALIDATION_RULES.map(({ label: rule }) => (
                   <label
                     key={rule}
                     className="flex items-center gap-2 text-sm text-brand-gray-dark dark:text-gray-200 cursor-pointer"
@@ -496,28 +720,28 @@ export default function CreateCampaignModal({
                   </label>
                 ))}
               </div>
-            )} */}
+            )}
 
-            {step === 7 && (
+            {step === 6 && (
               <div className="campaign-wizard-panel">
                 <CustomSelect
                   label="Payout Method"
                   required
                   value={form.payoutMethod || "e.g. Bank Transfer"}
-                  options={PAYOUT_METHODS}
+                  options={labelOf(PAYMENT_METHODS)}
                   onChange={(v) => set("payoutMethod", v)}
                 />
                 <CustomSelect
                   label="Payment Schedule"
                   required
                   value={form.paymentSchedule || "e.g. Weekly Batch"}
-                  options={PAYMENT_SCHEDULES}
+                  options={labelOf(PAYMENT_SCHEDULES)}
                   onChange={(v) => set("paymentSchedule", v)}
                 />
               </div>
             )}
 
-            {step === 8 && (
+            {step === 7 && (
               <div className="flex flex-col gap-4">
                 <ReviewSection title="Basic Information">
                   <ReviewRow
@@ -573,6 +797,7 @@ export default function CreateCampaignModal({
                   />
                 </ReviewSection>
 
+                {/* "Referrer Requirements" — no corresponding API field yet.
                 <ReviewSection title="Referrer Requirements">
                   <ReviewRow
                     label="Referrer Transaction Required"
@@ -583,6 +808,7 @@ export default function CreateCampaignModal({
                     value={form.transactionType || "—"}
                   />
                 </ReviewSection>
+                */}
 
                 <ReviewSection title="Time Rules">
                   <ReviewRow
@@ -593,10 +819,12 @@ export default function CreateCampaignModal({
                         : "—"
                     }
                   />
+                  {/* "Countdown Starts From" — the API only takes the raw day count above.
                   <ReviewRow
                     label="Countdown Starts From..."
                     value={form.countdownStartsFrom || "—"}
                   />
+                  */}
                 </ReviewSection>
 
                 <ReviewSection title="Eligibility">
@@ -635,6 +863,7 @@ export default function CreateCampaignModal({
 
       {scheduleOpen && (
         <ScheduleCampaignModal
+          isSubmitting={isSubmitting}
           onClose={() => setScheduleOpen(false)}
           onConfirm={handleSchedule}
         />

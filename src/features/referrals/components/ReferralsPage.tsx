@@ -2,13 +2,14 @@ import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import PageHeader from "@/components/generic/PageHeader";
 import Button from "@/components/generic/Button";
-import { PiExportFill } from "react-icons/pi";
 import { FaCirclePlus } from "react-icons/fa6";
 import OverviewTab from "./OverviewTab";
 import CampaignsTab from "./CampaignsTab";
 import CreateCampaignModal from "./CreateCampaignModal";
 import ParticipantsTab from "./ParticipantsTab";
 import RewardsTab from "./RewardsTab";
+import { showToast } from "@/lib/utils/toast";
+import { useCreateReferralCampaign } from "../queries";
 
 const TABS = ["Overview", "Campaigns", "Participants", "Rewards"] as const;
 type ReferralTab = (typeof TABS)[number];
@@ -16,6 +17,8 @@ type ReferralTab = (typeof TABS)[number];
 export default function ReferralsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [createOpen, setCreateOpen] = useState(false);
+  const { mutateAsync: createCampaign, isPending: isCreating } =
+    useCreateReferralCampaign();
 
   const tabParam = searchParams.get("tab");
   const activeTab: ReferralTab = TABS.includes(tabParam as ReferralTab)
@@ -31,14 +34,6 @@ export default function ReferralsPage() {
         subtitle="Track invited users, qualification progress, and referral rewards."
         actions={
           <>
-            <Button
-              leftIcon={<PiExportFill className="w-4 h-4 text-[#98A2B3]" />}
-              onClick={() => {
-                /* TODO: no referrals export endpoint yet */
-              }}
-            >
-              Export
-            </Button>
             <Button
               leftIcon={<FaCirclePlus className="w-4 h-4 text-white" />}
               bgColor="bg-brand-blue hover:bg-[#3F5EE0]"
@@ -70,7 +65,20 @@ export default function ReferralsPage() {
       {activeTab === "Rewards" && <RewardsTab />}
 
       {createOpen && (
-        <CreateCampaignModal onClose={() => setCreateOpen(false)} />
+        <CreateCampaignModal
+          isSubmitting={isCreating}
+          onClose={() => setCreateOpen(false)}
+          onSubmit={(payload) => {
+            showToast.promise(
+              createCampaign(payload).then(() => setCreateOpen(false)),
+              {
+                loading: `Creating ${payload.name || "campaign"}...`,
+                success: "Campaign created.",
+                error: "Couldn't create campaign.",
+              },
+            );
+          }}
+        />
       )}
     </div>
   );

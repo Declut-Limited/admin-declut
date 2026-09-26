@@ -89,7 +89,7 @@ export default function DataTable<TData>({
                 className="border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 text-brand-gray-dark dark:text-gray-400 dark:hover:bg-gray-800/50"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-3">
+                  <td key={cell.id} className="px-4 py-3 whitespace-nowrap">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -11,52 +11,30 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { FiChevronDown } from "react-icons/fi";
-import { IoArrowUpCircle } from "react-icons/io5";
 import { TbAlertCircleFilled } from "react-icons/tb";
-import type { IconType } from "react-icons";
-import calendar from "../../../assets/icons/calendar.svg";
 import Skeleton from "@/components/generic/Skeleton";
+import CustomSelect from "@/components/generic/CustomSelect";
 import DateRangeFilter, {
   type DateRange,
 } from "@/components/generic/DateRangeFilter";
-import type { ReferralOverview } from "../types";
+import { getApiErrorMessage } from "@/lib/utils/getApiErrorMessage";
+import { useReferralAnalytics, useReferralDashboard } from "../queries";
+import type { ReferralDashboardQualificationStatus } from "../types";
 
-type DashboardFilter =
+type AnalyticsPeriod =
   | "thisMonth"
   | "lastMonth"
   | "last3Months"
   | "thisYear"
+  | "lastYear"
   | "custom";
 
-interface StatCard {
-  label: string;
-  value: string;
-  meta: string;
-  trend: "positive" | "negative" | "neutral";
-}
-
-const trendConfig: Record<StatCard["trend"], { icon: IconType; text: string }> =
-  {
-    positive: {
-      icon: IoArrowUpCircle,
-      text: "text-green-600 dark:text-green-400",
-    },
-    negative: {
-      icon: TbAlertCircleFilled,
-      text: "text-red-600 dark:text-red-400",
-    },
-    neutral: {
-      icon: TbAlertCircleFilled,
-      text: "text-amber-600 dark:text-amber-400",
-    },
-  };
-
-const periodOptions: { label: string; value: DashboardFilter }[] = [
+const periodOptions: { label: string; value: AnalyticsPeriod }[] = [
   { label: "This Month", value: "thisMonth" },
   { label: "Last Month", value: "lastMonth" },
   { label: "Last 3 Months", value: "last3Months" },
   { label: "This Year", value: "thisYear" },
+  { label: "Last Year", value: "lastYear" },
   { label: "Custom Range", value: "custom" },
 ];
 
@@ -72,108 +50,112 @@ function formatCompactNaira(value: number) {
   return `₦${value}`;
 }
 
-// TODO: replace with /admin/referrals/overview once available
-const mockOverview: ReferralOverview = {
-  activeCampaigns: 2,
-  participants: 1235,
-  successfulReferrals: 468,
-  rewardsPaid: 4240000,
-  conversionRate: 28.7,
-  rewardSpendTotal: 364900000,
-  bestMonth: "July - 50 Users",
-  rewardSpend: [
-    { month: "Jan", value: 38 },
-    { month: "Feb", value: 12 },
-    { month: "Mar", value: 60 },
-    { month: "Apr", value: 10 },
-    { month: "May", value: 30 },
-    { month: "Jun", value: 95 },
-    { month: "Jul", value: 14 },
-    { month: "Aug", value: 98 },
-    { month: "Sep", value: 48 },
-    { month: "Oct", value: 82 },
-  ],
-  campaignPerformance: [
-    { campaign: "September Refer & Earn", participants: 842, referrals: 1204, successful: 486, conversion: 40.4, qualified: 216, rewardSpend: 2150000 },
-    { campaign: "Lagos Growth Campaign", participants: 428, referrals: 608, successful: 294, conversion: 48.4, qualified: 131, rewardSpend: 858000 },
-    { campaign: "New Buyer Challenge", participants: 219, referrals: 301, successful: 106, conversion: 35.2, qualified: 48, rewardSpend: 240000 },
-  ],
-  topReferrers: [
-    { participant: "Chibuzie Eke", successfulReferrals: 842, qualified: 216, transactionsGenerated: 24 },
-    { participant: "Fortune Onyemuwa", successfulReferrals: 426, qualified: 131, transactionsGenerated: 21 },
-    { participant: "Idowu Olatunji", successfulReferrals: 219, qualified: 48, transactionsGenerated: 17 },
-  ],
-  qualificationStatus: [
-    { name: "Qualified", value: 35, color: "#6366F1" },
-    { name: "Paid", value: 28, color: "#34D399" },
-    { name: "In Progress", value: 18, color: "#F59E0B" },
-    { name: "Expired", value: 12, color: "#22D3EE" },
-    { name: "Disqualified", value: 7, color: "#A78BFA" },
-  ],
-};
-
-function buildStats(overview: ReferralOverview): StatCard[] {
-  return [
-    {
-      label: "Active Campaigns",
-      value: String(overview.activeCampaigns),
-      meta: "Currently running",
-      trend: "positive",
-    },
-    {
-      label: "Participants",
-      value: overview.participants.toLocaleString(),
-      meta: "users participating",
-      trend: "positive",
-    },
-    {
-      label: "Successful Referrals",
-      value: overview.successfulReferrals.toLocaleString(),
-      meta: "completed qualifying activity",
-      trend: "positive",
-    },
-    {
-      label: "Rewards Paid",
-      value: currencyFormatter.format(overview.rewardsPaid),
-      meta: "successfully paid",
-      trend: "neutral",
-    },
-    {
-      label: "Conversion Rate",
-      value: `${overview.conversionRate}%`,
-      meta: "referral to qualification",
-      trend: "positive",
-    },
-  ];
+function formatDate(iso: string) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
+const CURRENT_YEAR = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from({ length: 5 }, (_, i) =>
+  String(CURRENT_YEAR - i),
+);
+
+const QUALIFICATION_STATUS_META: {
+  key: keyof ReferralDashboardQualificationStatus;
+  label: string;
+  color: string;
+}[] = [
+  { key: "qualified", label: "Qualified", color: "#6366F1" },
+  { key: "paid", label: "Paid", color: "#34D399" },
+  { key: "inProgress", label: "In Progress", color: "#F59E0B" },
+  { key: "expired", label: "Expired", color: "#22D3EE" },
+  { key: "disqualified", label: "Disqualified", color: "#A78BFA" },
+  { key: "left", label: "Left", color: "#F472B6" },
+];
+
 export default function OverviewTab() {
-  const [period, setPeriod] = useState<DashboardFilter>("thisMonth");
-  const [periodOpen, setPeriodOpen] = useState(false);
+  const [period, setPeriod] = useState<AnalyticsPeriod>("thisMonth");
   const [customRange, setCustomRange] = useState<DateRange>({
     from: "",
     to: "",
   });
-  const ref = useRef<HTMLDivElement>(null);
+  const [year, setYear] = useState(String(CURRENT_YEAR));
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node))
-        setPeriodOpen(false);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // TODO: swap for useReferralOverview({ filter: period, ... })
-  const overview = mockOverview;
-  const overviewLoading = false;
-  const overviewError = false;
-
-  const stats = useMemo(() => (overview ? buildStats(overview) : []), [overview]);
-  const periodLabel = periodOptions.find((o) => o.value === period)?.label ?? "";
   const awaitingCustomRange =
     period === "custom" && (!customRange.from || !customRange.to);
+
+  const analyticsQuery = useReferralAnalytics(
+    awaitingCustomRange
+      ? undefined
+      : {
+          period,
+          startDate: period === "custom" ? customRange.from : undefined,
+          endDate: period === "custom" ? customRange.to : undefined,
+        },
+  );
+  const {
+    data: analytics,
+    isLoading: analyticsLoading,
+    isError: analyticsError,
+    error: analyticsErrorObj,
+  } = analyticsQuery;
+
+  const stats = useMemo(() => {
+    if (!analytics) return [];
+    const { insights } = analytics;
+    return [
+      {
+        label: "Active Campaigns",
+        value: String(insights.activeCampaigns),
+        meta: "Currently running",
+      },
+      {
+        label: "Participants",
+        value: insights.participants.toLocaleString(),
+        meta: "users participating",
+      },
+      {
+        label: "Successful Referrals",
+        value: insights.successfulReferrals.toLocaleString(),
+        meta: "completed qualifying activity",
+      },
+      {
+        label: "Reward Paid",
+        value: currencyFormatter.format(insights.rewardPaid),
+        meta: "successfully paid",
+      },
+      {
+        label: "Conversion Rate",
+        value: insights.conversionRate,
+        meta: "referral to qualification",
+      },
+    ];
+  }, [analytics]);
+
+  const periodLabel =
+    periodOptions.find((o) => o.value === period)?.label ?? "";
+
+  const dashboardQuery = useReferralDashboard({ year: Number(year) });
+  const { data: dashboard, isLoading, isError, error } = dashboardQuery;
+
+  const qualificationSlices = useMemo(() => {
+    if (!dashboard) return [];
+    return QUALIFICATION_STATUS_META.map((meta) => ({
+      name: meta.label,
+      value: dashboard.qualificationStatus[meta.key],
+      color: meta.color,
+    }));
+  }, [dashboard]);
+
+  const qualificationTotal = qualificationSlices.reduce(
+    (sum, slice) => sum + slice.value,
+    0,
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -184,41 +166,27 @@ export default function OverviewTab() {
             <span className="font-medium text-[#454545] dark:text-gray-100">
               {periodLabel}
             </span>
+            {analytics && (
+              <span className="text-brand-gray-light">
+                {" "}
+                ({formatDate(analytics.since)} – {formatDate(analytics.until)})
+              </span>
+            )}
           </p>
 
           <div className="flex items-center gap-2">
             {period === "custom" && (
               <DateRangeFilter value={customRange} onChange={setCustomRange} />
             )}
-
-            <div className="relative" ref={ref}>
-              <button
-                className="period-filter-trigger cursor-pointer"
-                onClick={() => setPeriodOpen((o) => !o)}
-              >
-                <img src={calendar} alt="calendar" className="w-4 h-4" />
-                {periodLabel}
-                <FiChevronDown
-                  className={`w-4 h-4 transition-transform ${periodOpen ? "rotate-180" : ""}`}
-                />
-              </button>
-
-              {periodOpen && (
-                <div className="period-filter-dropdown">
-                  {periodOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      className="period-filter-option"
-                      onClick={() => {
-                        setPeriod(option.value);
-                        setPeriodOpen(false);
-                      }}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+            <div className="w-40">
+              <CustomSelect
+                value={periodLabel}
+                options={periodOptions.map((o) => o.label)}
+                onChange={(label) => {
+                  const option = periodOptions.find((o) => o.label === label);
+                  if (option) setPeriod(option.value);
+                }}
+              />
             </div>
           </div>
         </div>
@@ -230,21 +198,16 @@ export default function OverviewTab() {
                 Pick a start and end date to see insights.
               </p>
             </div>
-          ) : overviewError ? (
+          ) : analyticsError ? (
             <div className="col-span-full flex flex-col items-center justify-center gap-2 py-10 bg-[#FAFAFA] dark:bg-[#FFFFE71A] rounded-md">
               <p className="text-sm text-brand-gray-dark dark:text-gray-300">
-                Couldn't load referral insights for this period.
+                {getApiErrorMessage(
+                  analyticsErrorObj,
+                  "Couldn't load referral insights for this period.",
+                )}
               </p>
-              <button
-                onClick={() => {
-                  /* TODO: refetch once wired */
-                }}
-                className="text-sm text-brand-blue hover:underline cursor-pointer"
-              >
-                Try again
-              </button>
             </div>
-          ) : overviewLoading ? (
+          ) : analyticsLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="stats-card">
                 <div className="bg-[#FAFAFA] rounded-md p-2 dark:bg-[#FFFFE71A]">
@@ -263,16 +226,10 @@ export default function OverviewTab() {
                   <p className="stats-card-label">{stat.label}</p>
                   <p className="stats-card-value">{stat.value}</p>
                 </div>
-
                 <div className="stats-card-meta">
-                  {(() => {
-                    const { icon: Icon, text } = trendConfig[stat.trend];
-                    return (
-                      <span className="w-4 h-4 rounded-full flex items-center justify-center shrink-0">
-                        <Icon className={`w-4 h-4 ${text}`} />
-                      </span>
-                    );
-                  })()}
+                  <span className="w-4 h-4 rounded-full flex items-center justify-center shrink-0">
+                    <TbAlertCircleFilled className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  </span>
                   <span>{stat.meta}</span>
                 </div>
               </div>
@@ -281,187 +238,238 @@ export default function OverviewTab() {
         </div>
       </div>
 
-      {/* reward spend */}
-      <div className="chart-card">
-        <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
-          Reward Spend
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-[#888888] dark:text-gray-400">
+          Showing chart data for:{" "}
+          <span className="font-medium text-[#454545] dark:text-gray-100">
+            {year}
+          </span>
         </p>
-
-        <div className="chart-container">
-          <div className="flex items-center gap-10 pb-4 border-b border-gray-200 dark:border-gray-800">
-            <div>
-              <p className="chart-total-label">Total</p>
-              <p className="chart-total-value">
-                {formatCompactNaira(overview.rewardSpendTotal)}
-              </p>
-            </div>
-            <div>
-              <p className="chart-total-label">Best Month</p>
-              <p className="chart-total-value">{overview.bestMonth}</p>
-            </div>
-          </div>
-
-          <ResponsiveContainer width="100%" height={260} className="mt-4">
-            <BarChart data={overview.rewardSpend}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke="#E5E7EB"
-              />
-              <XAxis
-                dataKey="month"
-                tick={{ fontSize: 12, fill: "#9CA3AF" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 12, fill: "#9CA3AF" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip />
-              <Bar dataKey="value" fill="#4F6EF7" maxBarSize={60} />
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="w-32">
+          <CustomSelect value={year} options={YEAR_OPTIONS} onChange={setYear} />
         </div>
       </div>
 
-      {/* campaign performance */}
-      <div className="chart-card">
-        <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
-          Campaign Performance
-        </p>
-        <div className="chart-container overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs text-brand-gray-dark dark:text-gray-200 tracking-wider font-semibold">
-                <th className="pb-2">Campaign</th>
-                <th className="pb-2">Participants</th>
-                <th className="pb-2">Referrals</th>
-                <th className="pb-2">Successful</th>
-                <th className="pb-2">Conversion</th>
-                <th className="pb-2">Qualified</th>
-                <th className="pb-2">Reward Spend</th>
-              </tr>
-            </thead>
-            <tbody>
-              {overview.campaignPerformance.map((row) => (
-                <tr
-                  key={row.campaign}
-                  className="border-t border-gray-50 dark:border-gray-800 font-medium text-xs"
-                >
-                  <td className="py-2.5 text-brand-gray-dark dark:text-gray-200">
-                    {row.campaign}
-                  </td>
-                  <td className="py-2.5 text-brand-gray-dark dark:text-gray-300">
-                    {row.participants}
-                  </td>
-                  <td className="py-2.5 text-brand-gray-dark dark:text-gray-300">
-                    {row.referrals}
-                  </td>
-                  <td className="py-2.5 text-brand-gray-dark dark:text-gray-300">
-                    {row.successful}
-                  </td>
-                  <td className="py-2.5 text-brand-gray-dark dark:text-gray-300">
-                    {row.conversion}%
-                  </td>
-                  <td className="py-2.5 text-brand-gray-dark dark:text-gray-300">
-                    {row.qualified}
-                  </td>
-                  <td className="py-2.5 text-brand-gray-dark dark:text-gray-300">
-                    {formatCompactNaira(row.rewardSpend)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* top referrers + qualification status */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="chart-card">
-          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
-            Top Referrers
+      {isError ? (
+        <div className="flex flex-col items-center justify-center gap-2 py-10 bg-[#FAFAFA] dark:bg-[#FFFFE71A] rounded-md">
+          <p className="text-sm text-brand-gray-dark dark:text-gray-300">
+            {getApiErrorMessage(error, "Couldn't load referral insights.")}
           </p>
-          <div className="chart-container">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs text-brand-gray-dark dark:text-gray-200 tracking-wider font-semibold">
-                  <th className="pb-2">Participant</th>
-                  <th className="pb-2">Successful Referrals</th>
-                  <th className="pb-2">Qualified</th>
-                  <th className="pb-2">Transactions Generated</th>
-                </tr>
-              </thead>
-              <tbody>
-                {overview.topReferrers.map((row) => (
-                  <tr
-                    key={row.participant}
-                    className="border-t border-gray-50 dark:border-gray-800 text-xs font-medium"
-                  >
-                    <td className="py-2.5 text-brand-gray-dark dark:text-gray-200">
-                      {row.participant}
-                    </td>
-                    <td className="py-2.5 text-brand-gray-dark dark:text-gray-300">
-                      {row.successfulReferrals}
-                    </td>
-                    <td className="py-2.5 text-brand-gray-dark dark:text-gray-300">
-                      {row.qualified}
-                    </td>
-                    <td className="py-2.5 text-brand-gray-dark dark:text-gray-300">
-                      {row.transactionsGenerated}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </div>
+      ) : isLoading || !dashboard ? (
+        <div className="flex flex-col gap-6">
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      ) : (
+        <>
+          {/* reward spend */}
+          <div className="chart-card">
+            <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
+              Reward Spend
+            </p>
 
-        <div className="chart-card">
-          <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
-            Qualification Status
-          </p>
-          <div className="chart-container flex flex-col items-center">
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={overview.qualificationStatus}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={70}
-                  outerRadius={110}
-                  paddingAngle={1}
-                  cornerRadius={3}
-                  startAngle={90}
-                  endAngle={-270}
-                >
-                  {overview.qualificationStatus.map((slice) => (
-                    <Cell key={slice.name} fill={slice.color} stroke="none" />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-
-            <div className="flex flex-wrap items-center justify-center gap-4 mt-2">
-              {overview.qualificationStatus.map((slice) => (
-                <div
-                  key={slice.name}
-                  className="flex items-center gap-1.5 text-xs text-[#000000B2] dark:text-gray-400"
-                >
-                  <span
-                    className="donut-legend-dot"
-                    style={{ backgroundColor: slice.color }}
-                  />
-                  {slice.name}
+            <div className="chart-container">
+              <div className="flex items-center gap-10 pb-4 border-b border-gray-200 dark:border-gray-800">
+                <div>
+                  <p className="chart-total-label">Total</p>
+                  <p className="chart-total-value">
+                    {formatCompactNaira(dashboard.rewardSpent.totalSpent)}
+                  </p>
                 </div>
-              ))}
+                <div>
+                  <p className="chart-total-label">Best Month</p>
+                  <p className="chart-total-value">
+                    {dashboard.rewardSpent.bestMonth ?? "—"}
+                  </p>
+                </div>
+              </div>
+
+              <ResponsiveContainer width="100%" height={260} className="mt-4">
+                <BarChart data={dashboard.rewardSpent.chart}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="#E5E7EB"
+                  />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fontSize: 12, fill: "#9CA3AF" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12, fill: "#9CA3AF" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip />
+                  <Bar dataKey="amountSpent" fill="#4F6EF7" maxBarSize={60} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
-        </div>
-      </div>
+
+          {/* campaign performance */}
+          <div className="chart-card">
+            <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
+              Campaign Performance
+            </p>
+            <div className="chart-container overflow-x-auto">
+              {dashboard.campaignPerformance.length === 0 ? (
+                <div className="detail-empty-state">No campaigns yet.</div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-brand-gray-dark dark:text-gray-200 tracking-wider font-semibold">
+                      <th className="pb-2">Campaign</th>
+                      <th className="pb-2">Participants</th>
+                      <th className="pb-2">Referrals</th>
+                      <th className="pb-2">Successful</th>
+                      <th className="pb-2">Conversion</th>
+                      <th className="pb-2">Qualified</th>
+                      <th className="pb-2">Reward Spend</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dashboard.campaignPerformance.map((row) => (
+                      <tr
+                        key={row.id}
+                        className="border-t border-gray-50 dark:border-gray-800 font-medium text-xs"
+                      >
+                        <td className="py-2.5 text-brand-gray-dark dark:text-gray-200">
+                          {row.name}
+                        </td>
+                        <td className="py-2.5 text-brand-gray-dark dark:text-gray-300">
+                          {row.participants}
+                        </td>
+                        <td className="py-2.5 text-brand-gray-dark dark:text-gray-300">
+                          {row.referralCount}
+                        </td>
+                        <td className="py-2.5 text-brand-gray-dark dark:text-gray-300">
+                          {row.successfulCount}
+                        </td>
+                        <td className="py-2.5 text-brand-gray-dark dark:text-gray-300">
+                          {row.conversionRate}
+                        </td>
+                        <td className="py-2.5 text-brand-gray-dark dark:text-gray-300">
+                          {row.qualified}
+                        </td>
+                        <td className="py-2.5 text-brand-gray-dark dark:text-gray-300">
+                          {formatCompactNaira(row.rewardSpent)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          {/* top referrers + qualification status */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="chart-card">
+              <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
+                Top Referrers
+              </p>
+              <div className="chart-container">
+                {dashboard.topReferrals.length === 0 ? (
+                  <div className="detail-empty-state">
+                    No top referrers yet.
+                  </div>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-xs text-brand-gray-dark dark:text-gray-200 tracking-wider font-semibold">
+                        <th className="pb-2">Participant</th>
+                        <th className="pb-2">Successful Referrals</th>
+                        <th className="pb-2">Qualified</th>
+                        <th className="pb-2">Transactions Generated</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dashboard.topReferrals.map((row) => (
+                        <tr
+                          key={row.participantId}
+                          className="border-t border-gray-50 dark:border-gray-800 text-xs font-medium"
+                        >
+                          <td className="py-2.5 text-brand-gray-dark dark:text-gray-200">
+                            {row.name}
+                          </td>
+                          <td className="py-2.5 text-brand-gray-dark dark:text-gray-300">
+                            {row.successfulReferrals}
+                          </td>
+                          <td className="py-2.5 text-brand-gray-dark dark:text-gray-300">
+                            {row.qualified}
+                          </td>
+                          <td className="py-2.5 text-brand-gray-dark dark:text-gray-300">
+                            {row.transactionsGenerated}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+
+            <div className="chart-card">
+              <p className="text-sm font-semibold tracking-wide text-[#888888] dark:text-gray-400 uppercase mb-6">
+                Qualification Status
+              </p>
+              <div className="chart-container flex flex-col items-center">
+                {qualificationTotal === 0 ? (
+                  <div className="detail-empty-state">
+                    No participant activity yet.
+                  </div>
+                ) : (
+                  <>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={qualificationSlices}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius={70}
+                          outerRadius={110}
+                          paddingAngle={1}
+                          cornerRadius={3}
+                          startAngle={90}
+                          endAngle={-270}
+                        >
+                          {qualificationSlices.map((slice) => (
+                            <Cell
+                              key={slice.name}
+                              fill={slice.color}
+                              stroke="none"
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+
+                    <div className="flex flex-wrap items-center justify-center gap-4 mt-2">
+                      {qualificationSlices.map((slice) => (
+                        <div
+                          key={slice.name}
+                          className="flex items-center gap-1.5 text-xs text-[#000000B2] dark:text-gray-400"
+                        >
+                          <span
+                            className="donut-legend-dot"
+                            style={{ backgroundColor: slice.color }}
+                          />
+                          {slice.name}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

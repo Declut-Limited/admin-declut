@@ -1,7 +1,10 @@
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import TableToolbar from "@/components/generic/TableToolbar";
 import DataTable from "@/components/generic/DataTable";
 import Pagination from "@/components/generic/Pagination";
+import Button from "@/components/generic/Button";
+import { PiExportFill } from "react-icons/pi";
 import DateRangeFilter, {
   type DateRange,
 } from "@/components/generic/DateRangeFilter";
@@ -12,43 +15,80 @@ import { createCampaignColumns } from "./campaignColumns";
 import ViewCampaignModal from "./ViewCampaignModal";
 import CreateCampaignModal from "./CreateCampaignModal";
 import { showToast } from "@/lib/utils/toast";
-import { PAGE_SIZE } from "@/lib/constants/pagination";
-import type { Campaign } from "../types";
+import { getApiErrorMessage } from "@/lib/utils/getApiErrorMessage";
+import { usePageSize } from "@/lib/hooks/usePageSize";
+import { getReferralCampaign } from "../api";
+import {
+  useReferralCampaigns,
+  useUpdateReferralCampaign,
+  useDuplicateReferralCampaign,
+  useArchiveReferralCampaign,
+  useExportReferralCampaigns,
+} from "../queries";
+import type { ReferralCampaign, ReferralCampaignListItem } from "../types";
 
-// TODO: replace with /admin/referrals/campaigns once available
-const mockCampaigns: Campaign[] = [
-  { id: "1", code: "CMP-024", name: "August Marketplace Boost", reward: 10000, from: "2026-08-01", to: "2026-09-30", requirement: "2 successful referrals", participants: 428, qualified: 94, paid: 71, status: "active", createdBy: "Idowu Olatunji" },
-  { id: "2", code: "CMP-023", name: "Verified Seller Drive", reward: 5000, from: "2026-07-15", to: "2026-08-31", requirement: "3 completed sales", participants: 216, qualified: 58, paid: 44, status: "active", createdBy: "Idowu Olatunji" },
-  { id: "3", code: "CMP-022", name: "Lagos New User Launch", reward: 3000, from: "2026-09-01", to: "2026-10-31", requirement: "2 completed transactions", participants: 0, qualified: 0, paid: 0, status: "scheduled", createdBy: "Idowu Olatunji" },
-  { id: "4", code: "CMP-021", name: "June Referral Sprint", reward: 2000, from: "2026-06-01", to: "2026-06-30", requirement: "2 successful referrals", participants: 189, qualified: 47, paid: 47, status: "ended", createdBy: "Idowu Olatunji" },
-];
+const STATUS_OPTIONS = ["All Statuses", "Draft", "Published", "Scheduled", "Ended"];
 
 export default function CampaignsTab() {
+  const PAGE_SIZE = usePageSize();
+
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [viewingCampaign, setViewingCampaign] = useState<Campaign | null>(null);
-  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
-  const [endingCampaign, setEndingCampaign] = useState<Campaign | null>(null);
-  const [archivingCampaign, setArchivingCampaign] = useState<Campaign | null>(null);
+  const [viewingCampaignId, setViewingCampaignId] = useState<string | null>(null);
+  const [editingCampaign, setEditingCampaign] = useState<{
+    _id: string;
+    name: string;
+  } | null>(null);
+  const [endingCampaign, setEndingCampaign] =
+    useState<ReferralCampaignListItem | null>(null);
+  const [archivingCampaign, setArchivingCampaign] =
+    useState<ReferralCampaignListItem | null>(null);
+  const [isEnding, setIsEnding] = useState(false);
 
-  const campaigns = mockCampaigns;
+  const queryClient = useQueryClient();
+
+  const campaignsQuery = useReferralCampaigns({
+    page: currentPage,
+    limit: PAGE_SIZE,
+    status: statusFilter ? statusFilter.toLowerCase() : undefined,
+    startDate: dateRange.from || undefined,
+    endDate: dateRange.to || undefined,
+  });
+
+  const { data } = campaignsQuery;
+  const { mutateAsync: updateCampaign, isPending: isUpdating } =
+    useUpdateReferralCampaign();
+  const { mutateAsync: duplicateCampaign } = useDuplicateReferralCampaign();
+  const { mutateAsync: archiveCampaign, isPending: isArchiving } =
+    useArchiveReferralCampaign();
+  const { mutateAsync: exportCampaigns } = useExportReferralCampaigns();
+
+  const campaigns = useMemo(() => data?.results ?? [], [data?.results]);
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const columns = useMemo(
     () =>
       createCampaignColumns({
-        onViewDetails: (campaign) => setViewingCampaign(campaign),
+        onViewDetails: (campaign) => setViewingCampaignId(campaign._id),
         onEdit: (campaign) => setEditingCampaign(campaign),
         onDuplicate: (campaign) => {
-          // TODO: wire duplicate endpoint
-          showToast.success("Campaign duplicated", {
-            description: `A copy of ${campaign.name} was created as a draft.`,
-          });
+          showToast.promise(
+            duplicateCampaign(campaign._id).then((res) => {
+              setViewingCampaignId(res.data._id);
+            }),
+            {
+              loading: `Duplicating ${campaign.name}...`,
+              success: "Campaign duplicated.",
+              error: "Couldn't duplicate campaign.",
+            },
+          );
         },
         onPause: (campaign) => {
-          // TODO: wire pause endpoint
+          // TODO: no pause endpoint yet
           showToast.success("Campaign paused", {
             description: `${campaign.name} is now paused.`,
           });
@@ -56,42 +96,21 @@ export default function CampaignsTab() {
         onArchive: (campaign) => setArchivingCampaign(campaign),
         onEnd: (campaign) => setEndingCampaign(campaign),
       }),
-    [],
+    [duplicateCampaign],
   );
 
-  const visibleCampaigns = useMemo(() => {
-    return campaigns.filter((campaign) => {
-      const q = search.toLowerCase();
-      const matchesSearch =
-        !q ||
+  // no search param on the endpoint — filtering the current page
+  const filteredCampaigns = useMemo(() => {
+    if (!search) return campaigns;
+    const q = search.toLowerCase();
+    return campaigns.filter(
+      (campaign) =>
         campaign.name.toLowerCase().includes(q) ||
-        campaign.createdBy.toLowerCase().includes(q);
+        campaign.createdBy.toLowerCase().includes(q),
+    );
+  }, [campaigns, search]);
 
-      const matchesStatus =
-        !statusFilter || campaign.status === statusFilter.toLowerCase();
-
-      let matchesDate = true;
-      if (dateRange.from || dateRange.to) {
-        const from = new Date(campaign.from).getTime();
-        if (Number.isNaN(from)) matchesDate = false;
-        else {
-          if (dateRange.from && from < new Date(dateRange.from).setHours(0, 0, 0, 0))
-            matchesDate = false;
-          if (dateRange.to && from > new Date(dateRange.to).setHours(23, 59, 59, 999))
-            matchesDate = false;
-        }
-      }
-
-      return matchesSearch && matchesStatus && matchesDate;
-    });
-  }, [campaigns, search, statusFilter, dateRange]);
-
-  const totalPages = Math.max(1, Math.ceil(visibleCampaigns.length / PAGE_SIZE));
-
-  const paginatedCampaigns = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return visibleCampaigns.slice(start, start + PAGE_SIZE);
-  }, [visibleCampaigns, currentPage]);
+  const isFiltering = Boolean(search);
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -102,7 +121,7 @@ export default function CampaignsTab() {
     <div>
       <TableToolbar
         label="Programmes"
-        count={visibleCampaigns.length}
+        count={isFiltering ? filteredCampaigns.length : total}
         searchValue={search}
         onSearchChange={handleSearchChange}
         searchPlaceholder="Search campaigns..."
@@ -119,28 +138,40 @@ export default function CampaignsTab() {
               <CustomSelect
                 label="Status"
                 value={statusFilter || "All Statuses"}
-                options={[
-                  "All Statuses",
-                  "Active",
-                  "Scheduled",
-                  "Paused",
-                  "Ended",
-                  "Draft",
-                  "Archived",
-                ]}
+                options={STATUS_OPTIONS}
                 onChange={(val) => {
                   setStatusFilter(val === "All Statuses" ? "" : val);
                   setCurrentPage(1);
                 }}
               />
             </FiltersButton>
+            <Button
+              leftIcon={<PiExportFill className="w-4 h-4 text-[#98A2B3]" />}
+              onClick={() => {
+                showToast.promise(
+                  exportCampaigns({
+                    status: statusFilter ? statusFilter.toLowerCase() : undefined,
+                    startDate: dateRange.from || undefined,
+                    endDate: dateRange.to || undefined,
+                  }),
+                  {
+                    loading: "Preparing export...",
+                    success: "Export downloaded.",
+                    error: "Export failed.",
+                  },
+                );
+              }}
+            >
+              Export
+            </Button>
           </>
         }
       />
 
       <DataTable
-        data={paginatedCampaigns}
+        data={filteredCampaigns}
         columns={columns}
+        query={campaignsQuery}
         emptyMessage="No campaigns found."
       />
 
@@ -150,15 +181,36 @@ export default function CampaignsTab() {
         onPageChange={setCurrentPage}
       />
 
-      {viewingCampaign && (
+      {viewingCampaignId && (
         <ViewCampaignModal
-          campaign={viewingCampaign}
-          onClose={() => setViewingCampaign(null)}
+          campaignId={viewingCampaignId}
+          onClose={() => setViewingCampaignId(null)}
+          onEdit={(campaign) => {
+            setViewingCampaignId(null);
+            setEditingCampaign({ _id: campaign._id, name: campaign.name });
+          }}
         />
       )}
 
       {editingCampaign && (
-        <CreateCampaignModal onClose={() => setEditingCampaign(null)} />
+        <CreateCampaignModal
+          campaignId={editingCampaign._id}
+          isSubmitting={isUpdating}
+          onClose={() => setEditingCampaign(null)}
+          onSubmit={(payload) => {
+            showToast.promise(
+              updateCampaign({
+                campaignId: editingCampaign._id,
+                payload,
+              }).then(() => setEditingCampaign(null)),
+              {
+                loading: `Updating ${editingCampaign.name}...`,
+                success: "Campaign updated.",
+                error: "Couldn't update campaign.",
+              },
+            );
+          }}
+        />
       )}
 
       {endingCampaign && (
@@ -166,13 +218,35 @@ export default function CampaignsTab() {
           title="End campaign"
           message={`End ${endingCampaign.name}? Participants can no longer qualify once it ends.`}
           confirmLabel="End Campaign"
+          isSubmitting={isEnding || isUpdating}
           onClose={() => setEndingCampaign(null)}
-          onConfirm={() => {
-            // TODO: wire end endpoint
-            showToast.success("Campaign ended", {
-              description: `${endingCampaign.name} has ended.`,
-            });
-            setEndingCampaign(null);
+          onConfirm={async () => {
+            const campaignId = endingCampaign._id;
+            const campaignName = endingCampaign.name;
+            setIsEnding(true);
+            try {
+              const detail = await queryClient.fetchQuery({
+                queryKey: ["referral-campaigns", campaignId],
+                queryFn: () => getReferralCampaign(campaignId),
+              });
+              await showToast.promise(
+                updateCampaign({
+                  campaignId,
+                  payload: { ...toPayload(detail.data), status: "ended" },
+                }).then(() => setEndingCampaign(null)),
+                {
+                  loading: `Ending ${campaignName}...`,
+                  success: `${campaignName} has ended.`,
+                  error: "Couldn't end campaign.",
+                },
+              );
+            } catch (err) {
+              showToast.error("Couldn't end campaign.", {
+                description: getApiErrorMessage(err),
+              });
+            } finally {
+              setIsEnding(false);
+            }
           }}
         />
       )}
@@ -182,16 +256,43 @@ export default function CampaignsTab() {
           title="Archive campaign"
           message={`Archive ${archivingCampaign.name}? It will be hidden from the active list.`}
           confirmLabel="Archive"
+          isSubmitting={isArchiving}
           onClose={() => setArchivingCampaign(null)}
           onConfirm={() => {
-            // TODO: wire archive endpoint
-            showToast.success("Campaign archived", {
-              description: `${archivingCampaign.name} has been archived.`,
-            });
-            setArchivingCampaign(null);
+            showToast.promise(
+              archiveCampaign(archivingCampaign._id).then(() =>
+                setArchivingCampaign(null),
+              ),
+              {
+                loading: `Archiving ${archivingCampaign.name}...`,
+                success: `${archivingCampaign.name} has been archived.`,
+                error: "Couldn't archive campaign.",
+              },
+            );
           }}
         />
       )}
     </div>
   );
+}
+
+
+function toPayload(campaign: ReferralCampaign) {
+  return {
+    name: campaign.name,
+    description: campaign.description,
+    internalCampaignCode: campaign.internalCampaignCode,
+    status: campaign.status,
+    startDate: campaign.startDate,
+    endDate: campaign.endDate,
+    rewardType: campaign.rewardType,
+    rewardAmount: campaign.rewardAmount,
+    maxCampaignBudget: campaign.maxCampaignBudget,
+    referralRequirement: campaign.referralRequirement,
+    qualificationWindow: campaign.qualificationWindow,
+    eligibility: campaign.eligibility,
+    validationRules: campaign.validationRules,
+    paymentMethod: campaign.paymentMethod,
+    paymentSchedule: campaign.paymentSchedule,
+  };
 }
